@@ -1,0 +1,3 @@
+[submodule "SDF"]
+	path = SDF
+	url = git@github.com:Warwick-Plasma/SDF.git

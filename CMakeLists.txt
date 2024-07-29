@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.15...3.27)
-project(${SKBUILD_PROJECT_NAME} LANGUAGES C)
+
+project(${SKBUILD_PROJECT_NAME}
+  LANGUAGES C
+  VERSION ${SKBUILD_PROJECT_VERSION}
+)
 
 add_subdirectory(SDF/C)
 

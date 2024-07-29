@@ -283,3 +283,6 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Generated version file
+src/sdf_xarray/_version.py

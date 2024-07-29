@@ -11,4 +11,21 @@ version = "0.0.1"
 requires-python = ">=3.9"
 dependencies = [
   "numpy>=2.0.0",
+  "xarray>=2024.1.0",
 ]
+
+[project.optional-dependencies]
+docs = [
+     "sphinx >= 5.3",
+     "sphinx_autodoc_typehints >= 1.19",
+     "sphinx-book-theme >= 0.4.0rc1",
+     "sphinx-argparse-cli >= 1.10.0",
+     "sphinx-inline-tabs",
+]
+test = [
+      "pytest >= 3.3.0",
+]
+lint = ["ruff"]
+
+[project.entry-points."xarray.backends"]
+sdf_engine = "sdf_xarray:SDFEntrypoint"

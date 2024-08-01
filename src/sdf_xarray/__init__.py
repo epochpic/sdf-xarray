@@ -80,10 +80,10 @@ def open_sdf_dataset(filename_or_obj, *, drop_variables=None):
             for dim_size, dim_name in zip(value.grid_mid.dims, value.grid_mid.labels):
                 dim_size_lookup[dim_name][dim_size] = f"{dim_name}_{grid_mid_base_name}"
 
-            var_coords = (
+            var_coords = [
                 dim_size_lookup[dim_name][dim_size]
                 for dim_name, dim_size in zip(value.grid.labels, value.dims)
-            )
+            ]
             # TODO: error handling here? other attributes?
             data_attrs = {"units": value.units}
             data_vars[key] = (var_coords, value.data, data_attrs)

@@ -30,6 +30,7 @@ docs = [
 ]
 test = [
       "pytest >= 3.3.0",
+      "dask[complete]",
 ]
 lint = ["ruff"]
 

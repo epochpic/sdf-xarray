@@ -13,17 +13,14 @@ from . import sdf
 def combine_datasets(path_glob: Iterable | str) -> xr.Dataset:
     """Combine all datasets using a single time dimension"""
 
-    datasets = []
-    for f in path_glob:
-        ds = xr.open_dataset(f)
-        ds = ds.expand_dims(time=[ds.attrs["time"]])
-        datasets.append(ds)
-
-    return xr.merge(datasets)
+    return xr.open_mfdataset(
+        path_glob, preprocess=lambda ds: ds.expand_dims(time=[ds.attrs["time"]])
+    )
 
 
 def open_mfdataset(
-    path_glob: Iterable | str, separate_times: bool = False
+    path_glob: Iterable | str | pathlib.Path | pathlib.Path.glob,
+    separate_times: bool = False,
 ) -> xr.Dataset:
     """Open a set of EPOCH SDF files as one `xarray.Dataset`
 

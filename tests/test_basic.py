@@ -2,7 +2,6 @@ import pathlib
 
 import xarray as xr
 
-
 EXAMPLE_FILES_DIR = pathlib.Path(__file__).parent / "example_files"
 
 

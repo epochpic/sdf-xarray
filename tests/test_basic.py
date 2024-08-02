@@ -1,6 +1,8 @@
 import pathlib
 
 import xarray as xr
+from sdf_xarray import open_mfdataset
+
 
 EXAMPLE_FILES_DIR = pathlib.Path(__file__).parent / "example_files"
 
@@ -21,3 +23,22 @@ def test_coords():
         x_coord = "Px_x_px/electron"
         assert x_coord in df[px_electron].coords
         assert df[x_coord].attrs["long_name"] == "Px"
+
+
+def test_multiple_files_one_time_dim():
+    df = open_mfdataset(EXAMPLE_FILES_DIR.glob("*.sdf"))
+    ex_field = df["Electric Field/Ex"]
+    assert sorted(ex_field.coords) == sorted(("X_Grid_mid", "time"))
+    assert ex_field.shape == (11, 16)
+
+    ez_field = df["Electric Field/Ez"]
+    assert sorted(ez_field.coords) == sorted(("X_Grid_mid", "time"))
+    assert ez_field.shape == (11, 16)
+
+
+def test_multiple_files_multiple_time_dims():
+    df = open_mfdataset(EXAMPLE_FILES_DIR.glob("*.sdf"), separate_times=True)
+
+    assert list(df["Electric Field/Ex"].coords) != list(df["Electric Field/Ez"].coords)
+    assert df["Electric Field/Ex"].shape == (11, 16)
+    assert df["Electric Field/Ez"].shape == (1, 16)

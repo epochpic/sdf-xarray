@@ -1,12 +1,12 @@
-from collections import defaultdict
 import os
 import pathlib
-
-from . import sdf
+from collections import defaultdict
 
 import xarray as xr
 from xarray.backends import BackendEntrypoint
 from xarray.core.utils import try_read_magic_number_from_path
+
+from . import sdf
 
 
 def open_sdf_dataset(filename_or_obj, *, drop_variables=None):

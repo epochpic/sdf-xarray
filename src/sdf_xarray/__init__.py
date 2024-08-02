@@ -88,7 +88,7 @@ def open_sdf_dataset(filename_or_obj, *, drop_variables=None):
 
     # Read and convert SDF variables and meshes to xarray DataArrays and Coordinates
     for key, value in data.items():
-        if key.startswith("CPU"):
+        if "CPU" in key:
             # Had some problems with these variables, so just ignore them for now
             continue
 

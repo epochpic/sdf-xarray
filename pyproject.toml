@@ -12,9 +12,10 @@ dynamic = ["version"]
 license = {file = "LICENCE"}
 readme = "README.md"
 authors = [
-    {name = "Peter Hill", email = "peter.hill@york.ac.uk"}
+    {name = "Peter Hill", email = "peter.hill@york.ac.uk"},
+    {name = "Joel Adams", email = "joel.adams@york.ac.uk"},
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
   "numpy>=2.0.0",
   "xarray>=2024.1.0",
@@ -30,6 +31,7 @@ docs = [
 ]
 test = [
       "pytest >= 3.3.0",
+      "dask[complete]",
 ]
 lint = ["ruff"]
 

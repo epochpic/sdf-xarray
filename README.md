@@ -25,6 +25,7 @@ pip install .
 `sdf-xarray` is a backend for xarray, and so is usable directly from
 xarray:
 
+### Single file loading
 ```python
 import xarray as xr
 
@@ -38,4 +39,26 @@ print(df["Electric Field/Ex"])
 #   * X_x_px_deltaf/electron_beam  (X_x_px_deltaf/electron_beam) float64 128B 1...
 # Attributes:
 #     units:    V/m
+```
+
+### Multi file loading
+```python
+ds = xr.open_mfdataset(
+    "*.sdf",
+    concat_dim="time",
+    combine="nested",
+    data_vars='minimal', 
+    coords='minimal', 
+    compat='override', 
+    preprocess=lambda ds: ds.expand_dims(time=[ds.attrs["time"]])
+)
+
+print(ds)
+
+# Dimensions:
+# time: 301, X_Grid_mid: 128, Y_Grid_mid: 128, Px_px_py/Photon: 200, Py_px_py/Photon: 200, X_Grid: 129, Y_Grid: 129, Px_px_py/Photon_mid: 199, Py_px_py/Photon_mid: 199
+# Coordinates: (9)
+# Data variables: (18)
+# Indexes: (9)
+# Attributes: (22)
 ```

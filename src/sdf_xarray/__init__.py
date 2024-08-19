@@ -232,6 +232,7 @@ class SDFEntrypoint(BackendEntrypoint):
 
 class SDFPreprocess:
     """Preprocess SDF files for xarray ensuring matching job ids and sets time dimension"""
+
     def __init__(self):
         self.job_id: int | None = None
 

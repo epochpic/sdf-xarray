@@ -244,3 +244,7 @@ class SDFPreprocess:
             )
 
         return ds.expand_dims(time=[ds.attrs["time"]])
+
+    description = "Preprocess SDF files for xarray ensuring matching job ids and sets time dimension"
+
+    url = "https://epochpic.github.io/documentation/visualising_output/python.html"

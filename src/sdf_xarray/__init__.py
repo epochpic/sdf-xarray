@@ -13,9 +13,7 @@ from . import sdf
 def combine_datasets(path_glob: Iterable | str) -> xr.Dataset:
     """Combine all datasets using a single time dimension"""
 
-    return xr.open_mfdataset(
-        path_glob, preprocess=lambda ds: ds.expand_dims(time=[ds.attrs["time"]])
-    )
+    return xr.open_mfdataset(path_glob, preprocess=SDFPreprocess())
 
 
 def open_mfdataset(
@@ -69,6 +67,14 @@ def open_mfdataset(
             df[da] = df[da].expand_dims(
                 dim={var_times_map[str(da)]: [df.attrs["time"]]}
             )
+        for coord in df.coords:
+            if "Particles" in coord:
+                # We need to undo our renaming of the coordinates
+                base_name = coord.split("_", maxsplit=1)[-1]
+                sdf_coord_name = f"Grid/{base_name}"
+                df.coords[coord] = df.coords[coord].expand_dims(
+                    dim={var_times_map[sdf_coord_name]: [df.attrs["time"]]}
+                )
 
     return xr.merge(all_dfs)
 
@@ -131,6 +137,15 @@ def open_sdf_dataset(filename_or_obj, *, drop_variables=None):
     data_vars = {}
     coords = {}
 
+    def _norm_grid_name(grid_name: str) -> str:
+        """There may be multiple grids all with the same coordinate names, so
+        drop the "Grid/" from the start, and append the rest to the
+        dimension name. This lets us disambiguate them all. Probably"""
+        return grid_name.split("/", maxsplit=1)[-1]
+
+    def _grid_species_name(grid_name: str) -> str:
+        return grid_name.split("/")[-1]
+
     # Read and convert SDF variables and meshes to xarray DataArrays and Coordinates
     for key, value in data.items():
         if "CPU" in key:
@@ -141,18 +156,19 @@ def open_sdf_dataset(filename_or_obj, *, drop_variables=None):
             # This might have consequences when reading in multiple files?
             attrs[key] = value.data
 
-        elif isinstance(value, sdf.BlockPlainMesh):
+        elif isinstance(value, (sdf.BlockPlainMesh, sdf.BlockPointMesh)):
             # These are Coordinates
 
-            # There may be multiple grids all with the same coordinate names, so
-            # drop the "Grid/" from the start, and append the rest to the
-            # dimension name. This lets us disambiguate them all. Probably
-            base_name = key.split("/", maxsplit=1)[-1]
+            is_point_mesh = isinstance(value, sdf.BlockPointMesh)
+            base_name = _norm_grid_name(key)
 
             for label, coord, unit in zip(value.labels, value.data, value.units):
                 full_name = f"{label}_{base_name}"
+                dim_name = (
+                    f"ID_{_grid_species_name(key)}" if is_point_mesh else full_name
+                )
                 coords[full_name] = (
-                    full_name,
+                    dim_name,
                     coord,
                     {"long_name": label, "units": unit},
                 )
@@ -170,13 +186,11 @@ def open_sdf_dataset(filename_or_obj, *, drop_variables=None):
             # Then we can look up the dimension label and size to get *our* name
             # for the corresponding coordinate
             dim_size_lookup = defaultdict(dict)
-
-            # TODO: remove duplication with coords branch
-            grid_base_name = value.grid.name.split("/", maxsplit=1)[-1]
+            grid_base_name = _norm_grid_name(value.grid.name)
             for dim_size, dim_name in zip(value.grid.dims, value.grid.labels):
                 dim_size_lookup[dim_name][dim_size] = f"{dim_name}_{grid_base_name}"
 
-            grid_mid_base_name = value.grid_mid.name.split("/", maxsplit=1)[-1]
+            grid_mid_base_name = _norm_grid_name(value.grid_mid.name)
             for dim_size, dim_name in zip(value.grid_mid.dims, value.grid_mid.labels):
                 dim_size_lookup[dim_name][dim_size] = f"{dim_name}_{grid_mid_base_name}"
 
@@ -185,6 +199,12 @@ def open_sdf_dataset(filename_or_obj, *, drop_variables=None):
                 for dim_name, dim_size in zip(value.grid.labels, value.dims)
             ]
             # TODO: error handling here? other attributes?
+            data_attrs = {"units": value.units}
+            data_vars[key] = (var_coords, value.data, data_attrs)
+
+        elif isinstance(value, sdf.BlockPointVariable):
+            # Point (particle) variables are 1D
+            var_coords = (f"ID_{_grid_species_name(key)}",)
             data_attrs = {"units": value.units}
             data_vars[key] = (var_coords, value.data, data_attrs)
 
@@ -245,4 +265,11 @@ class SDFPreprocess:
                 f"Mismatching job ids (got {ds.attrs['jobid1']}, expected {self.job_id})"
             )
 
-        return ds.expand_dims(time=[ds.attrs["time"]])
+        ds = ds.expand_dims(time=[ds.attrs["time"]])
+
+        # Particles' spartial coordinates also evolve in time
+        for coord, value in ds.coords.items():
+            if "Particles" in coord:
+                ds.coords[coord] = value.expand_dims(time=[ds.attrs["time"]])
+
+        return ds

@@ -28,6 +28,15 @@ def test_coords():
         assert df[x_coord].attrs["long_name"] == "Px"
 
 
+def test_particles():
+    with xr.open_dataset(EXAMPLE_FILES_DIR / "0010.sdf") as df:
+        px_protons = "Particles/Px/proton"
+        assert px_protons in df
+        x_coord = "X_Particles/proton"
+        assert x_coord in df[px_protons].coords
+        assert df[x_coord].attrs["long_name"] == "X"
+
+
 def test_multiple_files_one_time_dim():
     df = open_mfdataset(EXAMPLE_FILES_DIR.glob("*.sdf"))
     ex_field = df["Electric Field/Ex"]
@@ -38,6 +47,13 @@ def test_multiple_files_one_time_dim():
     assert sorted(ez_field.coords) == sorted(("X_Grid_mid", "time"))
     assert ez_field.shape == (11, 16)
 
+    px_protons = df["Particles/Px/proton"]
+    assert sorted(px_protons.coords) == sorted(("X_Particles/proton", "time"))
+    assert px_protons.shape == (11, 1920)
+
+    px_protons = df["Particles/Weight/proton"]
+    assert sorted(px_protons.coords) == sorted(("X_Particles/proton", "time"))
+    assert px_protons.shape == (11, 1920)
 
 def test_multiple_files_multiple_time_dims():
     df = open_mfdataset(EXAMPLE_FILES_DIR.glob("*.sdf"), separate_times=True)
@@ -45,6 +61,8 @@ def test_multiple_files_multiple_time_dims():
     assert list(df["Electric Field/Ex"].coords) != list(df["Electric Field/Ez"].coords)
     assert df["Electric Field/Ex"].shape == (11, 16)
     assert df["Electric Field/Ez"].shape == (1, 16)
+    assert df["Particles/Px/proton"].shape == (1, 1920)
+    assert df["Particles/Weight/proton"].shape == (2, 1920)
 
 
 def test_erroring_on_mismatched_jobid_files():

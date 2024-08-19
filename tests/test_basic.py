@@ -76,7 +76,6 @@ def test_erroring_on_mismatched_jobid_files():
     with pytest.raises(ValueError):
         xr.open_mfdataset(
             EXAMPLE_MISMATCHED_FILES_DIR.glob("*.sdf"),
-            concat_dim="time",
             combine="nested",
             data_vars="minimal",
             coords="minimal",

@@ -1,10 +1,13 @@
 import pathlib
 
 import xarray as xr
-from sdf_xarray import open_mfdataset
-
+from sdf_xarray import open_mfdataset, SDFPreprocess
+import pytest
 
 EXAMPLE_FILES_DIR = pathlib.Path(__file__).parent / "example_files"
+EXAMPLE_MISMATCHED_FILES_DIR = (
+    pathlib.Path(__file__).parent / "example_mismatched_files"
+)
 
 
 def test_basic():
@@ -42,3 +45,16 @@ def test_multiple_files_multiple_time_dims():
     assert list(df["Electric Field/Ex"].coords) != list(df["Electric Field/Ez"].coords)
     assert df["Electric Field/Ex"].shape == (11, 16)
     assert df["Electric Field/Ez"].shape == (1, 16)
+
+
+def test_erroring_on_mismatched_jobid_files():
+    with pytest.raises(ValueError):
+        xr.open_mfdataset(
+            EXAMPLE_MISMATCHED_FILES_DIR.glob("*.sdf"),
+            concat_dim="time",
+            combine="nested",
+            data_vars="minimal",
+            coords="minimal",
+            compat="override",
+            preprocess=SDFPreprocess(),
+        )

@@ -63,7 +63,9 @@ def test_multiple_files_one_time_dim():
 
 
 def test_multiple_files_multiple_time_dims():
-    df = open_mfdataset(EXAMPLE_FILES_DIR.glob("*.sdf"), separate_times=True, keep_particles=True)
+    df = open_mfdataset(
+        EXAMPLE_FILES_DIR.glob("*.sdf"), separate_times=True, keep_particles=True
+    )
 
     assert list(df["Electric Field/Ex"].coords) != list(df["Electric Field/Ez"].coords)
     assert df["Electric Field/Ex"].shape == (11, 16)

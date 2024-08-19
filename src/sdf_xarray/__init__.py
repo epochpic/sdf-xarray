@@ -10,15 +10,17 @@ from xarray.core.utils import try_read_magic_number_from_path
 from . import sdf
 
 
-def combine_datasets(path_glob: Iterable | str) -> xr.Dataset:
+def combine_datasets(path_glob: Iterable | str, **kwargs) -> xr.Dataset:
     """Combine all datasets using a single time dimension"""
 
-    return xr.open_mfdataset(path_glob, preprocess=SDFPreprocess())
+    return xr.open_mfdataset(path_glob, preprocess=SDFPreprocess(), **kwargs)
 
 
 def open_mfdataset(
     path_glob: Iterable | str | pathlib.Path | pathlib.Path.glob,
+    *,
     separate_times: bool = False,
+    keep_particles: bool = False,
 ) -> xr.Dataset:
     """Open a set of EPOCH SDF files as one `xarray.Dataset`
 
@@ -46,7 +48,8 @@ def open_mfdataset(
     separate_times :
         If ``True``, create separate time dimensions for variables defined at
         different output frequencies
-
+    keep_particles :
+        If ``True``, also load particle data (this may use a lot of memory!)
     """
 
     # TODO: This is not very robust, look at how xarray.open_mfdataset does it
@@ -57,10 +60,10 @@ def open_mfdataset(
     path_glob = sorted(list(path_glob))
 
     if not separate_times:
-        return combine_datasets(path_glob)
+        return combine_datasets(path_glob, keep_particles=keep_particles)
 
     time_dims, var_times_map = make_time_dims(path_glob)
-    all_dfs = [xr.open_dataset(f) for f in path_glob]
+    all_dfs = [xr.open_dataset(f, keep_particles=keep_particles) for f in path_glob]
 
     for df in all_dfs:
         for da in df:
@@ -115,7 +118,7 @@ def make_time_dims(path_glob):
     return time_dims, var_times_map
 
 
-def open_sdf_dataset(filename_or_obj, *, drop_variables=None):
+def open_sdf_dataset(filename_or_obj, *, drop_variables=None, keep_particles=False):
     if isinstance(filename_or_obj, pathlib.Path):
         # sdf library takes a filename only
         # TODO: work out if we need to deal with file handles
@@ -150,6 +153,9 @@ def open_sdf_dataset(filename_or_obj, *, drop_variables=None):
     for key, value in data.items():
         if "CPU" in key:
             # Had some problems with these variables, so just ignore them for now
+            continue
+
+        if not keep_particles and "particles" in key.lower():
             continue
 
         if isinstance(value, sdf.BlockConstant):
@@ -229,10 +235,15 @@ class SDFEntrypoint(BackendEntrypoint):
         filename_or_obj,
         *,
         drop_variables=None,
+        keep_particles=False,
     ):
-        return open_sdf_dataset(filename_or_obj, drop_variables=drop_variables)
+        return open_sdf_dataset(
+            filename_or_obj,
+            drop_variables=drop_variables,
+            keep_particles=keep_particles,
+        )
 
-    open_dataset_parameters = ["filename_or_obj", "drop_variables"]
+    open_dataset_parameters = ["filename_or_obj", "drop_variables", "keep_particles"]
 
     def guess_can_open(self, filename_or_obj):
         magic_number = try_read_magic_number_from_path(filename_or_obj)

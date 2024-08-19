@@ -228,3 +228,19 @@ class SDFEntrypoint(BackendEntrypoint):
     description = "Use .sdf files in Xarray"
 
     url = "https://epochpic.github.io/documentation/visualising_output/python.html"
+
+
+class SDFPreprocess:
+    def __init__(self):
+        self.job_id: int | None = None
+
+    def __call__(self, ds: xr.Dataset) -> xr.Dataset:
+        if self.job_id is None:
+            self.job_id = ds.attrs["jobid1"]
+
+        if self.job_id != ds.attrs["jobid1"]:
+            raise ValueError(
+                f"Mismatching job ids (got {ds.attrs['jobid1']}, expected {self.job_id})"
+            )
+
+        return ds.expand_dims(time=[ds.attrs["time"]])

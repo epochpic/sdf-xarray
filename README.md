@@ -28,6 +28,7 @@ xarray:
 ### Single file loading
 ```python
 import xarray as xr
+from sdf_xarray import SDFPreprocess
 
 df = xr.open_dataset("0010.sdf")
 
@@ -50,7 +51,7 @@ ds = xr.open_mfdataset(
     data_vars='minimal', 
     coords='minimal', 
     compat='override', 
-    preprocess=lambda ds: ds.expand_dims(time=[ds.attrs["time"]])
+    preprocess=SDFPreprocess()
 )
 
 print(ds)

@@ -28,7 +28,24 @@ target_include_directories(sdfc PUBLIC
 
 find_package(Python COMPONENTS Interpreter Development.Module NumPy REQUIRED)
 
+set(_sdf_module_dir "${CMAKE_CURRENT_SOURCE_DIR}/src/sdf_xarray")
+set(_sdf_input "${_sdf_module_dir}/sdf_interface.pyx")
+set(_sdf_output "sdf_interface.c")
+add_custom_command(
+  OUTPUT ${_sdf_output}
+  COMMENT
+    "Making ${CMAKE_CURRENT_BINARY_DIR}/${_sdf_output} from ${_sdf_input}"
+  COMMAND Python::Interpreter -m cython
+          "${_sdf_input}" --output-file ${_sdf_output}
+          "-I${_sdf_module_dir}"
+          -3
+  DEPENDS "${_sdf_input}"
+  VERBATIM)
+
+python_add_library(sdf_interface MODULE ${_sdf_output} WITH_SOABI)
+target_link_libraries(sdf_interface PRIVATE sdfc Python::NumPy)
+
 python_add_library(sdf MODULE SDF/utilities/sdf_python.c WITH_SOABI)
 target_link_libraries(sdf PRIVATE sdfc Python::NumPy)
 
-install(TARGETS sdf DESTINATION ${SKBUILD_PROJECT_NAME})
+install(TARGETS sdf sdf_interface DESTINATION ${SKBUILD_PROJECT_NAME})

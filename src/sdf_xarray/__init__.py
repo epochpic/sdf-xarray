@@ -8,6 +8,7 @@ from xarray.backends import BackendEntrypoint
 from xarray.core.utils import try_read_magic_number_from_path
 
 from . import sdf
+from .sdf_interface import SDFFile as SDFFile
 
 
 def combine_datasets(path_glob: Iterable | str, **kwargs) -> xr.Dataset:

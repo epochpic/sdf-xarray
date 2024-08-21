@@ -74,34 +74,28 @@ cdef Mesh make_Mesh_from_sdf_block(str name, csdf.sdf_block_t* block):
         ),
     )
 
-    # cdef public int grid_id
-
-
-    # cdef public PyObject data
-    # cdef public PyObject extents
-    # cdef public PyObject geometry
-    # cdef public PyObject species_id
-    # cdef public PyObject mult
-    # cdef public int stagger
-    # cdef public PyObject dict
-    # cdef public PyObject material_names
-    # cdef public PyObject material_ids
-
-    # cdef public PyObject blocklist
-    # cdef public Block grid
-    # cdef public Block grid_mid
-    # cdef public Block parent
-    # cdef public SDFObject sdf
-    # cdef public sdf_block_t b
-
-    # cdef public int sdfref
-    # cdef public int adims[4]
-
 @dataclasses.dataclass
 cdef class Constant:
     _id: str
     name: str
     data: int | str | float
+
+
+cdef Constant make_Constant(str name, csdf.sdf_block_t* block):
+    data: int | str | float | double
+
+    if block.datatype == csdf.SDF_DATATYPE_REAL4:
+        data = (<float*>block.const_value)[0]
+    elif block.datatype == csdf.SDF_DATATYPE_REAL8:
+        data = (<double*>block.const_value)[0]
+    if block.datatype == csdf.SDF_DATATYPE_INTEGER4:
+        data = (<csdf.int32_t*>block.const_value)[0]
+    if block.datatype == csdf.SDF_DATATYPE_INTEGER8:
+        data = (<csdf.int64_t*>block.const_value)[0]
+
+    return Constant(
+        _id=block.id.decode("UTF-8"), name=name, data=data
+    )
 
 
 cdef class SDFFile:
@@ -176,7 +170,7 @@ cdef class SDFFile:
                 }
 
             elif block.blocktype == csdf.SDF_BLOCKTYPE_CONSTANT:
-                self.variables[name] = self._read_constant(name, block)
+                self.variables[name] = make_Constant(name, block)
 
             elif block.blocktype in (
                     csdf.SDF_BLOCKTYPE_PLAIN_MESH,
@@ -206,23 +200,6 @@ cdef class SDFFile:
                     self.variables[name] = make_Variable_from_sdf_block(name, block)
 
             block = block.next
-
-    cdef Constant _read_constant(self, str name, csdf.sdf_block_t* block):
-        data: int | str | float | double
-
-        if block.datatype == csdf.SDF_DATATYPE_REAL4:
-            data = (<float*>block.const_value)[0]
-        elif block.datatype == csdf.SDF_DATATYPE_REAL8:
-            data = (<double*>block.const_value)[0]
-        if block.datatype == csdf.SDF_DATATYPE_INTEGER4:
-            data = (<csdf.int32_t*>block.const_value)[0]
-        if block.datatype == csdf.SDF_DATATYPE_INTEGER8:
-            data = (<csdf.int64_t*>block.const_value)[0]
-
-        return Constant(
-            _id=block.id.decode("UTF-8"), name=name, data=data
-        )
-
 
     def close(self):
         csdf.sdf_stack_destroy(self._c_sdf_file)

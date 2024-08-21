@@ -177,7 +177,10 @@ cdef class SDFFile:
                     csdf.SDF_BLOCKTYPE_POINT_DERIVED,
                     csdf.SDF_BLOCKTYPE_ARRAY,
             ):
-                self.variables[name] = make_Variable_from_sdf_block(name, block)
+                # If the block doesn't have a datatype, that probably
+                # means its actually a grid dimension
+                if block.datatype_out != 0:
+                    self.variables[name] = make_Variable_from_sdf_block(name, block)
 
             block = block.next
 

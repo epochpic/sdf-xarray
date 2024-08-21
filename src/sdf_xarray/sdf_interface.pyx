@@ -53,7 +53,6 @@ cdef class Block:
 cdef class Constant:
     _id: str
     name: str
-    dtype: str
     data: int | str | float
 
 
@@ -111,6 +110,10 @@ cdef class SDFFile:
                     "run_date": time.ctime(run.run_date),
                     "io_date": time.ctime(run.io_date),
                 }
+
+            elif block.blocktype == csdf.SDF_BLOCKTYPE_CONSTANT:
+                self.variables[name] = self._read_constant(name, block)
+
             else:
                 self.variables[name] = Block(
                     _id=block.id.decode("UTF-8"),
@@ -121,7 +124,24 @@ cdef class SDFFile:
             )
 
             block = block.next
-            
+
+    cdef Constant _read_constant(self, str name, csdf.sdf_block_t* block):
+        data: int | str | float | double
+
+        if block.datatype == csdf.SDF_DATATYPE_REAL4:
+            data = (<float*>block.const_value)[0]
+        elif block.datatype == csdf.SDF_DATATYPE_REAL8:
+            data = (<double*>block.const_value)[0]
+        if block.datatype == csdf.SDF_DATATYPE_INTEGER4:
+            data = (<csdf.int32_t*>block.const_value)[0]
+        if block.datatype == csdf.SDF_DATATYPE_INTEGER8:
+            data = (<csdf.int64_t*>block.const_value)[0]
+
+        return Constant(
+            _id=block.id.decode("UTF-8"), name=name, data=data
+        )
+
+
     def close(self):
         csdf.sdf_stack_destroy(self._c_sdf_file)
         csdf.sdf_close(self._c_sdf_file)

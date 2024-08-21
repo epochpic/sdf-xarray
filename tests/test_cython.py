@@ -20,7 +20,8 @@ def test_sdffile():
 def test_variable_names():
     with SDFFile(str(EXAMPLE_FILES_DIR / "0000.sdf")) as f:
         assert "Electric Field/Ex" in f.variables
-        assert "Grid/Grid" in f.grids
+        assert "grid" in f.grids
+        assert "grid_mid" in f.grids
 
 
 if __name__ == "__main__":

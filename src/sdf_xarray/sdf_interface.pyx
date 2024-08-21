@@ -24,8 +24,48 @@ cdef class Block:
     dtype: str
     ndims: int
 
-    # cdef public list dims
-    # cdef public str units
+    dims: tuple[int]
+
+
+@dataclasses.dataclass
+cdef class Variable(Block):
+    units: tuple[str] | None
+
+
+cdef Variable make_Variable_from_sdf_block(str name, csdf.sdf_block_t* block):
+
+    units = None if block.units is NULL else block.units.decode("UTF-8")
+
+    return Variable(
+        _id=block.id.decode("UTF-8"),
+        name=name,
+        data_length=block.data_length,
+        dtype=_sdf_type_mapping[block.datatype_out],
+        ndims=block.ndims,
+        dims=tuple(block.dims[i] for i in range(block.ndims)),
+        units=units,
+    )
+
+
+@dataclasses.dataclass
+cdef class Mesh(Block):
+    units: tuple[str]
+    labels: tuple[str]
+
+
+cdef Mesh make_Mesh_from_sdf_block(str name, csdf.sdf_block_t* block):
+
+    return Mesh(
+        _id=block.id.decode("UTF-8"),
+        name=name,
+        data_length=block.data_length,
+        dtype=_sdf_type_mapping[block.datatype_out],
+        ndims=block.ndims,
+        dims=tuple(block.dims[i] for i in range(block.ndims)),
+        units=tuple(block.dim_units[i].decode("UTF-8") for i in range(block.ndims)),
+        labels=tuple(block.dim_labels[i].decode("UTF-8") for i in range(block.ndims)),
+    )
+
     # cdef public int grid_id
 
 
@@ -60,7 +100,8 @@ cdef class SDFFile:
     cdef csdf.sdf_file_t* _c_sdf_file
     cdef public str filename
     cdef public dict header, run_info
-    cdef public dict[str, Block] variables
+    cdef public dict[str, Variable] variables
+    cdef public dict[str, Mesh] grids
 
     def __cinit__(self, filename: str):
         self._c_sdf_file = csdf.sdf_open(
@@ -93,6 +134,7 @@ cdef class SDFFile:
         cdef csdf.run_info* run = NULL
 
         self.variables = {}
+        self.grids = {}
 
         for i in range(self._c_sdf_file.nblocks):
             name = block.name.decode("UTF-8")
@@ -114,14 +156,28 @@ cdef class SDFFile:
             elif block.blocktype == csdf.SDF_BLOCKTYPE_CONSTANT:
                 self.variables[name] = self._read_constant(name, block)
 
-            else:
-                self.variables[name] = Block(
-                    _id=block.id.decode("UTF-8"),
-                    name=name,
-                    data_length=block.data_length,
-                    dtype=_sdf_type_mapping[block.datatype_out],
-                    ndims=block.ndims,
-            )
+            elif block.blocktype in (
+                    csdf.SDF_BLOCKTYPE_PLAIN_MESH,
+                    csdf.SDF_BLOCKTYPE_POINT_MESH,
+                    csdf.SDF_BLOCKTYPE_LAGRANGIAN_MESH
+            ):
+                self.grids[name] = make_Mesh_from_sdf_block(name, block)
+
+                if block.blocktype != csdf.SDF_BLOCKTYPE_POINT_MESH:
+                    # Make the corresponding grid at mid-points, except for particle grids
+                    mid_grid_name = f"{name}_mid"
+                    mid_grid_block = make_Mesh_from_sdf_block(mid_grid_name, block)
+                    mid_grid_block.dims = tuple(dim - 1 for dim in mid_grid_block.dims if dim > 1)
+                    self.grids[mid_grid_name] = mid_grid_block
+
+            elif block.blocktype in (
+                    csdf.SDF_BLOCKTYPE_PLAIN_VARIABLE,
+                    csdf.SDF_BLOCKTYPE_PLAIN_DERIVED,
+                    csdf.SDF_BLOCKTYPE_POINT_VARIABLE,
+                    csdf.SDF_BLOCKTYPE_POINT_DERIVED,
+                    csdf.SDF_BLOCKTYPE_ARRAY,
+            ):
+                self.variables[name] = make_Variable_from_sdf_block(name, block)
 
             block = block.next
 

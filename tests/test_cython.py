@@ -19,14 +19,19 @@ def test_sdffile():
 
 def test_variable_names():
     with SDFFile(str(EXAMPLE_FILES_DIR / "0000.sdf")) as f:
-        names = f.variables
-
-    assert "Electric Field/Ex" in names
-    assert "Grid/Grid" in names
+        assert "Electric Field/Ex" in f.variables
+        assert "Grid/Grid" in f.grids
 
 
 if __name__ == "__main__":
+    from pprint import pprint
+
     with SDFFile(str(EXAMPLE_FILES_DIR / "0000.sdf")) as f:
-        print(f.header)
-        print(f.run_info)
-        print(f.variables)
+        print("header")
+        pprint(f.header)
+        print("run_info")
+        pprint(f.run_info)
+        print("variables")
+        pprint(f.variables)
+        print("grids")
+        pprint(f.grids)

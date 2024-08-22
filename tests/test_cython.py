@@ -1,6 +1,7 @@
 import pathlib
 import numpy as np
 import numpy.testing as npt
+import pytest
 
 from sdf_xarray import SDFFile
 
@@ -84,6 +85,20 @@ def test_read_variable():
 
     npt.assert_array_equal(ex, expected_ex)
     npt.assert_array_equal(dist_fn[::4, ::20], expected_dist_fn)
+
+
+def test_cant_read_unknown_variable():
+    with pytest.raises(ValueError):
+        with SDFFile(str(EXAMPLE_FILES_DIR / "0000.sdf")) as f:
+            f.read("unknown/unknown")
+
+
+def test_cant_read_closed_file():
+    f = SDFFile(str(EXAMPLE_FILES_DIR / "0000.sdf"))
+    f.close()
+
+    with pytest.raises(RuntimeError):
+        f.read("Electric Field/Ex")
 
 
 if __name__ == "__main__":

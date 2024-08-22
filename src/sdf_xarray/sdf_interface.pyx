@@ -210,6 +210,9 @@ cdef class SDFFile:
         """Read a variable from the file, returning numpy array
         """
 
+        if self._c_sdf_file is NULL:
+            raise RuntimeError(f"Can't read '{name}', file '{self.filename}' is closed")
+
         cdef csdf.sdf_block_t* block = csdf.sdf_find_block_by_name(
             self._c_sdf_file, name.encode("utf-8")
         )
@@ -240,6 +243,7 @@ cdef class SDFFile:
     def close(self):
         csdf.sdf_stack_destroy(self._c_sdf_file)
         csdf.sdf_close(self._c_sdf_file)
+        self._c_sdf_file = NULL
 
     def __enter__(self):
         return self

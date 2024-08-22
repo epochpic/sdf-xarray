@@ -94,6 +94,7 @@ cdef extern from "sdf.h":
         bint restart_flag
         char* code_name
         sdf_block_t* blocklist
+        sdf_block_t* current_block
 
     cdef struct run_info:
         int64_t defines

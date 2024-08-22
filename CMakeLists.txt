@@ -44,6 +44,7 @@ add_custom_command(
 
 python_add_library(sdf_interface MODULE ${_sdf_output} WITH_SOABI)
 target_link_libraries(sdf_interface PRIVATE sdfc Python::NumPy)
+target_compile_definitions(sdf_interface PRIVATE "NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION")
 
 python_add_library(sdf MODULE SDF/utilities/sdf_python.c WITH_SOABI)
 target_link_libraries(sdf PRIVATE sdfc Python::NumPy)

@@ -3,6 +3,11 @@ cimport csdf
 import dataclasses
 import time
 
+from libc.string cimport memcpy
+import numpy as np
+cimport numpy as cnp
+cnp.import_array()
+
 
 cdef list[str] _sdf_type_mapping = [
     "",
@@ -200,6 +205,37 @@ cdef class SDFFile:
                     self.variables[name] = make_Variable_from_sdf_block(name, block)
 
             block = block.next
+
+    cpdef cnp.ndarray read(self, name: str):
+        """Read a variable from the file, returning numpy array
+        """
+
+        cdef csdf.sdf_block_t* block = csdf.sdf_find_block_by_name(
+            self._c_sdf_file, name.encode("utf-8")
+        )
+
+        if block is NULL:
+            raise ValueError(f"Could not read variable '{name}'")
+
+        var = self.variables[name]
+        var_array = np.empty(var.dims, dtype=np.dtype(var.dtype), order="F")
+
+        self._c_sdf_file.current_block = block
+        csdf.sdf_helper_read_data(self._c_sdf_file, block)
+
+        cdef void* data = (
+            block.grids[0]
+            if (block.grids is not NULL and block.grids[0] is not NULL)
+            else block.data
+        )
+
+        # This is not as efficient as it could be -- we should be able
+        # to steal the block's data, but I've not worked out to do
+        # that properly yet. This is correct at least, and means we
+        # don't need to worry about freeing the memory
+        memcpy(cnp.PyArray_DATA(var_array), data, var_array.nbytes)
+
+        return var_array
 
     def close(self):
         csdf.sdf_stack_destroy(self._c_sdf_file)

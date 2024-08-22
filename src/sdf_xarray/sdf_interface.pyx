@@ -30,7 +30,7 @@ cdef class Block:
 cdef class Variable(Block):
     units: tuple[str] | None
     mult: float | None
-    grid: str
+    grid: str | None
     grid_mid: str | None
 
 
@@ -44,8 +44,8 @@ cdef Variable make_Variable_from_sdf_block(str name, csdf.sdf_block_t* block):
         dims=tuple(block.dims[i] for i in range(block.ndims)),
         units=block.units.decode("UTF-8") if block.units else None,
         mult=block.mult if block.mult else None,
-        grid=block.mesh_id.decode("UTF-8"),
-        grid_mid=f"{block.mesh_id.decode('UTF-8')}_mid",
+        grid=block.mesh_id.decode("UTF-8") if block.mesh_id else None,
+        grid_mid=f"{block.mesh_id.decode('UTF-8')}_mid" if block.mesh_id else None,
     )
 
 

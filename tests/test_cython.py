@@ -17,11 +17,31 @@ def test_sdffile():
         assert f.variables["Wall-time"].data == 0.0032005560000000002
 
 
+def test_sdffile_with_more_things():
+    with SDFFile(str(EXAMPLE_FILES_DIR / "0010.sdf")) as f:
+        assert f.header["filename"] == str(EXAMPLE_FILES_DIR / "0010.sdf")
+        assert f.header["code_name"] == "Epoch1d"
+        assert f.header["step"] == 22105
+        assert f.header["restart_flag"] is True
+
+        assert f.run_info["version"] == "4.19.3"
+
+        assert f.variables["Wall-time"].data == 3.968111756
+
+
 def test_variable_names():
     with SDFFile(str(EXAMPLE_FILES_DIR / "0000.sdf")) as f:
         assert "Electric Field/Ex" in f.variables
         assert "grid" in f.grids
         assert "grid_mid" in f.grids
+
+
+def test_manual_close():
+    f = SDFFile(str(EXAMPLE_FILES_DIR / "0000.sdf"))
+    f.close()
+
+    f = SDFFile(str(EXAMPLE_FILES_DIR / "0010.sdf"))
+    f.close()
 
 
 if __name__ == "__main__":

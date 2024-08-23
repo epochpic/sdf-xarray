@@ -25,9 +25,7 @@ cdef list[cnp.dtype | None] _sdf_type_mapping = [
 cdef class Block:
     _id: str
     name: str
-    data_length: int
     dtype: np.dtype
-    ndims: int
     dims: tuple[int]
     is_point_data: bool
     sdffile: SDFFile | None
@@ -52,9 +50,7 @@ cdef class Variable(Block):
         return Variable(
             _id=block.id.decode("UTF-8"),
             name=name,
-            data_length=block.data_length,
             dtype=_sdf_type_mapping[block.datatype_out],
-            ndims=block.ndims,
             dims=tuple(block.dims[i] for i in range(block.ndims)),
             units=block.units.decode("UTF-8") if block.units else None,
             mult=block.mult if block.mult else None,
@@ -84,9 +80,7 @@ cdef class Mesh(Block):
         return Mesh(
             _id=block.id.decode("UTF-8"),
             name=name,
-            data_length=block.data_length,
             dtype=_sdf_type_mapping[block.datatype_out],
-            ndims=block.ndims,
             dims=tuple(block.dims[i] for i in range(block.ndims)),
             units=tuple(
                 block.dim_units[i].decode("UTF-8") for i in range(block.ndims)

@@ -309,6 +309,8 @@ cdef class SDFFile:
         return var_array
 
     def close(self):
+        if self._c_sdf_file is NULL:
+            return
         csdf.sdf_stack_destroy(self._c_sdf_file)
         csdf.sdf_close(self._c_sdf_file)
         self._c_sdf_file = NULL

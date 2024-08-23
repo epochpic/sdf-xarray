@@ -8,7 +8,7 @@ from xarray.backends import BackendEntrypoint
 from xarray.core.utils import try_read_magic_number_from_path
 
 from . import sdf
-from .sdf_interface import SDFFile as SDFFile
+from .sdf_interface import SDFFile as SDFFile, Constant
 
 
 def combine_datasets(path_glob: Iterable | str, **kwargs) -> xr.Dataset:
@@ -128,24 +128,15 @@ def make_time_dims(path_glob):
     return time_dims, var_times_map
 
 
-def open_sdf_dataset(filename_or_obj, *, drop_variables=None, keep_particles=False):
-    if isinstance(filename_or_obj, pathlib.Path):
-        # sdf library takes a filename only
-        # TODO: work out if we need to deal with file handles
-        filename_or_obj = str(filename_or_obj)
-
-    data = sdf.read(filename_or_obj, dict=True)
-
+def read_sdf_dataset(data: SDFFile, *, drop_variables=None, keep_particles=False):
     # Drop any requested variables
     if drop_variables:
         for variable in drop_variables:
             # TODO: nicer error handling
-            data.pop(variable)
+            data.variables.pop(variable)
 
     # These two dicts are global metadata about the run or file
-    attrs = {}
-    attrs.update(data.pop("Header", {}))
-    attrs.update(data.pop("Run_info", {}))
+    attrs = {**data.header, **data.run_info}
 
     data_vars = {}
     coords = {}
@@ -159,8 +150,26 @@ def open_sdf_dataset(filename_or_obj, *, drop_variables=None, keep_particles=Fal
     def _grid_species_name(grid_name: str) -> str:
         return grid_name.split("/")[-1]
 
+    for key, value in data.grids.items():
+        if "cpu" in key.lower():
+            # Had some problems with these variables, so just ignore them for now
+            continue
+
+        base_name = _norm_grid_name(value.name)
+
+        for label, coord, unit in zip(value.labels, value.data, value.units):
+            full_name = f"{label}_{base_name}"
+            dim_name = (
+                f"ID_{_grid_species_name(key)}" if value.is_point_data else full_name
+            )
+            coords[full_name] = (
+                dim_name,
+                coord,
+                {"long_name": label, "units": unit},
+            )
+
     # Read and convert SDF variables and meshes to xarray DataArrays and Coordinates
-    for key, value in data.items():
+    for key, value in data.variables.items():
         if "CPU" in key:
             # Had some problems with these variables, so just ignore them for now
             continue
@@ -168,27 +177,20 @@ def open_sdf_dataset(filename_or_obj, *, drop_variables=None, keep_particles=Fal
         if not keep_particles and "particles" in key.lower():
             continue
 
-        if isinstance(value, sdf.BlockConstant):
+        if isinstance(value, Constant):
             # This might have consequences when reading in multiple files?
             attrs[key] = value.data
 
-        elif isinstance(value, (sdf.BlockPlainMesh, sdf.BlockPointMesh)):
-            # These are Coordinates
+        elif value.grid is None:
+            # No grid, so not physical data, just stick it in as an attribute
+            attrs[key] = value.data
 
-            is_point_mesh = isinstance(value, sdf.BlockPointMesh)
-            base_name = _norm_grid_name(key)
-
-            for label, coord, unit in zip(value.labels, value.data, value.units):
-                full_name = f"{label}_{base_name}"
-                dim_name = (
-                    f"ID_{_grid_species_name(key)}" if is_point_mesh else full_name
-                )
-                coords[full_name] = (
-                    dim_name,
-                    coord,
-                    {"long_name": label, "units": unit},
-                )
-        elif isinstance(value, sdf.BlockPlainVariable):
+        elif value.is_point_data:
+            # Point (particle) variables are 1D
+            var_coords = (f"ID_{_grid_species_name(key)}",)
+            data_attrs = {"units": value.units}
+            data_vars[key] = (var_coords, value.data, data_attrs)
+        else:
             # These are DataArrays
 
             # SDF makes matching up the coordinates a bit convoluted. Each
@@ -202,25 +204,21 @@ def open_sdf_dataset(filename_or_obj, *, drop_variables=None, keep_particles=Fal
             # Then we can look up the dimension label and size to get *our* name
             # for the corresponding coordinate
             dim_size_lookup = defaultdict(dict)
-            grid_base_name = _norm_grid_name(value.grid.name)
-            for dim_size, dim_name in zip(value.grid.dims, value.grid.labels):
+            grid = data.grids[value.grid]
+            grid_base_name = _norm_grid_name(grid.name)
+            for dim_size, dim_name in zip(grid.dims, grid.labels):
                 dim_size_lookup[dim_name][dim_size] = f"{dim_name}_{grid_base_name}"
 
-            grid_mid_base_name = _norm_grid_name(value.grid_mid.name)
-            for dim_size, dim_name in zip(value.grid_mid.dims, value.grid_mid.labels):
+            grid_mid = data.grids[value.grid_mid]
+            grid_mid_base_name = _norm_grid_name(grid_mid.name)
+            for dim_size, dim_name in zip(grid_mid.dims, grid_mid.labels):
                 dim_size_lookup[dim_name][dim_size] = f"{dim_name}_{grid_mid_base_name}"
 
             var_coords = [
                 dim_size_lookup[dim_name][dim_size]
-                for dim_name, dim_size in zip(value.grid.labels, value.dims)
+                for dim_name, dim_size in zip(grid.labels, value.dims)
             ]
             # TODO: error handling here? other attributes?
-            data_attrs = {"units": value.units}
-            data_vars[key] = (var_coords, value.data, data_attrs)
-
-        elif isinstance(value, sdf.BlockPointVariable):
-            # Point (particle) variables are 1D
-            var_coords = (f"ID_{_grid_species_name(key)}",)
             data_attrs = {"units": value.units}
             data_vars[key] = (var_coords, value.data, data_attrs)
 
@@ -247,11 +245,15 @@ class SDFEntrypoint(BackendEntrypoint):
         drop_variables=None,
         keep_particles=False,
     ):
-        return open_sdf_dataset(
-            filename_or_obj,
-            drop_variables=drop_variables,
-            keep_particles=keep_particles,
-        )
+        if isinstance(filename_or_obj, pathlib.Path):
+            # sdf library takes a filename only
+            # TODO: work out if we need to deal with file handles
+            filename_or_obj = str(filename_or_obj)
+
+        with SDFFile(filename_or_obj) as data:
+            return read_sdf_dataset(
+                data, drop_variables=drop_variables, keep_particles=keep_particles
+            )
 
     open_dataset_parameters = ["filename_or_obj", "drop_variables", "keep_particles"]
 

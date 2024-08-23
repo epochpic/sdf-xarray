@@ -9,15 +9,15 @@ cimport numpy as cnp
 cnp.import_array()
 
 
-cdef list[str] _sdf_type_mapping = [
-    "",
-    "i4",
-    "i8",
-    "f4",
-    "f8",
-    "f16",
-    "s",
-    "bool",
+cdef list[cnp.dtype | None] _sdf_type_mapping = [
+    None,
+    cnp.dtype(np.int32),
+    cnp.dtype(np.int64),
+    cnp.dtype(np.float32),
+    cnp.dtype(np.float64),
+    cnp.dtype(np.float128),
+    cnp.dtype("S"),
+    cnp.dtype(np.bool_),
 ]
 
 
@@ -26,7 +26,7 @@ cdef class Block:
     _id: str
     name: str
     data_length: int
-    dtype: str
+    dtype: np.dtype
     ndims: int
     dims: tuple[int]
     is_point_data: bool
@@ -267,12 +267,12 @@ cdef class SDFFile:
             data = []
             for i, dim in enumerate(var.dims):
                 data.append(
-                    self._make_array((dim,), np.dtype(var.dtype), block.grids[i])
+                    self._make_array((dim,), var.dtype, block.grids[i])
                 )
             return tuple(data)
 
         # Normal variables
-        return self._make_array(var.dims, np.dtype(var.dtype), block.data)
+        return self._make_array(var.dims, var.dtype, block.data)
 
     cdef _read_mid_grid(self, mesh: Mesh):
         """Read a midpoint grid"""

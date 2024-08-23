@@ -46,7 +46,6 @@ print(df["Electric Field/Ex"])
 ```python
 ds = xr.open_mfdataset(
     "*.sdf",
-    concat_dim="time",
     combine="nested",
     data_vars='minimal', 
     coords='minimal', 
@@ -62,4 +61,14 @@ print(ds)
 # Data variables: (18)
 # Indexes: (9)
 # Attributes: (22)
+```
+
+### Reading particle data
+
+By default, particle data isn't kept. Pass `keep_particles=True` as a
+keyword argument to `open_dataset` (for single files) or
+`open_mfdataset` (for multiple files):
+
+```python
+df = xr.open_dataset("0010.sdf", keep_particles=True)
 ```

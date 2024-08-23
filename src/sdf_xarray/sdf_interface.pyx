@@ -29,7 +29,7 @@ cdef class Block:
     dtype: str
     ndims: int
     dims: tuple[int]
-
+    sdffile: SDFFile | None
 
 @dataclasses.dataclass
 cdef class Variable(Block):
@@ -38,8 +38,14 @@ cdef class Variable(Block):
     grid: str | None
     grid_mid: str | None
 
+    cpdef cnp.ndarray read(self):
+        """Read a variable from the file, returning numpy array
+        """
 
-cdef Variable make_Variable_from_sdf_block(str name, csdf.sdf_block_t* block):
+        return self.sdffile.read(self)
+
+
+cdef Variable make_Variable_from_sdf_block(str name, csdf.sdf_block_t* block, SDFFile sdffile):
     return Variable(
         _id=block.id.decode("UTF-8"),
         name=name,
@@ -51,6 +57,7 @@ cdef Variable make_Variable_from_sdf_block(str name, csdf.sdf_block_t* block):
         mult=block.mult if block.mult else None,
         grid=block.mesh_id.decode("UTF-8") if block.mesh_id else None,
         grid_mid=f"{block.mesh_id.decode('UTF-8')}_mid" if block.mesh_id else None,
+        sdffile=sdffile,
     )
 
 
@@ -61,8 +68,14 @@ cdef class Mesh(Block):
     mults: tuple[float] | None
     parent: Mesh | None = None
 
+    cpdef tuple[cnp.ndarray] read(self):
+        """Read a variable from the file, returning numpy array
+        """
 
-cdef Mesh make_Mesh_from_sdf_block(str name, csdf.sdf_block_t* block):
+        return self.sdffile.read(self)
+
+
+cdef Mesh make_Mesh_from_sdf_block(str name, csdf.sdf_block_t* block, SDFFile sdffile):
     return Mesh(
         _id=block.id.decode("UTF-8"),
         name=name,
@@ -77,6 +90,7 @@ cdef Mesh make_Mesh_from_sdf_block(str name, csdf.sdf_block_t* block):
             if block.dim_mults
             else None
         ),
+        sdffile=sdffile,
     )
 
 @dataclasses.dataclass
@@ -183,11 +197,11 @@ cdef class SDFFile:
                     csdf.SDF_BLOCKTYPE_LAGRANGIAN_MESH
             ):
                 grid_id = block.id.decode("UTF-8")
-                self.grids[grid_id] = make_Mesh_from_sdf_block(name, block)
+                self.grids[grid_id] = make_Mesh_from_sdf_block(name, block, self)
 
                 if block.blocktype != csdf.SDF_BLOCKTYPE_POINT_MESH:
                     # Make the corresponding grid at mid-points, except for particle grids
-                    mid_grid_block = make_Mesh_from_sdf_block(f"{name}_mid", block)
+                    mid_grid_block = make_Mesh_from_sdf_block(f"{name}_mid", block, self)
                     mid_grid_block.dims = tuple(dim - 1 for dim in mid_grid_block.dims if dim > 1)
                     mid_grid_block.parent = self.grids[grid_id]
                     self.grids[f"{grid_id}_mid"] = mid_grid_block
@@ -202,40 +216,51 @@ cdef class SDFFile:
                 # If the block doesn't have a datatype, that probably
                 # means its actually a grid dimension
                 if block.datatype_out != 0:
-                    self.variables[name] = make_Variable_from_sdf_block(name, block)
+                    self.variables[name] = make_Variable_from_sdf_block(name, block, self)
 
             block = block.next
 
-    cpdef cnp.ndarray read(self, name: str):
+    cpdef read(self, thing: Block):
         """Read a variable from the file, returning numpy array
         """
 
         if self._c_sdf_file is NULL:
-            raise RuntimeError(f"Can't read '{name}', file '{self.filename}' is closed")
+            raise RuntimeError(f"Can't read '{thing.name}', file '{self.filename}' is closed")
 
         cdef csdf.sdf_block_t* block = csdf.sdf_find_block_by_name(
-            self._c_sdf_file, name.encode("utf-8")
+            self._c_sdf_file, thing.name.encode("utf-8")
         )
 
         if block is NULL:
-            raise ValueError(f"Could not read variable '{name}'")
-
-        var = self.variables[name]
-        var_array = np.empty(var.dims, dtype=np.dtype(var.dtype), order="F")
+            raise RuntimeError(f"Could not read variable '{thing.name}'")
 
         self._c_sdf_file.current_block = block
         csdf.sdf_helper_read_data(self._c_sdf_file, block)
 
-        cdef void* data = (
-            block.grids[0]
-            if (block.grids is not NULL and block.grids[0] is not NULL)
-            else block.data
-        )
+        if isinstance(thing, Mesh):
+            # Meshes store the data for separate dimensions in block.grids
+            # TODO: handle mid-points
+            # TODO: handle Lagrangian meshes
 
-        # This is not as efficient as it could be -- we should be able
-        # to steal the block's data, but I've not worked out to do
-        # that properly yet. This is correct at least, and means we
-        # don't need to worry about freeing the memory
+            if not (block.grids is not NULL and block.grids[0] is not NULL):
+                raise RuntimeError(f"Could not read variable '{thing.name}'")
+            data = []
+            for i, dim in enumerate(thing.dims):
+                data.append(self._make_array((dim,), np.dtype(thing.dtype), block.grids[i]))
+            return tuple(data)
+
+        # Normal variables
+        return self._make_array(thing.dims, np.dtype(thing.dtype), block.data)
+
+    cdef cnp.ndarray _make_array(self, tuple[int, ...] dims, cnp.dtype dtype, void* data):
+        """Helper function for making Numpy arrays from data allocated elsewhere"""
+        # This is not as efficient as it could be -- we should be able to steal
+        # the block's data, but I've not worked out to do that properly
+        # yet. This is correct at least, and means we don't need to worry about
+        # freeing the memory. Can't just use PyArray_NewFromDescr because this
+        # isn't available from Cython. Might be able to use one of the other
+        # low-level creation routines?
+        var_array = np.empty(dims, dtype=dtype, order="F")
         memcpy(cnp.PyArray_DATA(var_array), data, var_array.nbytes)
 
         return var_array

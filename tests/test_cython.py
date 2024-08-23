@@ -49,8 +49,8 @@ def test_manual_close():
 
 def test_read_variable():
     with SDFFile(str(EXAMPLE_FILES_DIR / "0010.sdf")) as f:
-        ex = f.read("Electric Field/Ex")
-        dist_fn = f.read("dist_fn/x_px/electron")
+        ex = f.variables["Electric Field/Ex"].read()
+        dist_fn = f.variables["dist_fn/x_px/electron"].read()
 
     expected_ex = np.array(
         [
@@ -87,10 +87,18 @@ def test_read_variable():
     npt.assert_array_equal(dist_fn[::4, ::20], expected_dist_fn)
 
 
-def test_cant_read_unknown_variable():
-    with pytest.raises(ValueError):
-        with SDFFile(str(EXAMPLE_FILES_DIR / "0000.sdf")) as f:
-            f.read("unknown/unknown")
+def test_read_grids():
+    with SDFFile(str(EXAMPLE_FILES_DIR / "0010.sdf")) as f:
+        x_px = f.grids["grid/x_px/electron"].read()
+
+    assert len(x_px) == 2
+    x, px = x_px
+
+    expected_x = np.linspace(1.7252244667478382e-05, 0.0005348195846918299, 16)
+    expected_px = np.linspace(-2.97e-22, 2.97e-22, 100)
+
+    npt.assert_array_almost_equal(x, expected_x)
+    npt.assert_array_almost_equal(px, expected_px)
 
 
 def test_cant_read_closed_file():
@@ -98,7 +106,7 @@ def test_cant_read_closed_file():
     f.close()
 
     with pytest.raises(RuntimeError):
-        f.read("Electric Field/Ex")
+        f.variables["Electric Field/Ex"].read()
 
 
 if __name__ == "__main__":
@@ -114,4 +122,6 @@ if __name__ == "__main__":
         print("grids")
         pprint(f.grids)
         print("Ex")
-        pprint(f.read("Electric Field/Ex"))
+        pprint(f.variables["Electric Field/Ex"].read())
+        print("grid")
+        pprint(f.grids["grid"].read())

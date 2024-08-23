@@ -206,17 +206,17 @@ def read_sdf_dataset(data: SDFFile, *, drop_variables=None, keep_particles=False
             dim_size_lookup = defaultdict(dict)
             grid = data.grids[value.grid]
             grid_base_name = _norm_grid_name(grid.name)
-            for dim_size, dim_name in zip(grid.dims, grid.labels):
+            for dim_size, dim_name in zip(grid.shape, grid.labels):
                 dim_size_lookup[dim_name][dim_size] = f"{dim_name}_{grid_base_name}"
 
             grid_mid = data.grids[value.grid_mid]
             grid_mid_base_name = _norm_grid_name(grid_mid.name)
-            for dim_size, dim_name in zip(grid_mid.dims, grid_mid.labels):
+            for dim_size, dim_name in zip(grid_mid.shape, grid_mid.labels):
                 dim_size_lookup[dim_name][dim_size] = f"{dim_name}_{grid_mid_base_name}"
 
             var_coords = [
                 dim_size_lookup[dim_name][dim_size]
-                for dim_name, dim_size in zip(grid.labels, value.dims)
+                for dim_name, dim_size in zip(grid.labels, value.shape)
             ]
             # TODO: error handling here? other attributes?
             data_attrs = {"units": value.units}

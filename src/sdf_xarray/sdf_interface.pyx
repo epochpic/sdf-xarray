@@ -26,7 +26,7 @@ cdef class Block:
     _id: str
     name: str
     dtype: np.dtype
-    dims: tuple[int]
+    shape: tuple[int]
     is_point_data: bool
     sdffile: SDFFile | None
 
@@ -51,7 +51,7 @@ cdef class Variable(Block):
             _id=block.id.decode("UTF-8"),
             name=name,
             dtype=_sdf_type_mapping[block.datatype_out],
-            dims=tuple(block.dims[i] for i in range(block.ndims)),
+            shape=tuple(block.dims[i] for i in range(block.ndims)),
             units=block.units.decode("UTF-8") if block.units else None,
             mult=block.mult if block.mult else None,
             grid=block.mesh_id.decode("UTF-8") if block.mesh_id else None,
@@ -81,7 +81,7 @@ cdef class Mesh(Block):
             _id=block.id.decode("UTF-8"),
             name=name,
             dtype=_sdf_type_mapping[block.datatype_out],
-            dims=tuple(block.dims[i] for i in range(block.ndims)),
+            shape=tuple(block.dims[i] for i in range(block.ndims)),
             units=tuple(
                 block.dim_units[i].decode("UTF-8") for i in range(block.ndims)
             ),
@@ -208,8 +208,8 @@ cdef class SDFFile:
                     # Make the corresponding grid at mid-points, except for
                     # particle grids
                     mid_grid_block = Mesh.from_block(f"{name}_mid", block, self)
-                    mid_grid_block.dims = tuple(
-                        dim - 1 for dim in mid_grid_block.dims if dim > 1
+                    mid_grid_block.shape = tuple(
+                        dim - 1 for dim in mid_grid_block.shape if dim > 1
                     )
                     mid_grid_block.parent = self.grids[grid_id]
                     self.grids[f"{grid_id}_mid"] = mid_grid_block
@@ -259,14 +259,14 @@ cdef class SDFFile:
                 raise RuntimeError(f"Could not read variable '{var.name}'")
 
             data = []
-            for i, dim in enumerate(var.dims):
+            for i, dim in enumerate(var.shape):
                 data.append(
                     self._make_array((dim,), var.dtype, block.grids[i])
                 )
             return tuple(data)
 
         # Normal variables
-        return self._make_array(var.dims, var.dtype, block.data)
+        return self._make_array(var.shape, var.dtype, block.data)
 
     cdef _read_mid_grid(self, mesh: Mesh):
         """Read a midpoint grid"""

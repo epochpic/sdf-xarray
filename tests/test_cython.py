@@ -101,6 +101,20 @@ def test_read_grids():
     npt.assert_array_almost_equal(px, expected_px)
 
 
+def test_read_grid_mids():
+    with SDFFile(str(EXAMPLE_FILES_DIR / "0010.sdf")) as f:
+        x_px = f.grids["grid/x_px/electron_mid"].read()
+
+    assert len(x_px) == 2
+    x, px = x_px
+
+    expected_x = np.linspace(3.45044893e-05, 5.17567340e-04, 15)
+    expected_px = np.linspace(-2.94e-22, 2.94e-22, 99)
+
+    npt.assert_array_almost_equal(x, expected_x)
+    npt.assert_array_almost_equal(px, expected_px)
+
+
 def test_cant_read_closed_file():
     f = SDFFile(str(EXAMPLE_FILES_DIR / "0000.sdf"))
     f.close()

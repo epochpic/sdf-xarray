@@ -220,37 +220,60 @@ cdef class SDFFile:
 
             block = block.next
 
-    cpdef read(self, thing: Block):
+    cpdef read(self, var: Block):
         """Read a variable from the file, returning numpy array
         """
 
         if self._c_sdf_file is NULL:
-            raise RuntimeError(f"Can't read '{thing.name}', file '{self.filename}' is closed")
+            raise RuntimeError(f"Can't read '{var.name}', file '{self.filename}' is closed")
+
+        is_mesh: bool = isinstance(var, Mesh)
+
+        # Has a parent block, so we need to average node data to midpoint
+        if is_mesh and var.parent:
+            return self._read_mid_grid(var)
 
         cdef csdf.sdf_block_t* block = csdf.sdf_find_block_by_name(
-            self._c_sdf_file, thing.name.encode("utf-8")
+            self._c_sdf_file, var.name.encode("utf-8")
         )
 
         if block is NULL:
-            raise RuntimeError(f"Could not read variable '{thing.name}'")
+            raise RuntimeError(f"Could not read variable '{var.name}'")
 
         self._c_sdf_file.current_block = block
         csdf.sdf_helper_read_data(self._c_sdf_file, block)
 
-        if isinstance(thing, Mesh):
+        if is_mesh:
             # Meshes store the data for separate dimensions in block.grids
-            # TODO: handle mid-points
-            # TODO: handle Lagrangian meshes
-
             if not (block.grids is not NULL and block.grids[0] is not NULL):
-                raise RuntimeError(f"Could not read variable '{thing.name}'")
+                raise RuntimeError(f"Could not read variable '{var.name}'")
+
             data = []
-            for i, dim in enumerate(thing.dims):
-                data.append(self._make_array((dim,), np.dtype(thing.dtype), block.grids[i]))
+            for i, dim in enumerate(var.dims):
+                data.append(self._make_array((dim,), np.dtype(var.dtype), block.grids[i]))
             return tuple(data)
 
         # Normal variables
-        return self._make_array(thing.dims, np.dtype(thing.dtype), block.data)
+        return self._make_array(var.dims, np.dtype(var.dtype), block.data)
+
+    cdef _read_mid_grid(self, mesh: Mesh):
+        """Read a midpoint grid"""
+
+        data = []
+        for dim in mesh.parent.read():
+            if len(dim.shape) == 1:
+                mid_point = (dim[:-1] + dim[1:]) / 2
+            elif len(dim.shape) == 2:
+                mid_point = (
+                    dim[:-1, :-1] + dim[1:, :-1] + dim[:-1, 1:] + dim[1:, 1:]
+                ) / 4
+            else:
+                raise ValueError(
+                    f"Unexpected number of dimensions reading mesh '{mesh.name}' "
+                    f"(expected 1 or 2, got {len(dim.shape)})"
+                )
+            data.append(mid_point)
+        return tuple(data)
 
     cdef cnp.ndarray _make_array(self, tuple[int, ...] dims, cnp.dtype dtype, void* data):
         """Helper function for making Numpy arrays from data allocated elsewhere"""

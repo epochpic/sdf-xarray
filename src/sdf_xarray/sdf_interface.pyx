@@ -31,6 +31,7 @@ cdef class Block:
     dims: tuple[int]
     sdffile: SDFFile | None
 
+
 @dataclasses.dataclass
 cdef class Variable(Block):
     units: tuple[str] | None
@@ -83,8 +84,12 @@ cdef class Mesh(Block):
             dtype=_sdf_type_mapping[block.datatype_out],
             ndims=block.ndims,
             dims=tuple(block.dims[i] for i in range(block.ndims)),
-            units=tuple(block.dim_units[i].decode("UTF-8") for i in range(block.ndims)),
-            labels=tuple(block.dim_labels[i].decode("UTF-8") for i in range(block.ndims)),
+            units=tuple(
+                block.dim_units[i].decode("UTF-8") for i in range(block.ndims)
+            ),
+            labels=tuple(
+                block.dim_labels[i].decode("UTF-8") for i in range(block.ndims)
+            ),
             mults=(
                 tuple(block.dim_mults[i] for i in range(block.ndims))
                 if block.dim_mults
@@ -92,6 +97,7 @@ cdef class Mesh(Block):
             ),
             sdffile=sdffile,
         )
+
 
 @dataclasses.dataclass
 cdef class Constant:
@@ -200,9 +206,12 @@ cdef class SDFFile:
                 self.grids[grid_id] = Mesh.from_block(name, block, self)
 
                 if block.blocktype != csdf.SDF_BLOCKTYPE_POINT_MESH:
-                    # Make the corresponding grid at mid-points, except for particle grids
+                    # Make the corresponding grid at mid-points, except for
+                    # particle grids
                     mid_grid_block = Mesh.from_block(f"{name}_mid", block, self)
-                    mid_grid_block.dims = tuple(dim - 1 for dim in mid_grid_block.dims if dim > 1)
+                    mid_grid_block.dims = tuple(
+                        dim - 1 for dim in mid_grid_block.dims if dim > 1
+                    )
                     mid_grid_block.parent = self.grids[grid_id]
                     self.grids[f"{grid_id}_mid"] = mid_grid_block
 
@@ -225,7 +234,9 @@ cdef class SDFFile:
         """
 
         if self._c_sdf_file is NULL:
-            raise RuntimeError(f"Can't read '{var.name}', file '{self.filename}' is closed")
+            raise RuntimeError(
+                f"Can't read '{var.name}', file '{self.filename}' is closed"
+            )
 
         is_mesh: bool = isinstance(var, Mesh)
 
@@ -250,7 +261,9 @@ cdef class SDFFile:
 
             data = []
             for i, dim in enumerate(var.dims):
-                data.append(self._make_array((dim,), np.dtype(var.dtype), block.grids[i]))
+                data.append(
+                    self._make_array((dim,), np.dtype(var.dtype), block.grids[i])
+                )
             return tuple(data)
 
         # Normal variables
@@ -275,7 +288,9 @@ cdef class SDFFile:
             data.append(mid_point)
         return tuple(data)
 
-    cdef cnp.ndarray _make_array(self, tuple[int, ...] dims, cnp.dtype dtype, void* data):
+    cdef cnp.ndarray _make_array(
+        self, tuple[int, ...] dims, cnp.dtype dtype, void* data
+    ):
         """Helper function for making Numpy arrays from data allocated elsewhere"""
         # This is not as efficient as it could be -- we should be able to steal
         # the block's data, but I've not worked out to do that properly

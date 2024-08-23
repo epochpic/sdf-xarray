@@ -29,6 +29,7 @@ cdef class Block:
     dtype: str
     ndims: int
     dims: tuple[int]
+    is_point_data: bool
     sdffile: SDFFile | None
 
 
@@ -59,6 +60,7 @@ cdef class Variable(Block):
             mult=block.mult if block.mult else None,
             grid=block.mesh_id.decode("UTF-8") if block.mesh_id else None,
             grid_mid=f"{block.mesh_id.decode('UTF-8')}_mid" if block.mesh_id else None,
+            is_point_data=block.blocktype == csdf.SDF_BLOCKTYPE_POINT_VARIABLE,
             sdffile=sdffile,
         )
 
@@ -97,6 +99,7 @@ cdef class Mesh(Block):
                 if block.dim_mults
                 else None
             ),
+            is_point_data=block.blocktype == csdf.SDF_BLOCKTYPE_POINT_MESH,
             sdffile=sdffile,
         )
 

@@ -83,7 +83,7 @@ def open_mfdataset(
                 dim={var_times_map[str(da)]: [df.attrs["time"]]}
             )
         for coord in df.coords:
-            if "Particles" in coord:
+            if df.coords[coord].attrs.get("point_data", False):
                 # We need to undo our renaming of the coordinates
                 base_name = coord.split("_", maxsplit=1)[-1]
                 sdf_coord_name = f"Grid/{base_name}"
@@ -241,7 +241,7 @@ class SDFDataStore(AbstractDataStore):
                 # Had some problems with these variables, so just ignore them for now
                 continue
 
-            if not self.keep_particles and "particles" in value.name.lower():
+            if not self.keep_particles and value.is_point_data:
                 continue
 
             base_name = _norm_grid_name(value.name)
@@ -256,7 +256,11 @@ class SDFDataStore(AbstractDataStore):
                 coords[full_name] = (
                     dim_name,
                     coord,
-                    {"long_name": label, "units": unit},
+                    {
+                        "long_name": label,
+                        "units": unit,
+                        "point_data": value.is_point_data,
+                    },
                 )
 
         # Read and convert SDF variables and meshes to xarray DataArrays and Coordinates
@@ -268,19 +272,15 @@ class SDFDataStore(AbstractDataStore):
             if not self.keep_particles and "particles" in key.lower():
                 continue
 
-            if isinstance(value, Constant):
+            if isinstance(value, Constant) or value.grid is None:
+                # No grid, so not physical data, just stick it in as an attribute
                 # This might have consequences when reading in multiple files?
                 attrs[key] = value.data
+                continue
 
-            elif value.grid is None:
-                # No grid, so not physical data, just stick it in as an attribute
-                attrs[key] = value.data
-
-            elif value.is_point_data:
+            if value.is_point_data:
                 # Point (particle) variables are 1D
                 var_coords = (f"ID_{_grid_species_name(key)}",)
-                data_attrs = {"units": value.units}
-                data_vars[key] = Variable(var_coords, value.data, data_attrs)
             else:
                 # These are DataArrays
 
@@ -311,10 +311,11 @@ class SDFDataStore(AbstractDataStore):
                     dim_size_lookup[dim_name][dim_size]
                     for dim_name, dim_size in zip(grid.labels, value.shape)
                 ]
-                # TODO: error handling here? other attributes?
-                data_attrs = {"units": value.units}
-                lazy_data = indexing.LazilyIndexedArray(SDFBackendArray(key, self))
-                data_vars[key] = Variable(var_coords, lazy_data, data_attrs)
+
+            # TODO: error handling here? other attributes?
+            data_attrs = {"units": value.units, "point_data": value.is_point_data}
+            lazy_data = indexing.LazilyIndexedArray(SDFBackendArray(key, self))
+            data_vars[key] = Variable(var_coords, lazy_data, data_attrs)
 
         # TODO: might need to decode if mult is set?
 
@@ -390,7 +391,7 @@ class SDFPreprocess:
 
         # Particles' spartial coordinates also evolve in time
         for coord, value in ds.coords.items():
-            if "Particles" in coord:
+            if value.attrs.get("point_data", False):
                 ds.coords[coord] = value.expand_dims(time=[ds.attrs["time"]])
 
         return ds

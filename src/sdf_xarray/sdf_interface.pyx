@@ -44,21 +44,21 @@ cdef class Variable(Block):
 
         return self.sdffile.read(self)
 
-
-cdef Variable make_Variable_from_sdf_block(str name, csdf.sdf_block_t* block, SDFFile sdffile):
-    return Variable(
-        _id=block.id.decode("UTF-8"),
-        name=name,
-        data_length=block.data_length,
-        dtype=_sdf_type_mapping[block.datatype_out],
-        ndims=block.ndims,
-        dims=tuple(block.dims[i] for i in range(block.ndims)),
-        units=block.units.decode("UTF-8") if block.units else None,
-        mult=block.mult if block.mult else None,
-        grid=block.mesh_id.decode("UTF-8") if block.mesh_id else None,
-        grid_mid=f"{block.mesh_id.decode('UTF-8')}_mid" if block.mesh_id else None,
-        sdffile=sdffile,
-    )
+    @staticmethod
+    cdef Variable from_block(str name, csdf.sdf_block_t* block, SDFFile sdffile):
+        return Variable(
+            _id=block.id.decode("UTF-8"),
+            name=name,
+            data_length=block.data_length,
+            dtype=_sdf_type_mapping[block.datatype_out],
+            ndims=block.ndims,
+            dims=tuple(block.dims[i] for i in range(block.ndims)),
+            units=block.units.decode("UTF-8") if block.units else None,
+            mult=block.mult if block.mult else None,
+            grid=block.mesh_id.decode("UTF-8") if block.mesh_id else None,
+            grid_mid=f"{block.mesh_id.decode('UTF-8')}_mid" if block.mesh_id else None,
+            sdffile=sdffile,
+        )
 
 
 @dataclasses.dataclass
@@ -74,24 +74,24 @@ cdef class Mesh(Block):
 
         return self.sdffile.read(self)
 
-
-cdef Mesh make_Mesh_from_sdf_block(str name, csdf.sdf_block_t* block, SDFFile sdffile):
-    return Mesh(
-        _id=block.id.decode("UTF-8"),
-        name=name,
-        data_length=block.data_length,
-        dtype=_sdf_type_mapping[block.datatype_out],
-        ndims=block.ndims,
-        dims=tuple(block.dims[i] for i in range(block.ndims)),
-        units=tuple(block.dim_units[i].decode("UTF-8") for i in range(block.ndims)),
-        labels=tuple(block.dim_labels[i].decode("UTF-8") for i in range(block.ndims)),
-        mults=(
-            tuple(block.dim_mults[i] for i in range(block.ndims))
-            if block.dim_mults
-            else None
-        ),
-        sdffile=sdffile,
-    )
+    @staticmethod
+    cdef Mesh from_block(str name, csdf.sdf_block_t* block, SDFFile sdffile):
+        return Mesh(
+            _id=block.id.decode("UTF-8"),
+            name=name,
+            data_length=block.data_length,
+            dtype=_sdf_type_mapping[block.datatype_out],
+            ndims=block.ndims,
+            dims=tuple(block.dims[i] for i in range(block.ndims)),
+            units=tuple(block.dim_units[i].decode("UTF-8") for i in range(block.ndims)),
+            labels=tuple(block.dim_labels[i].decode("UTF-8") for i in range(block.ndims)),
+            mults=(
+                tuple(block.dim_mults[i] for i in range(block.ndims))
+                if block.dim_mults
+                else None
+            ),
+            sdffile=sdffile,
+        )
 
 @dataclasses.dataclass
 cdef class Constant:
@@ -99,22 +99,22 @@ cdef class Constant:
     name: str
     data: int | str | float
 
+    @staticmethod
+    cdef Constant from_block(str name, csdf.sdf_block_t* block):
+        data: int | str | float | double
 
-cdef Constant make_Constant(str name, csdf.sdf_block_t* block):
-    data: int | str | float | double
+        if block.datatype == csdf.SDF_DATATYPE_REAL4:
+            data = (<float*>block.const_value)[0]
+        elif block.datatype == csdf.SDF_DATATYPE_REAL8:
+            data = (<double*>block.const_value)[0]
+        if block.datatype == csdf.SDF_DATATYPE_INTEGER4:
+            data = (<csdf.int32_t*>block.const_value)[0]
+        if block.datatype == csdf.SDF_DATATYPE_INTEGER8:
+            data = (<csdf.int64_t*>block.const_value)[0]
 
-    if block.datatype == csdf.SDF_DATATYPE_REAL4:
-        data = (<float*>block.const_value)[0]
-    elif block.datatype == csdf.SDF_DATATYPE_REAL8:
-        data = (<double*>block.const_value)[0]
-    if block.datatype == csdf.SDF_DATATYPE_INTEGER4:
-        data = (<csdf.int32_t*>block.const_value)[0]
-    if block.datatype == csdf.SDF_DATATYPE_INTEGER8:
-        data = (<csdf.int64_t*>block.const_value)[0]
-
-    return Constant(
-        _id=block.id.decode("UTF-8"), name=name, data=data
-    )
+        return Constant(
+            _id=block.id.decode("UTF-8"), name=name, data=data
+        )
 
 
 cdef class SDFFile:
@@ -189,7 +189,7 @@ cdef class SDFFile:
                 }
 
             elif block.blocktype == csdf.SDF_BLOCKTYPE_CONSTANT:
-                self.variables[name] = make_Constant(name, block)
+                self.variables[name] = Constant.from_block(name, block)
 
             elif block.blocktype in (
                     csdf.SDF_BLOCKTYPE_PLAIN_MESH,
@@ -197,11 +197,11 @@ cdef class SDFFile:
                     csdf.SDF_BLOCKTYPE_LAGRANGIAN_MESH
             ):
                 grid_id = block.id.decode("UTF-8")
-                self.grids[grid_id] = make_Mesh_from_sdf_block(name, block, self)
+                self.grids[grid_id] = Mesh.from_block(name, block, self)
 
                 if block.blocktype != csdf.SDF_BLOCKTYPE_POINT_MESH:
                     # Make the corresponding grid at mid-points, except for particle grids
-                    mid_grid_block = make_Mesh_from_sdf_block(f"{name}_mid", block, self)
+                    mid_grid_block = Mesh.from_block(f"{name}_mid", block, self)
                     mid_grid_block.dims = tuple(dim - 1 for dim in mid_grid_block.dims if dim > 1)
                     mid_grid_block.parent = self.grids[grid_id]
                     self.grids[f"{grid_id}_mid"] = mid_grid_block
@@ -216,7 +216,7 @@ cdef class SDFFile:
                 # If the block doesn't have a datatype, that probably
                 # means its actually a grid dimension
                 if block.datatype_out != 0:
-                    self.variables[name] = make_Variable_from_sdf_block(name, block, self)
+                    self.variables[name] = Variable.from_block(name, block, self)
 
             block = block.next
 

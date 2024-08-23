@@ -13,7 +13,14 @@ from . import sdf
 def combine_datasets(path_glob: Iterable | str, **kwargs) -> xr.Dataset:
     """Combine all datasets using a single time dimension"""
 
-    return xr.open_mfdataset(path_glob, preprocess=SDFPreprocess(), **kwargs)
+    return xr.open_mfdataset(
+        path_glob,
+        data_vars="minimal",
+        coords="minimal",
+        compat="override",
+        preprocess=SDFPreprocess(),
+        **kwargs,
+    )
 
 
 def open_mfdataset(
@@ -79,7 +86,9 @@ def open_mfdataset(
                     dim={var_times_map[sdf_coord_name]: [df.attrs["time"]]}
                 )
 
-    return xr.merge(all_dfs)
+    return xr.combine_by_coords(
+        all_dfs, data_vars="minimal", combine_attrs="drop_conflicts"
+    )
 
 
 def make_time_dims(path_glob):

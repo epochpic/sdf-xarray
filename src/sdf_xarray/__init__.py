@@ -100,9 +100,11 @@ def make_time_dims(path_glob):
     # Map variable names to list of times
     vars_count = defaultdict(list)
     for f in path_glob:
-        sdf_file = sdf.read(str(f), dict=True)
-        for key in sdf_file:
-            vars_count[key].append(sdf_file["Header"]["time"])
+        with SDFFile(str(f)) as sdf_file:
+            for key in sdf_file.variables:
+                vars_count[key].append(sdf_file.header["time"])
+            for grid in sdf_file.grids.values():
+                vars_count[grid.name].append(sdf_file.header["time"])
 
     # Count the unique set of lists of times
     times_count = Counter((tuple(v) for v in vars_count.values()))
@@ -153,6 +155,9 @@ def read_sdf_dataset(data: SDFFile, *, drop_variables=None, keep_particles=False
     for key, value in data.grids.items():
         if "cpu" in key.lower():
             # Had some problems with these variables, so just ignore them for now
+            continue
+
+        if not keep_particles and "particles" in value.name.lower():
             continue
 
         base_name = _norm_grid_name(value.name)
@@ -230,9 +235,7 @@ def read_sdf_dataset(data: SDFFile, *, drop_variables=None, keep_particles=False
     # )
 
     ds = xr.Dataset(data_vars, attrs=attrs, coords=coords)
-    # I think SDF basically keeps files open for the whole lifetime of the
-    # Python block variables, so there's no way to explicitly close them
-    ds.set_close(lambda: None)
+    ds.set_close(data.close)
 
     return ds
 

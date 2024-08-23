@@ -49,8 +49,8 @@ def test_manual_close():
 
 def test_read_variable():
     with SDFFile(str(EXAMPLE_FILES_DIR / "0010.sdf")) as f:
-        ex = f.variables["Electric Field/Ex"].read()
-        dist_fn = f.variables["dist_fn/x_px/electron"].read()
+        ex = f.variables["Electric Field/Ex"].data
+        dist_fn = f.variables["dist_fn/x_px/electron"].data
 
     expected_ex = np.array(
         [
@@ -89,7 +89,7 @@ def test_read_variable():
 
 def test_read_grids():
     with SDFFile(str(EXAMPLE_FILES_DIR / "0010.sdf")) as f:
-        x_px = f.grids["grid/x_px/electron"].read()
+        x_px = f.grids["grid/x_px/electron"].data
 
     assert len(x_px) == 2
     x, px = x_px
@@ -103,7 +103,7 @@ def test_read_grids():
 
 def test_read_grid_mids():
     with SDFFile(str(EXAMPLE_FILES_DIR / "0010.sdf")) as f:
-        x_px = f.grids["grid/x_px/electron_mid"].read()
+        x_px = f.grids["grid/x_px/electron_mid"].data
 
     assert len(x_px) == 2
     x, px = x_px
@@ -120,7 +120,7 @@ def test_cant_read_closed_file():
     f.close()
 
     with pytest.raises(RuntimeError):
-        f.variables["Electric Field/Ex"].read()
+        f.variables["Electric Field/Ex"].data
 
 
 if __name__ == "__main__":
@@ -136,6 +136,6 @@ if __name__ == "__main__":
         print("grids")
         pprint(f.grids)
         print("Ex")
-        pprint(f.variables["Electric Field/Ex"].read())
+        pprint(f.variables["Electric Field/Ex"].data)
         print("grid")
-        pprint(f.grids["grid"].read())
+        pprint(f.grids["grid"].data)

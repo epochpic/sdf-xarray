@@ -39,7 +39,8 @@ cdef class Variable(Block):
     grid: str | None
     grid_mid: str | None
 
-    cpdef cnp.ndarray read(self):
+    @property
+    def data(self) -> np.ndarray :
         """Read a variable from the file, returning numpy array
         """
 
@@ -69,7 +70,8 @@ cdef class Mesh(Block):
     mults: tuple[float] | None
     parent: Mesh | None = None
 
-    cpdef tuple[cnp.ndarray] read(self):
+    @property
+    def data(self) -> tuple[np.ndarray]:
         """Read a variable from the file, returning numpy array
         """
 
@@ -273,7 +275,7 @@ cdef class SDFFile:
         """Read a midpoint grid"""
 
         data = []
-        for dim in mesh.parent.read():
+        for dim in mesh.parent.data:
             if len(dim.shape) == 1:
                 mid_point = (dim[:-1] + dim[1:]) / 2
             elif len(dim.shape) == 2:

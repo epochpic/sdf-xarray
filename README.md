@@ -46,7 +46,6 @@ print(df["Electric Field/Ex"])
 ```python
 ds = xr.open_mfdataset(
     "*.sdf",
-    combine="nested",
     data_vars='minimal', 
     coords='minimal', 
     compat='override', 

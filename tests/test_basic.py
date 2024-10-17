@@ -18,6 +18,11 @@ def test_basic():
         assert x_coord in df[ex_field].coords
         assert df[x_coord].attrs["long_name"] == "X"
 
+        px_protons = "Particles/Px/proton"
+        assert px_protons not in df
+        x_coord = "X_Particles/proton"
+        assert x_coord not in df.coords
+
 
 def test_coords():
     with xr.open_dataset(EXAMPLE_FILES_DIR / "0010.sdf") as df:

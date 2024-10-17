@@ -3,11 +3,16 @@ import pathlib
 from collections import Counter, defaultdict
 from typing import Iterable
 
+import numpy as np
 import xarray as xr
-from xarray.backends import BackendEntrypoint
-from xarray.core.utils import try_read_magic_number_from_path
+from xarray.backends import AbstractDataStore, BackendArray, BackendEntrypoint
+from xarray.backends.file_manager import CachingFileManager
+from xarray.backends.locks import ensure_lock
+from xarray.core import indexing
+from xarray.core.utils import close_on_error, try_read_magic_number_from_path
+from xarray.core.variable import Variable
 
-from . import sdf
+from .sdf_interface import Constant, SDFFile
 
 
 def combine_datasets(path_glob: Iterable | str, **kwargs) -> xr.Dataset:
@@ -78,7 +83,7 @@ def open_mfdataset(
                 dim={var_times_map[str(da)]: [df.attrs["time"]]}
             )
         for coord in df.coords:
-            if "Particles" in coord:
+            if df.coords[coord].attrs.get("point_data", False):
                 # We need to undo our renaming of the coordinates
                 base_name = coord.split("_", maxsplit=1)[-1]
                 sdf_coord_name = f"Grid/{base_name}"
@@ -99,9 +104,11 @@ def make_time_dims(path_glob):
     # Map variable names to list of times
     vars_count = defaultdict(list)
     for f in path_glob:
-        sdf_file = sdf.read(str(f), dict=True)
-        for key in sdf_file:
-            vars_count[key].append(sdf_file["Header"]["time"])
+        with SDFFile(str(f)) as sdf_file:
+            for key in sdf_file.variables:
+                vars_count[key].append(sdf_file.header["time"])
+            for grid in sdf_file.grids.values():
+                vars_count[grid.name].append(sdf_file.header["time"])
 
     # Count the unique set of lists of times
     times_count = Counter((tuple(v) for v in vars_count.values()))
@@ -127,115 +134,203 @@ def make_time_dims(path_glob):
     return time_dims, var_times_map
 
 
-def open_sdf_dataset(filename_or_obj, *, drop_variables=None, keep_particles=False):
-    if isinstance(filename_or_obj, pathlib.Path):
-        # sdf library takes a filename only
-        # TODO: work out if we need to deal with file handles
-        filename_or_obj = str(filename_or_obj)
+class SDFBackendArray(BackendArray):
+    """Adapater class required for lazy loading"""
 
-    data = sdf.read(filename_or_obj, dict=True)
+    __slots__ = ("datastore", "dtype", "shape", "variable_name")
 
-    # Drop any requested variables
-    if drop_variables:
-        for variable in drop_variables:
-            # TODO: nicer error handling
-            data.pop(variable)
+    def __init__(self, variable_name, datastore):
+        self.datastore = datastore
+        self.variable_name = variable_name
 
-    # These two dicts are global metadata about the run or file
-    attrs = {}
-    attrs.update(data.pop("Header", {}))
-    attrs.update(data.pop("Run_info", {}))
+        array = self.get_array()
+        self.shape = array.shape
+        self.dtype = array.dtype
 
-    data_vars = {}
-    coords = {}
+    def get_array(self, needs_lock=True):
+        with self.datastore.acquire_context(needs_lock) as ds:
+            return ds.variables[self.variable_name]
 
-    def _norm_grid_name(grid_name: str) -> str:
-        """There may be multiple grids all with the same coordinate names, so
-        drop the "Grid/" from the start, and append the rest to the
-        dimension name. This lets us disambiguate them all. Probably"""
-        return grid_name.split("/", maxsplit=1)[-1]
+    def __getitem__(self, key: indexing.ExplicitIndexer) -> np.typing.ArrayLike:
+        return indexing.explicit_indexing_adapter(
+            key,
+            self.shape,
+            indexing.IndexingSupport.OUTER,
+            self._raw_indexing_method,
+        )
 
-    def _grid_species_name(grid_name: str) -> str:
-        return grid_name.split("/")[-1]
+    def _raw_indexing_method(self, key: tuple) -> np.typing.ArrayLike:
+        # thread safe method that access to data on disk
+        with self.datastore.acquire_context():
+            original_array = self.get_array(needs_lock=False)
+            return original_array.data[key]
 
-    # Read and convert SDF variables and meshes to xarray DataArrays and Coordinates
-    for key, value in data.items():
-        if "CPU" in key:
-            # Had some problems with these variables, so just ignore them for now
-            continue
 
-        if not keep_particles and "particles" in key.lower():
-            continue
+class SDFDataStore(AbstractDataStore):
+    """Store for reading and writing data via the SDF library."""
 
-        if isinstance(value, sdf.BlockConstant):
-            # This might have consequences when reading in multiple files?
-            attrs[key] = value.data
+    __slots__ = (
+        "lock",
+        "drop_variables",
+        "keep_particles",
+        "_filename",
+        "_manager",
+    )
 
-        elif isinstance(value, (sdf.BlockPlainMesh, sdf.BlockPointMesh)):
-            # These are Coordinates
+    def __init__(self, manager, drop_variables=None, keep_particles=False, lock=None):
+        self._manager = manager
+        self._filename = self.ds.filename
+        self.drop_variables = drop_variables
+        self.keep_particles = keep_particles
+        self.lock = ensure_lock(lock)
 
-            is_point_mesh = isinstance(value, sdf.BlockPointMesh)
-            base_name = _norm_grid_name(key)
+    @classmethod
+    def open(
+        cls,
+        filename,
+        lock=None,
+        drop_variables=None,
+        keep_particles=False,
+    ):
+        if isinstance(filename, os.PathLike):
+            filename = os.fspath(filename)
+
+        manager = CachingFileManager(SDFFile, filename, lock=lock)
+        return cls(
+            manager,
+            lock=lock,
+            drop_variables=drop_variables,
+            keep_particles=keep_particles,
+        )
+
+    def _acquire(self, needs_lock=True):
+        with self._manager.acquire_context(needs_lock) as ds:
+            return ds
+
+    @property
+    def ds(self):
+        return self._acquire()
+
+    def acquire_context(self, needs_lock=True):
+        return self._manager.acquire_context(needs_lock)
+
+    def load(self):
+        # Drop any requested variables
+        if self.drop_variables:
+            for variable in self.drop_variables:
+                # TODO: nicer error handling
+                self.ds.variables.pop(variable)
+
+        # These two dicts are global metadata about the run or file
+        attrs = {**self.ds.header, **self.ds.run_info}
+
+        data_vars = {}
+        coords = {}
+
+        def _norm_grid_name(grid_name: str) -> str:
+            """There may be multiple grids all with the same coordinate names, so
+            drop the "Grid/" from the start, and append the rest to the
+            dimension name. This lets us disambiguate them all. Probably"""
+            return grid_name.split("/", maxsplit=1)[-1]
+
+        def _grid_species_name(grid_name: str) -> str:
+            return grid_name.split("/")[-1]
+
+        for key, value in self.ds.grids.items():
+            if "cpu" in key.lower():
+                # Had some problems with these variables, so just ignore them for now
+                continue
+
+            if not self.keep_particles and value.is_point_data:
+                continue
+
+            base_name = _norm_grid_name(value.name)
 
             for label, coord, unit in zip(value.labels, value.data, value.units):
                 full_name = f"{label}_{base_name}"
                 dim_name = (
-                    f"ID_{_grid_species_name(key)}" if is_point_mesh else full_name
+                    f"ID_{_grid_species_name(key)}"
+                    if value.is_point_data
+                    else full_name
                 )
                 coords[full_name] = (
                     dim_name,
                     coord,
-                    {"long_name": label, "units": unit},
+                    {
+                        "long_name": label,
+                        "units": unit,
+                        "point_data": value.is_point_data,
+                    },
                 )
-        elif isinstance(value, sdf.BlockPlainVariable):
-            # These are DataArrays
 
-            # SDF makes matching up the coordinates a bit convoluted. Each
-            # dimension on a variable can be defined either on "grid" or
-            # "grid_mid", and the only way to tell which one is to compare the
-            # variable's dimension sizes for each grid. We do this by making a
-            # nested dict that looks something like:
-            #
-            #     {"X": {129: "X_Grid", 129: "X_Grid_mid"}}
-            #
-            # Then we can look up the dimension label and size to get *our* name
-            # for the corresponding coordinate
-            dim_size_lookup = defaultdict(dict)
-            grid_base_name = _norm_grid_name(value.grid.name)
-            for dim_size, dim_name in zip(value.grid.dims, value.grid.labels):
-                dim_size_lookup[dim_name][dim_size] = f"{dim_name}_{grid_base_name}"
+        # Read and convert SDF variables and meshes to xarray DataArrays and Coordinates
+        for key, value in self.ds.variables.items():
+            if "CPU" in key:
+                # Had some problems with these variables, so just ignore them for now
+                continue
 
-            grid_mid_base_name = _norm_grid_name(value.grid_mid.name)
-            for dim_size, dim_name in zip(value.grid_mid.dims, value.grid_mid.labels):
-                dim_size_lookup[dim_name][dim_size] = f"{dim_name}_{grid_mid_base_name}"
+            if not self.keep_particles and "particles" in key.lower():
+                continue
 
-            var_coords = [
-                dim_size_lookup[dim_name][dim_size]
-                for dim_name, dim_size in zip(value.grid.labels, value.dims)
-            ]
+            if isinstance(value, Constant) or value.grid is None:
+                # No grid, so not physical data, just stick it in as an attribute
+                # This might have consequences when reading in multiple files?
+                attrs[key] = value.data
+                continue
+
+            if value.is_point_data:
+                # Point (particle) variables are 1D
+                var_coords = (f"ID_{_grid_species_name(key)}",)
+            else:
+                # These are DataArrays
+
+                # SDF makes matching up the coordinates a bit convoluted. Each
+                # dimension on a variable can be defined either on "grid" or
+                # "grid_mid", and the only way to tell which one is to compare the
+                # variable's dimension sizes for each grid. We do this by making a
+                # nested dict that looks something like:
+                #
+                #     {"X": {129: "X_Grid", 129: "X_Grid_mid"}}
+                #
+                # Then we can look up the dimension label and size to get *our* name
+                # for the corresponding coordinate
+                dim_size_lookup = defaultdict(dict)
+                grid = self.ds.grids[value.grid]
+                grid_base_name = _norm_grid_name(grid.name)
+                for dim_size, dim_name in zip(grid.shape, grid.labels):
+                    dim_size_lookup[dim_name][dim_size] = f"{dim_name}_{grid_base_name}"
+
+                grid_mid = self.ds.grids[value.grid_mid]
+                grid_mid_base_name = _norm_grid_name(grid_mid.name)
+                for dim_size, dim_name in zip(grid_mid.shape, grid_mid.labels):
+                    dim_size_lookup[dim_name][
+                        dim_size
+                    ] = f"{dim_name}_{grid_mid_base_name}"
+
+                var_coords = [
+                    dim_size_lookup[dim_name][dim_size]
+                    for dim_name, dim_size in zip(grid.labels, value.shape)
+                ]
+
             # TODO: error handling here? other attributes?
-            data_attrs = {"units": value.units}
-            data_vars[key] = (var_coords, value.data, data_attrs)
+            data_attrs = {"units": value.units, "point_data": value.is_point_data}
+            lazy_data = indexing.LazilyIndexedArray(SDFBackendArray(key, self))
+            data_vars[key] = Variable(var_coords, lazy_data, data_attrs)
 
-        elif isinstance(value, sdf.BlockPointVariable):
-            # Point (particle) variables are 1D
-            var_coords = (f"ID_{_grid_species_name(key)}",)
-            data_attrs = {"units": value.units}
-            data_vars[key] = (var_coords, value.data, data_attrs)
+        # TODO: might need to decode if mult is set?
 
-    # TODO: might need to decode if mult is set?
+        # #  see also conventions.decode_cf_variables
+        # vars, attrs, coords = my_decode_variables(
+        #     vars, attrs, decode_times, decode_timedelta, decode_coords
+        # )
 
-    # #  see also conventions.decode_cf_variables
-    # vars, attrs, coords = my_decode_variables(
-    #     vars, attrs, decode_times, decode_timedelta, decode_coords
-    # )
+        ds = xr.Dataset(data_vars, attrs=attrs, coords=coords)
+        ds.set_close(self.ds.close)
 
-    ds = xr.Dataset(data_vars, attrs=attrs, coords=coords)
-    # I think SDF basically keeps files open for the whole lifetime of the
-    # Python block variables, so there's no way to explicitly close them
-    ds.set_close(lambda: None)
+        return ds
 
-    return ds
+    def close(self, **kwargs):
+        self._manager.close(**kwargs)
 
 
 class SDFEntrypoint(BackendEntrypoint):
@@ -246,11 +341,18 @@ class SDFEntrypoint(BackendEntrypoint):
         drop_variables=None,
         keep_particles=False,
     ):
-        return open_sdf_dataset(
+        if isinstance(filename_or_obj, pathlib.Path):
+            # sdf library takes a filename only
+            # TODO: work out if we need to deal with file handles
+            filename_or_obj = str(filename_or_obj)
+
+        store = SDFDataStore.open(
             filename_or_obj,
             drop_variables=drop_variables,
             keep_particles=keep_particles,
         )
+        with close_on_error(store):
+            return store.load()
 
     open_dataset_parameters = ["filename_or_obj", "drop_variables", "keep_particles"]
 
@@ -289,7 +391,7 @@ class SDFPreprocess:
 
         # Particles' spartial coordinates also evolve in time
         for coord, value in ds.coords.items():
-            if "Particles" in coord:
+            if value.attrs.get("point_data", False):
                 ds.coords[coord] = value.expand_dims(time=[ds.attrs["time"]])
 
         return ds

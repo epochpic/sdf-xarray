@@ -11,6 +11,8 @@ cimport numpy as cnp
 
 cnp.import_array()
 
+# Some systems don't have F128
+_NUMPY_128 = getattr(np, "float128", None)
 
 cdef list[cnp.dtype | None] _sdf_type_mapping = [
     None,
@@ -18,7 +20,7 @@ cdef list[cnp.dtype | None] _sdf_type_mapping = [
     cnp.dtype(np.int64),
     cnp.dtype(np.float32),
     cnp.dtype(np.float64),
-    cnp.dtype(np.float128),
+    _NUMPY_128,
     cnp.dtype("S"),
     cnp.dtype(np.bool_),
 ]

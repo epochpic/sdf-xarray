@@ -8,6 +8,7 @@ EXAMPLE_FILES_DIR = pathlib.Path(__file__).parent / "example_files"
 EXAMPLE_MISMATCHED_FILES_DIR = (
     pathlib.Path(__file__).parent / "example_mismatched_files"
 )
+EXAMPLE_ARRAYS_DIR = pathlib.Path(__file__).parent / "example_array_no_grids"
 
 
 def test_basic():
@@ -101,3 +102,25 @@ def test_erroring_on_mismatched_jobid_files():
             compat="override",
             preprocess=SDFPreprocess(),
         )
+
+
+def test_arrays_with_no_grids():
+    with xr.open_dataset(EXAMPLE_ARRAYS_DIR / "0001.sdf") as df:
+        laser_phase = "laser_x_min_phase"
+        assert laser_phase in df
+        assert df[laser_phase].shape == (1,)
+
+        random_states = "Random States"
+        assert random_states in df
+        assert df[random_states].shape == (8,)
+
+
+def test_arrays_with_no_grids_multifile():
+    df = xr.open_mfdataset(EXAMPLE_ARRAYS_DIR.glob("*.sdf"), preprocess=SDFPreprocess())
+    laser_phase = "laser_x_min_phase"
+    assert laser_phase in df
+    assert df[laser_phase].shape == (2, 1)
+
+    random_states = "Random States"
+    assert random_states in df
+    assert df[random_states].shape == (2, 8)

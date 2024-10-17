@@ -1,6 +1,7 @@
 cimport csdf
 
 import dataclasses
+import re
 import time
 
 from libc.string cimport memcpy
@@ -103,11 +104,14 @@ cdef class Mesh(Block):
         )
 
 
+_CONSTANT_UNITS_RE = re.compile(r"(?P<name>.*) \((?P<units>.*)\)$")
+
 @dataclasses.dataclass
 cdef class Constant:
     _id: str
     name: str
     data: int | str | float
+    units: str | None
 
     @staticmethod
     cdef Constant from_block(str name, csdf.sdf_block_t* block):
@@ -122,9 +126,21 @@ cdef class Constant:
         if block.datatype == csdf.SDF_DATATYPE_INTEGER8:
             data = (<csdf.int64_t*>block.const_value)[0]
 
+        # There's no metadata with e.g. units, but there's a
+        # convention to put one in brackets at the end of the name,
+        # if so, strip it off to give the name and units
+        units = None
+        if match := _CONSTANT_UNITS_RE.match(name):
+            name = match["name"]
+            units = match["units"]
+
         return Constant(
-            _id=block.id.decode("UTF-8"), name=name, data=data
+            _id=block.id.decode("UTF-8"), name=name, data=data, units=units
         )
+
+    @property
+    def is_point_data(self) -> bool:
+        return False
 
 
 cdef class SDFFile:
@@ -199,7 +215,10 @@ cdef class SDFFile:
                 }
 
             elif block.blocktype == csdf.SDF_BLOCKTYPE_CONSTANT:
-                self.variables[name] = Constant.from_block(name, block)
+                # We modify the name to remove units, so convert it
+                # first so we can get the new name
+                constant = Constant.from_block(name, block)
+                self.variables[constant.name] = constant
 
             elif block.blocktype in (
                     csdf.SDF_BLOCKTYPE_PLAIN_MESH,

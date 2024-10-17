@@ -265,17 +265,22 @@ class SDFDataStore(AbstractDataStore):
 
         # Read and convert SDF variables and meshes to xarray DataArrays and Coordinates
         for key, value in self.ds.variables.items():
-            if "CPU" in key:
-                # Had some problems with these variables, so just ignore them for now
+            # Had some problems with these variables, so just ignore them for now
+            if "cpu" in key.lower():
+                continue
+            if "output file" in key.lower():
                 continue
 
-            if not self.keep_particles and "particles" in key.lower():
+            if not self.keep_particles and value.is_point_data:
                 continue
 
             if isinstance(value, Constant) or value.grid is None:
-                # No grid, so not physical data, just stick it in as an attribute
-                # This might have consequences when reading in multiple files?
-                attrs[key] = value.data
+                # No grid, so just a scalar
+                data_attrs = {}
+                if value.units is not None:
+                    data_attrs["units"] = value.units
+
+                data_vars[key] = Variable((), value.data, data_attrs)
                 continue
 
             if value.is_point_data:

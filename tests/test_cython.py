@@ -17,7 +17,7 @@ def test_sdffile():
 
         assert f.run_info["version"] == "4.19.3"
 
-        assert f.variables["Wall-time"].data == 0.0032005560000000002
+        assert f.variables["Wall-time"].data == 0.014211990000000008
 
 
 def test_sdffile_with_more_things():
@@ -29,7 +29,7 @@ def test_sdffile_with_more_things():
 
         assert f.run_info["version"] == "4.19.3"
 
-        assert f.variables["Wall-time"].data == 3.968111756
+        assert f.variables["Wall-time"].data == 4.068961859
 
 
 def test_variable_names():

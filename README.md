@@ -8,13 +8,13 @@ plasma PIC code.
 
 Until this is on PyPI, please install directly from this repo:
 
-```
+```bash
 pip install git+https://github.com/PlasmaFAIR/sdf-xarray.git@main
 ```
 
 or from a local checkout:
 
-```
+```bash
 git clone https://github.com/PlasmaFAIR/sdf-xarray.git
 cd sdf-xarray
 pip install .
@@ -26,6 +26,7 @@ pip install .
 xarray:
 
 ### Single file loading
+
 ```python
 import xarray as xr
 from sdf_xarray import SDFPreprocess
@@ -43,6 +44,7 @@ print(df["Electric Field/Ex"])
 ```
 
 ### Multi file loading
+
 ```python
 ds = xr.open_mfdataset(
     "*.sdf",
@@ -60,6 +62,20 @@ print(ds)
 # Data variables: (18)
 # Indexes: (9)
 # Attributes: (22)
+```
+
+### Loading SDF files directly (using the exact same code as sdf_helper)
+
+```python
+from sdf_xarray import SDFFile
+
+sdf_file = SDFFile("0010.sdf")
+
+print(sdf_file.variables["Electric Field/Ex"])
+# Variable(_id='ex', name='Electric Field/Ex', dtype=dtype('float64'), shape=(1024,), is_point_data=False, sdffile=<sdf_xarray.sdf_interface.SDFFile object at 0x10be7ebc0>, units='V/m', mult=1.0, grid='grid', grid_mid='grid_mid')
+
+print(sdf_file.variables["Electric Field/Ex"].data)
+# [ 0.00000000e+00  0.00000000e+00  0.00000000e+00 ... -4.44992788e+12  1.91704994e+13  0.00000000e+00]
 ```
 
 ### Reading particle data

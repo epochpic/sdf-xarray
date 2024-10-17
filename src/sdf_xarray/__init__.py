@@ -271,7 +271,7 @@ class SDFDataStore(AbstractDataStore):
             if "output file" in key.lower():
                 continue
 
-            if not self.keep_particles and "particles" in key.lower():
+            if not self.keep_particles and value.is_point_data:
                 continue
 
             if isinstance(value, Constant) or value.grid is None:

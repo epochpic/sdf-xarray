@@ -126,6 +126,10 @@ cdef class Constant:
             _id=block.id.decode("UTF-8"), name=name, data=data
         )
 
+    @property
+    def is_point_data(self) -> bool:
+        return False
+
 
 cdef class SDFFile:
     """Read an SDF file

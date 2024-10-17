@@ -265,8 +265,10 @@ class SDFDataStore(AbstractDataStore):
 
         # Read and convert SDF variables and meshes to xarray DataArrays and Coordinates
         for key, value in self.ds.variables.items():
-            if "CPU" in key:
-                # Had some problems with these variables, so just ignore them for now
+            # Had some problems with these variables, so just ignore them for now
+            if "cpu" in key.lower():
+                continue
+            if "output file" in key.lower():
                 continue
 
             if not self.keep_particles and "particles" in key.lower():

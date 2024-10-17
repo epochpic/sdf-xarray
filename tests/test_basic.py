@@ -24,6 +24,13 @@ def test_basic():
         assert x_coord not in df.coords
 
 
+def test_constant_name_and_units():
+    with xr.open_dataset(EXAMPLE_FILES_DIR / "0000.sdf") as df:
+        name = "Absorption/Total Laser Energy Injected"
+        assert name in df
+        assert df[name].units == "J"
+
+
 def test_coords():
     with xr.open_dataset(EXAMPLE_FILES_DIR / "0010.sdf") as df:
         px_electron = "dist_fn/x_px/electron"
@@ -66,6 +73,10 @@ def test_multiple_files_one_time_dim():
     assert sorted(px_protons.coords) == sorted(("X_Particles/proton", "time"))
     assert px_protons.shape == (11, 1920)
 
+    absorption = df["Absorption/Total Laser Energy Injected"]
+    assert tuple(absorption.coords) == ("time",)
+    assert absorption.shape == (11,)
+
 
 def test_multiple_files_multiple_time_dims():
     df = open_mfdataset(
@@ -77,6 +88,7 @@ def test_multiple_files_multiple_time_dims():
     assert df["Electric Field/Ez"].shape == (1, 16)
     assert df["Particles/Px/proton"].shape == (1, 1920)
     assert df["Particles/Weight/proton"].shape == (2, 1920)
+    assert df["Absorption/Total Laser Energy Injected"].shape == (11,)
 
 
 def test_erroring_on_mismatched_jobid_files():

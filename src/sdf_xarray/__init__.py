@@ -275,9 +275,12 @@ class SDFDataStore(AbstractDataStore):
                 continue
 
             if isinstance(value, Constant) or value.grid is None:
-                # No grid, so not physical data, just stick it in as an attribute
-                # This might have consequences when reading in multiple files?
-                attrs[key] = value.data
+                # No grid, so just a scalar
+                data_attrs = {}
+                if value.units is not None:
+                    data_attrs["units"] = value.units
+
+                data_vars[key] = Variable((), value.data, data_attrs)
                 continue
 
             if value.is_point_data:

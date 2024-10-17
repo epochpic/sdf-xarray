@@ -64,7 +64,7 @@ print(ds)
 # Attributes: (22)
 ```
 
-### Loading SDF files directly (using the exact same code as sdf_helper)
+### Loading SDF files directly
 
 ```python
 from sdf_xarray import SDFFile

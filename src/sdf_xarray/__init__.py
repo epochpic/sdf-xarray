@@ -275,12 +275,18 @@ class SDFDataStore(AbstractDataStore):
                 continue
 
             if isinstance(value, Constant) or value.grid is None:
-                # No grid, so just a scalar
                 data_attrs = {}
                 if value.units is not None:
                     data_attrs["units"] = value.units
 
-                data_vars[key] = Variable((), value.data, data_attrs)
+                # We don't have a grid, either because it's just a
+                # scalar, or because it's an array over something
+                # else. We have no more information, so just make up
+                # some (hopefully) unique dimension names
+                shape = getattr(value.data, "shape", ())
+                dims = [f"dim_{key}_{n}" for n, _ in enumerate(shape)]
+
+                data_vars[key] = Variable(dims, value.data, attrs=data_attrs)
                 continue
 
             if value.is_point_data:

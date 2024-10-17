@@ -1,0 +1,119 @@
+begin:constant
+  nel = 1e+23
+  intens = 2e+22
+  omega = 2.0 * pi * c / (1.0e-6)
+  den_crit = critical(omega)
+  scale = 1e-06
+  den_max = 5.0 * den_crit
+  den_maxpoint = 4e-05
+  den_contrast = 1.0
+  amax = 1.0
+end:constant
+
+begin:control
+  nx = 8
+  nparticles = nx * 2
+  nsteps = 1
+  t_end = 2e-15
+  x_min = -1e-05
+  x_max = 1e-05
+  dt_multiplier = 0.8
+end:control
+
+begin:qed
+  use_qed = F
+  qed_start_time = 0
+  produce_photons = F
+  photon_energy_min = 50 * kev
+  produce_pairs = F
+  photon_dynamics = F
+end:qed
+
+begin:collisions
+  use_collisions = T
+  coulomb_log = auto
+  collide = all
+end:collisions
+
+begin:boundaries
+  bc_x_min = simple_laser
+  bc_x_max = simple_laser
+end:boundaries
+
+begin:species
+  name = Electron
+  fraction = 0.5
+  dump = F
+  temperature = 0
+  number_density = if (x gt 0e-6, nel * 1.0e6, 0)
+  number_density_min = 1
+  identify:electron
+end:species
+
+begin:species
+  name = Ion
+  fraction = 0.5
+  dump = F
+  number_density = number_density(Electron)
+  temperature = temperature_x(Electron)
+  number_density_min = 1
+  identify:proton
+end:species
+
+begin:species
+  name = Photon
+  nparticles = 0
+  dump = F
+  identify:photon
+end:species
+
+begin:output_global
+  force_final_to_be_restartable = T
+end:output_global
+
+begin:output
+  name = normal
+  use_offset_grid = F
+  dt_snapshot = 5e-15
+  particles = never
+  px = never
+  py = never
+  pz = never
+  vx = never
+  vy = never
+  vz = never
+  charge = never
+  mass = never
+  particle_weight = never
+  species_id = never
+  grid = always
+  ex = never
+  ey = never
+  ez = never
+  bx = never
+  by = never
+  bz = never
+  jx = never
+  jy = never
+  jz = never
+  average_particle_energy = always + species
+  mass_density = never + species
+  charge_density = never
+  number_density = never + species
+  temperature = never + species
+  distribution_functions = always
+  particle_probes = never
+  absorption = always
+  total_energy_sum = always + species
+end:output
+
+begin:laser
+  boundary = x_min
+  intensity = intens * 1.0e4
+  omega = omega
+  polarisation = 0.0
+  phase = 0.0
+  t_profile = gauss(time, 40.0e-15, 30.0e-15)
+  t_start = 0.0
+  t_end = end
+end:laser

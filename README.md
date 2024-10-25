@@ -4,6 +4,11 @@
 read SDF files as created by the [EPOCH](https://epochpic.github.io)
 plasma PIC code.
 
+> ![IMPORTANT]
+> All variable names now use snake_case to align with Epoch’s `sdf_helper`
+> conventions. For example, `Electric Field/Ex` has been updated to
+> `Electric_Field_Ex`.
+
 ## Installation
 
 Until this is on PyPI, please install directly from this repo:
@@ -33,14 +38,15 @@ from sdf_xarray import SDFPreprocess
 
 df = xr.open_dataset("0010.sdf")
 
-print(df["Electric Field/Ex"])
+print(df["Electric_Field_Ex"])
 
-# <xarray.DataArray 'Electric Field/Ex' (X_x_px_deltaf/electron_beam: 16)> Size: 128B
+# <xarray.DataArray 'Electric_Field_Ex' (X_x_px_deltaf_electron_beam: 16)> Size: 128B
 # [16 values with dtype=float64]
 # Coordinates:
-#   * X_x_px_deltaf/electron_beam  (X_x_px_deltaf/electron_beam) float64 128B 1...
+#   * X_x_px_deltaf_electron_beam  (X_x_px_deltaf_electron_beam) float64 128B 1...
 # Attributes:
 #     units:    V/m
+#     full_name: "Electric Field/Ex"
 ```
 
 ### Multi file loading
@@ -57,7 +63,7 @@ ds = xr.open_mfdataset(
 print(ds)
 
 # Dimensions:
-# time: 301, X_Grid_mid: 128, Y_Grid_mid: 128, Px_px_py/Photon: 200, Py_px_py/Photon: 200, X_Grid: 129, Y_Grid: 129, Px_px_py/Photon_mid: 199, Py_px_py/Photon_mid: 199
+# time: 301, X_Grid_mid: 128, Y_Grid_mid: 128, Px_px_py_Photon: 200, Py_px_py_Photon: 200, X_Grid: 129, Y_Grid: 129, Px_px_py_Photon_mid: 199, Py_px_py_Photon_mid: 199
 # Coordinates: (9)
 # Data variables: (18)
 # Indexes: (9)

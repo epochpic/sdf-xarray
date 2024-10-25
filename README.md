@@ -4,7 +4,7 @@
 read SDF files as created by the [EPOCH](https://epochpic.github.io)
 plasma PIC code.
 
-> ![IMPORTANT]
+> [!IMPORTANT]
 > All variable names now use snake_case to align with Epoch’s `sdf_helper`
 > conventions. For example, `Electric Field/Ex` has been updated to
 > `Electric_Field_Ex`.

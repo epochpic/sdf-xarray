@@ -15,6 +15,13 @@ from xarray.core.variable import Variable
 from .sdf_interface import Constant, SDFFile
 
 
+def _rename_with_underscore(name: str) -> str:
+    """A lot of the variable names have spaces and slashes in them, which
+    are not valid in xarray dimension names. So we replace them with
+    underscores."""
+    return name.replace("/", "_").replace(" ", "_")
+
+
 def combine_datasets(path_glob: Iterable | str, **kwargs) -> xr.Dataset:
     """Combine all datasets using a single time dimension"""
 
@@ -86,7 +93,7 @@ def open_mfdataset(
             if df.coords[coord].attrs.get("point_data", False):
                 # We need to undo our renaming of the coordinates
                 base_name = coord.split("_", maxsplit=1)[-1]
-                sdf_coord_name = f"Grid/{base_name}"
+                sdf_coord_name = f"Grid_{base_name}"
                 df.coords[coord] = df.coords[coord].expand_dims(
                     dim={var_times_map[sdf_coord_name]: [df.attrs["time"]]}
                 )
@@ -106,9 +113,11 @@ def make_time_dims(path_glob):
     for f in path_glob:
         with SDFFile(str(f)) as sdf_file:
             for key in sdf_file.variables:
-                vars_count[key].append(sdf_file.header["time"])
+                vars_count[_rename_with_underscore(key)].append(sdf_file.header["time"])
             for grid in sdf_file.grids.values():
-                vars_count[grid.name].append(sdf_file.header["time"])
+                vars_count[_rename_with_underscore(grid.name)].append(
+                    sdf_file.header["time"]
+                )
 
     # Count the unique set of lists of times
     times_count = Counter((tuple(v) for v in vars_count.values()))
@@ -236,6 +245,12 @@ class SDFDataStore(AbstractDataStore):
         def _grid_species_name(grid_name: str) -> str:
             return grid_name.split("/")[-1]
 
+        def _process_grid_name(grid_name: str, transform_func) -> str:
+            """Apply the given transformation function and then rename with underscores."""
+            transformed_name = transform_func(grid_name)
+            renamed_name = _rename_with_underscore(transformed_name)
+            return renamed_name
+
         for key, value in self.ds.grids.items():
             if "cpu" in key.lower():
                 # Had some problems with these variables, so just ignore them for now
@@ -244,12 +259,12 @@ class SDFDataStore(AbstractDataStore):
             if not self.keep_particles and value.is_point_data:
                 continue
 
-            base_name = _norm_grid_name(value.name)
+            base_name = _process_grid_name(value.name, _norm_grid_name)
 
             for label, coord, unit in zip(value.labels, value.data, value.units):
                 full_name = f"{label}_{base_name}"
                 dim_name = (
-                    f"ID_{_grid_species_name(key)}"
+                    f"ID_{_process_grid_name(key, _grid_species_name)}"
                     if value.is_point_data
                     else full_name
                 )
@@ -260,6 +275,7 @@ class SDFDataStore(AbstractDataStore):
                         "long_name": label,
                         "units": unit,
                         "point_data": value.is_point_data,
+                        "full_name": value.name,
                     },
                 )
 
@@ -276,6 +292,7 @@ class SDFDataStore(AbstractDataStore):
 
             if isinstance(value, Constant) or value.grid is None:
                 data_attrs = {}
+                data_attrs["full_name"] = key
                 if value.units is not None:
                     data_attrs["units"] = value.units
 
@@ -285,13 +302,14 @@ class SDFDataStore(AbstractDataStore):
                 # some (hopefully) unique dimension names
                 shape = getattr(value.data, "shape", ())
                 dims = [f"dim_{key}_{n}" for n, _ in enumerate(shape)]
+                base_name = _rename_with_underscore(key)
 
-                data_vars[key] = Variable(dims, value.data, attrs=data_attrs)
+                data_vars[base_name] = Variable(dims, value.data, attrs=data_attrs)
                 continue
 
             if value.is_point_data:
                 # Point (particle) variables are 1D
-                var_coords = (f"ID_{_grid_species_name(key)}",)
+                var_coords = (f"ID_{_process_grid_name(key, _grid_species_name)}",)
             else:
                 # These are DataArrays
 
@@ -307,12 +325,12 @@ class SDFDataStore(AbstractDataStore):
                 # for the corresponding coordinate
                 dim_size_lookup = defaultdict(dict)
                 grid = self.ds.grids[value.grid]
-                grid_base_name = _norm_grid_name(grid.name)
+                grid_base_name = _process_grid_name(grid.name, _norm_grid_name)
                 for dim_size, dim_name in zip(grid.shape, grid.labels):
                     dim_size_lookup[dim_name][dim_size] = f"{dim_name}_{grid_base_name}"
 
                 grid_mid = self.ds.grids[value.grid_mid]
-                grid_mid_base_name = _norm_grid_name(grid_mid.name)
+                grid_mid_base_name = _process_grid_name(grid_mid.name, _norm_grid_name)
                 for dim_size, dim_name in zip(grid_mid.shape, grid_mid.labels):
                     dim_size_lookup[dim_name][
                         dim_size
@@ -324,9 +342,14 @@ class SDFDataStore(AbstractDataStore):
                 ]
 
             # TODO: error handling here? other attributes?
-            data_attrs = {"units": value.units, "point_data": value.is_point_data}
+            data_attrs = {
+                "units": value.units,
+                "point_data": value.is_point_data,
+                "full_name": key,
+            }
             lazy_data = indexing.LazilyIndexedArray(SDFBackendArray(key, self))
-            data_vars[key] = Variable(var_coords, lazy_data, data_attrs)
+            base_name = _rename_with_underscore(key)
+            data_vars[base_name] = Variable(var_coords, lazy_data, data_attrs)
 
         # TODO: might need to decode if mult is set?
 

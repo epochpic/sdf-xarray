@@ -16,10 +16,9 @@ from .sdf_interface import Constant, SDFFile
 
 
 def _rename_with_underscore(name: str) -> str:
-    """A lot of the variable names have spaces and slashes in them, which
-    are not valid in xarray dimension names. So we replace them with
-    underscores."""
-    return name.replace("/", "_").replace(" ", "_")
+    """A lot of the variable names have spaces, forward slashes and dashes in them, which
+    are not valid in netCDF names so we replace them with underscores."""
+    return name.replace("/", "_").replace(" ", "_").replace("-", "_")
 
 
 def combine_datasets(path_glob: Iterable | str, **kwargs) -> xr.Dataset:

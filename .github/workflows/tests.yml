@@ -19,6 +19,8 @@ jobs:
     - name: Setup uv
       id: setup-uv
       uses: astral-sh/setup-uv@v3
+      with:
+        enable-cache: true
 
     - name: Print the installed version
       run: echo "Installed uv version is ${{ steps.setup-uv.outputs.uv-version }}"

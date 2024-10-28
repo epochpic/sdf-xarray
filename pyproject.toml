@@ -37,6 +37,7 @@ test = [
       "dask[complete]",
 ]
 lint = ["ruff"]
+build = ["cibuildwheel[uv]"]
 
 [project.entry-points."xarray.backends"]
 sdf_engine = "sdf_xarray:SDFEntrypoint"
@@ -47,3 +48,12 @@ sdist.include = ["src/sdf_xarray/_version.py"]
 
 [tool.setuptools_scm]
 write_to = "src/sdf_xarray/_version.py"
+
+[tool.cibuildwheel]
+build-frontend = "build[uv]"
+skip = ["*-win32", "*-manylinux_i686", "pp*", "*musllinux*"]
+test-extras = ["test"]
+test-command = "pytest {project}/tests"
+
+[tool.uv]
+cache-keys = [{ file = "pyproject.toml" }, { git = true }]

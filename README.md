@@ -4,6 +4,8 @@
 read SDF files as created by the [EPOCH](https://epochpic.github.io)
 plasma PIC code.
 
+`sdf-xarray` uses the [SDF-C](https://github.com/Warwick-Plasma/SDF_C) library.
+
 > [!IMPORTANT]
 > All variable names now use snake_case to align with Epoch’s `sdf_helper`
 > conventions. For example, `Electric Field/Ex` has been updated to
@@ -11,10 +13,10 @@ plasma PIC code.
 
 ## Installation
 
-Until this is on PyPI, please install directly from this repo:
+Install from PyPI with:
 
 ```bash
-pip install git+https://github.com/PlasmaFAIR/sdf-xarray.git@main
+pip install sdf-xarray
 ```
 
 or from a local checkout:
@@ -25,6 +27,8 @@ cd sdf-xarray
 pip install .
 ```
 
+We recommend switching to [uv](https://docs.astral.sh/uv/) to manage packages.
+
 ## Usage
 
 `sdf-xarray` is a backend for xarray, and so is usable directly from
@@ -34,7 +38,6 @@ xarray:
 
 ```python
 import xarray as xr
-from sdf_xarray import SDFPreprocess
 
 df = xr.open_dataset("0010.sdf")
 
@@ -51,45 +54,74 @@ print(df["Electric_Field_Ex"])
 
 ### Multi file loading
 
-```python
-ds = xr.open_mfdataset(
-    "*.sdf",
-    data_vars='minimal', 
-    coords='minimal', 
-    compat='override', 
-    preprocess=SDFPreprocess()
-)
+To open a whole simulation at once, pass `preprocess=sdf_xarray.SDFPreprocess()`
+to `xarray.open_mfdataset`:
 
-print(ds)
+```python
+import xarray as xr
+from sdf_xarray import SDFPreprocess
+
+with xr.open_mfdataset("*.sdf", preprocess=SDFPreprocess()) as ds:
+    print(ds)
 
 # Dimensions:
-# time: 301, X_Grid_mid: 128, Y_Grid_mid: 128, Px_px_py_Photon: 200, Py_px_py_Photon: 200, X_Grid: 129, Y_Grid: 129, Px_px_py_Photon_mid: 199, Py_px_py_Photon_mid: 199
-# Coordinates: (9)
-# Data variables: (18)
-# Indexes: (9)
-# Attributes: (22)
+# time: 301, X_Grid_mid: 128, ...
+# Coordinates: (9) ...
+# Data variables: (18) ...
+# Indexes: (9) ...
+# Attributes: (22) ...
+```
+
+`SDFPreprocess` checks that all the files are from the same simulation, as
+ensures there's a `time` dimension so the files are correctly concatenated.
+
+If your simulation has multiple `output` blocks so that not all variables are
+output at every time step, then those variables will have `NaN` values at the
+corresponding time points.
+
+Alternatively, we can create a separate time dimensions for each `output` block
+(essentially) using `sdf_xarray.open_mfdataset` with `separate_times=True`:
+
+```python
+from sdf_xarray import open_mfdataset
+
+with open_mfdataset("*.sdf", separate_times=True) as ds:
+    print(ds)
+
+# Dimensions:
+# time0: 301, time1: 31, time2: 61, X_Grid_mid: 128, ...
+# Coordinates: (12) ...
+# Data variables: (18) ...
+# Indexes: (9) ...
+# Attributes: (22) ...
+```
+
+This is better for memory consumption, at the cost of perhaps slightly less
+friendly comparisons between variables on different time coordinates.
+
+### Reading particle data
+
+By default, particle data isn't kept as it takes up a lot of space. Pass
+`keep_particles=True` as a keyword argument to `open_dataset` (for single files)
+or `open_mfdataset` (for multiple files):
+
+```python
+df = xr.open_dataset("0010.sdf", keep_particles=True)
 ```
 
 ### Loading SDF files directly
 
+For debugging, sometimes it's useful to see the raw SDF files:
+
 ```python
 from sdf_xarray import SDFFile
 
-sdf_file = SDFFile("0010.sdf")
+with SDFFile("0010.sdf") as sdf_file:
+    print(sdf_file.variables["Electric Field/Ex"])
 
-print(sdf_file.variables["Electric Field/Ex"])
-# Variable(_id='ex', name='Electric Field/Ex', dtype=dtype('float64'), shape=(1024,), is_point_data=False, sdffile=<sdf_xarray.sdf_interface.SDFFile object at 0x10be7ebc0>, units='V/m', mult=1.0, grid='grid', grid_mid='grid_mid')
+    # Variable(_id='ex', name='Electric Field/Ex', dtype=dtype('float64'), ...
 
-print(sdf_file.variables["Electric Field/Ex"].data)
-# [ 0.00000000e+00  0.00000000e+00  0.00000000e+00 ... -4.44992788e+12  1.91704994e+13  0.00000000e+00]
-```
+    print(sdf_file.variables["Electric Field/Ex"].data)
 
-### Reading particle data
-
-By default, particle data isn't kept. Pass `keep_particles=True` as a
-keyword argument to `open_dataset` (for single files) or
-`open_mfdataset` (for multiple files):
-
-```python
-df = xr.open_dataset("0010.sdf", keep_particles=True)
+    # [ 0.00000000e+00  0.00000000e+00  0.00000000e+00 ... -4.44992788e+12  1.91704994e+13  0.00000000e+00]
 ```

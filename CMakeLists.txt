@@ -21,7 +21,7 @@ if(SDF_XARRAY_UPDATE_GIT_SUBMODULE)
   endif()
 endif()
 
-add_subdirectory(SDF/C)
+add_subdirectory(externals/sdf_c)
 
 target_include_directories(sdfc PUBLIC
   $<TARGET_FILE_DIR:sdfc>)
@@ -46,7 +46,4 @@ python_add_library(sdf_interface MODULE ${_sdf_output} WITH_SOABI)
 target_link_libraries(sdf_interface PRIVATE sdfc Python::NumPy)
 target_compile_definitions(sdf_interface PRIVATE "NPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION")
 
-python_add_library(sdf MODULE SDF/utilities/sdf_python.c WITH_SOABI)
-target_link_libraries(sdf PRIVATE sdfc Python::NumPy)
-
-install(TARGETS sdf sdf_interface DESTINATION ${SKBUILD_PROJECT_NAME})
+install(TARGETS sdf_interface DESTINATION ${SKBUILD_PROJECT_NAME})

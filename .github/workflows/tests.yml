@@ -8,21 +8,27 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     steps:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
         submodules: "recursive"
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+
+    - name: Setup uv
+      id: setup-uv
+      uses: astral-sh/setup-uv@v3
       with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
+        enable-cache: true
+
+    - name: Print the installed version
+      run: echo "Installed uv version is ${{ steps.setup-uv.outputs.uv-version }}"
+
+    - name: Set up Python ${{ matrix.python-version }} and install dependencies
       run: |
-        python -m pip install --upgrade pip
-        python -m pip install .[test]
+        uv python install ${{ matrix.python-version }}
+        uv sync --python ${{ matrix.python-version }} --extra test --extra build --frozen
+
     - name: Test with pytest
-      run: |
-        pytest
+      run: uv run pytest

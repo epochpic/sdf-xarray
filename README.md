@@ -11,10 +11,10 @@ plasma PIC code.
 
 ## Installation
 
-Until this is on PyPI, please install directly from this repo:
+Install from PyPI with:
 
 ```bash
-pip install git+https://github.com/PlasmaFAIR/sdf-xarray.git@main
+pip install sdf-xarray
 ```
 
 or from a local checkout:
@@ -24,6 +24,8 @@ git clone https://github.com/PlasmaFAIR/sdf-xarray.git
 cd sdf-xarray
 pip install .
 ```
+
+We recommend switching to [uv](https://docs.astral.sh/uv/) to manage packages.
 
 ## Usage
 

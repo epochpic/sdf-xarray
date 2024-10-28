@@ -23,23 +23,10 @@ jobs:
     - name: Print the installed version
       run: echo "Installed uv version is ${{ steps.setup-uv.outputs.uv-version }}"
 
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python ${{ matrix.python-version }} and install dependencies
       run: |
         uv python install ${{ matrix.python-version }}
-        uv venv --python ${{ matrix.python-version }}
-
-    - name: Activate venv (Windows)
-      if: runner.os == 'Windows'
-      run: .\.venv\Scripts\activate
-      shell: cmd
-
-    - name: Activate venv (Unix)
-      if: runner.os != 'Windows'
-      run: source .venv/bin/activate
-      shell: bash
-
-    - name: Install dependencies
-      run: uv pip install .[test]
+        uv sync --python ${{ matrix.python-version }} --extra test --extra build
 
     - name: Test with pytest
       run: uv run pytest

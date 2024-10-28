@@ -28,7 +28,7 @@ jobs:
     - name: Set up Python ${{ matrix.python-version }} and install dependencies
       run: |
         uv python install ${{ matrix.python-version }}
-        uv sync --python ${{ matrix.python-version }} --extra test --extra build
+        uv sync --python ${{ matrix.python-version }} --extra test --extra build --frozen
 
     - name: Test with pytest
       run: uv run pytest

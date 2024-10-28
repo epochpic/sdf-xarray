@@ -17,12 +17,6 @@ jobs:
         fetch-depth: 0
         submodules: "recursive"
 
-    - name: Set up QEMU
-      if: runner.os == 'Linux'
-      uses: docker/setup-qemu-action@v3
-      with:
-        platforms: arm64
-
     - name: Setup uv
       id: setup-uv
       uses: astral-sh/setup-uv@v3
@@ -38,7 +32,7 @@ jobs:
     - name: Build
       uses: pypa/cibuildwheel@v2.21.3
       env:
-        CIBW_ARCHS_LINUX: auto aarch64
+        CIBW_ARCHS_LINUX: auto
         CIBW_ARCHS_MACOS: x86_64 arm64
 
     - name: Upload Wheels

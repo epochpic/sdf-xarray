@@ -36,9 +36,9 @@ jobs:
         CIBW_ARCHS_MACOS: x86_64 arm64
 
     - name: Upload Wheels
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: dist
+        name: dist-${{ matrix.os }}
         path: wheelhouse
 
   make_sdist:
@@ -50,8 +50,9 @@ jobs:
     - name: Build SDist
       run: pipx run build --sdist
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
+        name: dist-src
         path: dist/*.tar.gz
 
   publish-to-pypi:
@@ -67,7 +68,8 @@ jobs:
       - name: Download distribution packages
         uses: actions/download-artifact@v4
         with:
-          name: python-package-distributions
+          pattern: dist-*
           path: dist/
+          merge-multiple: true
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1

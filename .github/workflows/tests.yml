@@ -15,14 +15,31 @@ jobs:
       with:
         fetch-depth: 0
         submodules: "recursive"
+
+    - name: Setup uv
+      id: setup-uv
+      uses: astral-sh/setup-uv@v3
+
+    - name: Print the installed version
+      run: echo "Installed uv version is ${{ steps.setup-uv.outputs.uv-version }}"
+
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
+      run: |
+        uv python install ${{ matrix.python-version }}
+        uv venv --python ${{ matrix.python-version }}
+
+    - name: Activate venv (Windows)
+      if: runner.os == 'Windows'
+      run: .\.venv\Scripts\activate
+      shell: cmd
+
+    - name: Activate venv (Unix)
+      if: runner.os != 'Windows'
+      run: source .venv/bin/activate
+      shell: bash
+
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install .[test]
+      run: uv pip install .[test]
+
     - name: Test with pytest
-      run: |
-        pytest
+      run: uv run pytest

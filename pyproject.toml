@@ -23,6 +23,7 @@ dependencies = [
   "dask>=2024.7.1",
   "cython>=3.0",
 ]
+description = "Provides a backend for xarray to read SDF files as created by the EPOCH plasma PIC code."
 
 [project.optional-dependencies]
 docs = [

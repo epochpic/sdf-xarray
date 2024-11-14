@@ -27,16 +27,16 @@ description = "Provides a backend for xarray to read SDF files as created by the
 
 [project.optional-dependencies]
 docs = [
-  "sphinx >= 5.3",
-  "sphinx_autodoc_typehints >= 1.19",
-  "sphinx-book-theme >= 0.4.0rc1",
-  "sphinx-argparse-cli >= 1.10.0",
+  "sphinx>=5.3",
+  "sphinx_autodoc_typehints>=1.19",
+  "sphinx-book-theme>=0.4.0rc1",
+  "sphinx-argparse-cli>=1.10.0",
   "sphinx-inline-tabs",
 ]
 test = ["pytest >= 3.3.0", "dask[complete]"]
 lint = ["ruff"]
 build = ["cibuildwheel[uv]"]
-jupyter = ["dask[diagnostics] >= 2024.7.1", "ipykernel>=6.29.5"]
+jupyter = ["dask[diagnostics]", "ipykernel>=6.29.5"]
 
 [project.entry-points."xarray.backends"]
 sdf_engine = "sdf_xarray:SDFEntrypoint"

@@ -1,20 +1,20 @@
 [build-system]
 requires = [
-    "scikit-build-core>=0.3",
-    "setuptools_scm",
-    "numpy>=2.0.0",
-    "cython>=3.0",
+  "scikit-build-core>=0.3",
+  "setuptools_scm",
+  "numpy>=2.0.0",
+  "cython>=3.0",
 ]
 build-backend = "scikit_build_core.build"
 
 [project]
 name = "sdf-xarray"
 dynamic = ["version"]
-license = {file = "LICENCE"}
+license = { file = "LICENCE" }
 readme = "README.md"
 authors = [
-    {name = "Peter Hill", email = "peter.hill@york.ac.uk"},
-    {name = "Joel Adams", email = "joel.adams@york.ac.uk"},
+  { name = "Peter Hill", email = "peter.hill@york.ac.uk" },
+  { name = "Joel Adams", email = "joel.adams@york.ac.uk" },
 ]
 requires-python = ">=3.10"
 dependencies = [
@@ -27,18 +27,16 @@ description = "Provides a backend for xarray to read SDF files as created by the
 
 [project.optional-dependencies]
 docs = [
-     "sphinx >= 5.3",
-     "sphinx_autodoc_typehints >= 1.19",
-     "sphinx-book-theme >= 0.4.0rc1",
-     "sphinx-argparse-cli >= 1.10.0",
-     "sphinx-inline-tabs",
+  "sphinx >= 5.3",
+  "sphinx_autodoc_typehints >= 1.19",
+  "sphinx-book-theme >= 0.4.0rc1",
+  "sphinx-argparse-cli >= 1.10.0",
+  "sphinx-inline-tabs",
 ]
-test = [
-      "pytest >= 3.3.0",
-      "dask[complete]",
-]
+test = ["pytest >= 3.3.0", "dask[complete]"]
 lint = ["ruff"]
 build = ["cibuildwheel[uv]"]
+jupyter = ["dask[diagnostics] >= 2024.7.1", "ipykernel>=6.29.5"]
 
 [project.entry-points."xarray.backends"]
 sdf_engine = "sdf_xarray:SDFEntrypoint"

@@ -1,15 +1,12 @@
 # sdf-xarray
 
+![PyPI](https://img.shields.io/pypi/v/sdf-xarray?color=blue)
+![Build/Publish](https://github.com/PlasmaFAIR/sdf-xarray/actions/workflows/build_publish.yml/badge.svg)
+![Tests](https://github.com/PlasmaFAIR/sdf-xarray/actions/workflows/tests.yml/badge.svg)
+
 `sdf-xarray` provides a backend for [xarray](https://xarray.dev) to
 read SDF files as created by the [EPOCH](https://epochpic.github.io)
-plasma PIC code.
-
-`sdf-xarray` uses the [SDF-C](https://github.com/Warwick-Plasma/SDF_C) library.
-
-> [!IMPORTANT]
-> All variable names now use snake_case to align with Epoch’s `sdf_helper`
-> conventions. For example, `Electric Field/Ex` has been updated to
-> `Electric_Field_Ex`.
+plasma PIC code. It also uses the [SDF-C](https://github.com/Warwick-Plasma/SDF_C) library.
 
 ## Installation
 

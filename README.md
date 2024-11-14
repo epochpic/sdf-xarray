@@ -19,6 +19,13 @@ Install from PyPI with:
 pip install sdf-xarray
 ```
 
+> [!NOTE]
+> For use within jupyter notebooks, run this additional command after installation:
+>
+> ```bash
+> pip install "sdf-xarray[jupyter]"
+> ```
+
 or from a local checkout:
 
 ```bash

@@ -6,7 +6,7 @@
 
 `sdf-xarray` provides a backend for [xarray](https://xarray.dev) to
 read SDF files as created by the [EPOCH](https://epochpic.github.io)
-plasma PIC code. It also uses the [SDF-C](https://github.com/Warwick-Plasma/SDF_C) library.
+plasma PIC code using the [SDF-C](https://github.com/Warwick-Plasma/SDF_C) library.
 
 ## Installation
 

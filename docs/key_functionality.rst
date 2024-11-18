@@ -27,8 +27,8 @@ Loading a Single Raw SDF File
 
 .. ipython:: python
 
-   sdf_file = SDFFile("tutorial_dataset_1d/0010.sdf")   
-   sdf_file.variables
+   with SDFFile("tutorial_dataset_1d/0010.sdf") as sdf_file:
+      print(sdf_file.variables)
 
 Loading all SDF Files for a Simulation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

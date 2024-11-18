@@ -35,8 +35,8 @@ Basic usage:
 .. ipython:: python
 
     import xarray as xr
-    df = xr.open_dataset("tutorial_dataset_1d/0010.sdf")
-    df["Electric_Field_Ex"]
+    with xr.open_dataset("tutorial_dataset_1d/0010.sdf") as df:
+        print(df["Electric_Field_Ex"])
 
 Multi file loading
 ~~~~~~~~~~~~~~~~~~
@@ -86,5 +86,5 @@ For debugging, sometimes it's useful to see the raw SDF files:
 .. ipython:: python
     
     from sdf_xarray import SDFFile
-    sdf_file = SDFFile("tutorial_dataset_1d/0010.sdf")
-    sdf_file.variables["Electric Field/Ex"]
+    with SDFFile("tutorial_dataset_1d/0010.sdf") as sdf_file:
+        print(sdf_file.variables["Electric Field/Ex"])

@@ -1,0 +1,45 @@
+ EPOCH1D v4.19.3   v4.19.3-24-gaafed395-dirty 1729856095.720           
+
+ Loaded 65536 particles of species "Electron"
+ Loaded 65536 particles of species "Ion"
+Wrote normal ,           0000.sdf at time  0.2606E-16 and iteration       0
+Wrote normal ,           0001.sdf at time  0.5003E-14 and iteration      96
+Wrote normal ,           0002.sdf at time  0.1001E-13 and iteration     192
+Wrote normal ,           0003.sdf at time  0.1501E-13 and iteration     288
+Wrote normal ,           0004.sdf at time  0.2001E-13 and iteration     384
+Wrote normal ,           0005.sdf at time  0.2502E-13 and iteration     480
+Wrote normal ,           0006.sdf at time  0.3002E-13 and iteration     576
+Wrote normal ,           0007.sdf at time  0.3502E-13 and iteration     672
+Wrote normal ,           0008.sdf at time  0.4003E-13 and iteration     768
+Wrote normal ,           0009.sdf at time  0.4503E-13 and iteration     864
+Wrote normal ,           0010.sdf at time  0.5003E-13 and iteration     960
+Wrote normal ,           0011.sdf at time  0.5504E-13 and iteration    1056
+Wrote normal ,           0012.sdf at time  0.6004E-13 and iteration    1152
+Wrote normal ,           0013.sdf at time  0.6504E-13 and iteration    1248
+Wrote normal ,           0014.sdf at time  0.7005E-13 and iteration    1344
+Wrote normal ,           0015.sdf at time  0.7505E-13 and iteration    1440
+Wrote normal ,           0016.sdf at time  0.8000E-13 and iteration    1535
+Wrote normal ,           0017.sdf at time  0.8501E-13 and iteration    1631
+Wrote normal ,           0018.sdf at time  0.9001E-13 and iteration    1727
+Wrote normal ,           0019.sdf at time  0.9501E-13 and iteration    1823
+Wrote normal ,           0020.sdf at time  0.1000E-12 and iteration    1919
+Wrote normal ,           0021.sdf at time  0.1050E-12 and iteration    2015
+Wrote normal ,           0022.sdf at time  0.1100E-12 and iteration    2111
+Wrote normal ,           0023.sdf at time  0.1150E-12 and iteration    2207
+Wrote normal ,           0024.sdf at time  0.1200E-12 and iteration    2303
+Wrote normal ,           0025.sdf at time  0.1250E-12 and iteration    2399
+Wrote normal ,           0026.sdf at time  0.1300E-12 and iteration    2495
+Wrote normal ,           0027.sdf at time  0.1350E-12 and iteration    2591
+Wrote normal ,           0028.sdf at time  0.1400E-12 and iteration    2687
+Wrote normal ,           0029.sdf at time  0.1450E-12 and iteration    2783
+Wrote normal ,           0030.sdf at time  0.1501E-12 and iteration    2879
+Wrote normal ,           0031.sdf at time  0.1550E-12 and iteration    2974
+Wrote normal ,           0032.sdf at time  0.1600E-12 and iteration    3070
+Wrote normal ,           0033.sdf at time  0.1650E-12 and iteration    3166
+Wrote normal ,           0034.sdf at time  0.1700E-12 and iteration    3262
+Wrote normal ,           0035.sdf at time  0.1750E-12 and iteration    3358
+Wrote normal ,           0036.sdf at time  0.1800E-12 and iteration    3454
+Wrote normal ,           0037.sdf at time  0.1850E-12 and iteration    3550
+Wrote normal ,           0038.sdf at time  0.1900E-12 and iteration    3646
+Wrote normal ,           0039.sdf at time  0.1950E-12 and iteration    3742
+Wrote restart,           0040.sdf at time  0.2000E-12 and iteration    3838

@@ -1,0 +1,343 @@
+ EPOCH1D v4.19.3   v4.19.3-24-gaafed395-dirty 1729856095.720           
+
+Deck state:  1
+
+ Beginning "constant" block
+
+ 	Element nel=1.750208573569848e+22 handled OK
+ 	Element intens=1.2142321215274375e+22 handled OK
+ 	Element omega=2.0 * pi * c / (1.0e-6) handled OK
+ 	Element den_crit=critical(omega) handled OK
+ 	Element scale=3.5e-06 handled OK
+ 	Element den_max=5.0 * den_crit handled OK
+ 	Element den_maxpoint=4e-05 handled OK
+ 	Element den_contrast=1.0 handled OK
+ 	Element amax=1.0 handled OK
+
+ Ending "constant" block
+
+ Beginning "control" block
+
+ 	Element nx=1024*1.5 handled OK
+ 	Element nparticles=1024*2 * 64 handled OK
+ 	Element nsteps=-1 handled OK
+ 	Element t_end=2e-13 handled OK
+ 	Element x_min=-1e-05 handled OK
+ 	Element x_max=2e-05 handled OK
+ 	Element dt_multiplier=0.8 handled OK
+
+ Ending "control" block
+
+ Beginning "qed" block
+
+ 	Element use_qed=F handled OK
+ 	Element qed_start_time=0 handled OK
+ 	Element produce_photons=F handled OK
+ 	Element photon_energy_min=50 * kev handled OK
+ 	Element produce_pairs=F handled OK
+ 	Element photon_dynamics=F handled OK
+
+ Ending "qed" block
+
+ Beginning "collisions" block
+
+ 	Element use_collisions=T handled OK
+ 	Element coulomb_log=auto handled OK
+ 	Element collide=all handled OK
+
+ Ending "collisions" block
+
+ Beginning "boundaries" block
+
+ 	Element bc_x_min=simple_laser handled OK
+ 	Element bc_x_max=simple_laser handled OK
+ 	Element bc_x_max_field=simple_outflow handled OK
+ 	Element bc_x_max_particle=reflect handled OK
+
+ Ending "boundaries" block
+
+ Beginning "species" block
+
+ 	Element name=Electron handled OK
+ 	Element fraction=0.5 handled OK
+ 	Element dump=T handled OK
+ 	Element temperature=0 handled OK
+ 	Element number_density=if (x gt 0e-6, nel * 1.0e6, 0) handled OK
+ 	Element number_density_min=1 handled OK
+ 	Element identify=electron handled OK
+
+ Ending "species" block
+
+ Beginning "species" block
+
+ 	Element name=Ion handled OK
+ 	Element fraction=0.5 handled OK
+ 	Element dump=T handled OK
+ 	Element number_density=number_density(Electron) handled OK
+ 	Element temperature=temperature_x(Electron) handled OK
+ 	Element number_density_min=1 handled OK
+ 	Element identify=proton handled OK
+
+ Ending "species" block
+
+ Beginning "species" block
+
+ 	Element name=Photon handled OK
+ 	Element nparticles=0 handled OK
+ 	Element dump=T handled OK
+ 	Element identify=photon handled OK
+
+ Ending "species" block
+
+ Beginning "species" block
+
+ 	Element name=Positron handled OK
+ 	Element nparticles=0 handled OK
+ 	Element dump=T handled OK
+ 	Element identify=positron handled OK
+
+ Ending "species" block
+
+ Beginning "output_global" block
+
+ 	Element force_final_to_be_restartable=T handled OK
+
+ Ending "output_global" block
+
+ Beginning "output" block
+
+ 	Element name=normal handled OK
+ 	Element use_offset_grid=F handled OK
+ 	Element dt_snapshot=5e-15 handled OK
+ 	Element particles=never handled OK
+ 	Element px=never handled OK
+ 	Element py=never handled OK
+ 	Element pz=never handled OK
+ 	Element vx=never handled OK
+ 	Element vy=never handled OK
+ 	Element vz=never handled OK
+ 	Element charge=never handled OK
+ 	Element mass=never handled OK
+ 	Element particle_weight=never handled OK
+ 	Element species_id=never handled OK
+ 	Element grid=always handled OK
+ 	Element ex=always handled OK
+ 	Element ey=always handled OK
+ 	Element ez=always handled OK
+ 	Element bx=always handled OK
+ 	Element by=always handled OK
+ 	Element bz=always handled OK
+ 	Element jx=always handled OK
+ 	Element jy=always handled OK
+ 	Element jz=never handled OK
+ 	Element average_particle_energy=always + species handled OK
+ 	Element mass_density=never + species handled OK
+ 	Element charge_density=never handled OK
+ 	Element number_density=always + species handled OK
+ 	Element temperature=never + species handled OK
+ 	Element distribution_functions=always handled OK
+ 	Element particle_probes=never handled OK
+ 	Element absorption=always handled OK
+ 	Element total_energy_sum=always + species handled OK
+
+ Ending "output" block
+
+ Beginning "laser" block
+
+ 	Element boundary=x_min handled OK
+ 	Element intensity=intens * 1.0e4 handled OK
+ 	Element omega=omega handled OK
+ 	Element polarisation=0.0 handled OK
+ 	Element phase=0.0 handled OK
+ 	Element t_profile=gauss(time, 40.0e-15, 30.0e-15) handled OK
+ 	Element t_start=0.0 handled OK
+ 	Element t_end=end handled OK
+
+ Ending "laser" block
+
+ Beginning "dist_fn" block
+
+ 	Element name=px_py handled OK
+ 	Element ndims=2 handled OK
+ 	Element dumpmask=always handled OK
+ 	Element direction1=dir_px handled OK
+ 	Element direction2=dir_py handled OK
+ 	Element range1=(-1.5e-21, 1.5e-21) handled OK
+ 	Element range2=(-1.5e-21, 1.5e-21) handled OK
+ 	Element resolution1=200 handled OK
+ 	Element resolution2=200 handled OK
+ 	Element include_species=Photon handled OK
+
+ Ending "dist_fn" block
+
+Deck state:  2
+
+ Beginning "constant" block
+
+ 	Element nel=1.750208573569848e+22 handled OK
+ 	Element intens=1.2142321215274375e+22 handled OK
+ 	Element omega=2.0 * pi * c / (1.0e-6) handled OK
+ 	Element den_crit=critical(omega) handled OK
+ 	Element scale=3.5e-06 handled OK
+ 	Element den_max=5.0 * den_crit handled OK
+ 	Element den_maxpoint=4e-05 handled OK
+ 	Element den_contrast=1.0 handled OK
+ 	Element amax=1.0 handled OK
+
+ Ending "constant" block
+
+ Beginning "control" block
+
+ 	Element nx=1024*1.5 handled OK
+ 	Element nparticles=1024*2 * 64 handled OK
+ 	Element nsteps=-1 handled OK
+ 	Element t_end=2e-13 handled OK
+ 	Element x_min=-1e-05 handled OK
+ 	Element x_max=2e-05 handled OK
+ 	Element dt_multiplier=0.8 handled OK
+
+ Ending "control" block
+
+ Beginning "qed" block
+
+ 	Element use_qed=F handled OK
+ 	Element qed_start_time=0 handled OK
+ 	Element produce_photons=F handled OK
+ 	Element photon_energy_min=50 * kev handled OK
+ 	Element produce_pairs=F handled OK
+ 	Element photon_dynamics=F handled OK
+
+ Ending "qed" block
+
+ Beginning "collisions" block
+
+ 	Element use_collisions=T handled OK
+ 	Element coulomb_log=auto handled OK
+ 	Element collide=all handled OK
+
+ Ending "collisions" block
+
+ Beginning "boundaries" block
+
+ 	Element bc_x_min=simple_laser handled OK
+ 	Element bc_x_max=simple_laser handled OK
+ 	Element bc_x_max_field=simple_outflow handled OK
+ 	Element bc_x_max_particle=reflect handled OK
+
+ Ending "boundaries" block
+
+ Beginning "species" block
+
+ 	Element name=Electron handled OK
+ 	Element fraction=0.5 handled OK
+ 	Element dump=T handled OK
+ 	Element temperature=0 handled OK
+ 	Element number_density=if (x gt 0e-6, nel * 1.0e6, 0) handled OK
+ 	Element number_density_min=1 handled OK
+ 	Element identify=electron handled OK
+
+ Ending "species" block
+
+ Beginning "species" block
+
+ 	Element name=Ion handled OK
+ 	Element fraction=0.5 handled OK
+ 	Element dump=T handled OK
+ 	Element number_density=number_density(Electron) handled OK
+ 	Element temperature=temperature_x(Electron) handled OK
+ 	Element number_density_min=1 handled OK
+ 	Element identify=proton handled OK
+
+ Ending "species" block
+
+ Beginning "species" block
+
+ 	Element name=Photon handled OK
+ 	Element nparticles=0 handled OK
+ 	Element dump=T handled OK
+ 	Element identify=photon handled OK
+
+ Ending "species" block
+
+ Beginning "species" block
+
+ 	Element name=Positron handled OK
+ 	Element nparticles=0 handled OK
+ 	Element dump=T handled OK
+ 	Element identify=positron handled OK
+
+ Ending "species" block
+
+ Beginning "output_global" block
+
+ 	Element force_final_to_be_restartable=T handled OK
+
+ Ending "output_global" block
+
+ Beginning "output" block
+
+ 	Element name=normal handled OK
+ 	Element use_offset_grid=F handled OK
+ 	Element dt_snapshot=5e-15 handled OK
+ 	Element particles=never handled OK
+ 	Element px=never handled OK
+ 	Element py=never handled OK
+ 	Element pz=never handled OK
+ 	Element vx=never handled OK
+ 	Element vy=never handled OK
+ 	Element vz=never handled OK
+ 	Element charge=never handled OK
+ 	Element mass=never handled OK
+ 	Element particle_weight=never handled OK
+ 	Element species_id=never handled OK
+ 	Element grid=always handled OK
+ 	Element ex=always handled OK
+ 	Element ey=always handled OK
+ 	Element ez=always handled OK
+ 	Element bx=always handled OK
+ 	Element by=always handled OK
+ 	Element bz=always handled OK
+ 	Element jx=always handled OK
+ 	Element jy=always handled OK
+ 	Element jz=never handled OK
+ 	Element average_particle_energy=always + species handled OK
+ 	Element mass_density=never + species handled OK
+ 	Element charge_density=never handled OK
+ 	Element number_density=always + species handled OK
+ 	Element temperature=never + species handled OK
+ 	Element distribution_functions=always handled OK
+ 	Element particle_probes=never handled OK
+ 	Element absorption=always handled OK
+ 	Element total_energy_sum=always + species handled OK
+
+ Ending "output" block
+
+ Beginning "laser" block
+
+ 	Element boundary=x_min handled OK
+ 	Element intensity=intens * 1.0e4 handled OK
+ 	Element omega=omega handled OK
+ 	Element polarisation=0.0 handled OK
+ 	Element phase=0.0 handled OK
+ 	Element t_profile=gauss(time, 40.0e-15, 30.0e-15) handled OK
+ 	Element t_start=0.0 handled OK
+ 	Element t_end=end handled OK
+
+ Ending "laser" block
+
+ Beginning "dist_fn" block
+
+ 	Element name=px_py handled OK
+ 	Element ndims=2 handled OK
+ 	Element dumpmask=always handled OK
+ 	Element direction1=dir_px handled OK
+ 	Element direction2=dir_py handled OK
+ 	Element range1=(-1.5e-21, 1.5e-21) handled OK
+ 	Element range2=(-1.5e-21, 1.5e-21) handled OK
+ 	Element resolution1=200 handled OK
+ 	Element resolution2=200 handled OK
+ 	Element include_species=Photon handled OK
+
+ Ending "dist_fn" block
+
+ Initial conditions complete and valid.

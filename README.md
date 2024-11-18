@@ -35,6 +35,8 @@ We recommend switching to [uv](https://docs.astral.sh/uv/) to manage packages.
 
 ## Usage
 
+For more in depth documentation please visit  <https://sdf-xarray.readthedocs.io/>
+
 `sdf-xarray` is a backend for xarray, and so is usable directly from
 xarray:
 
@@ -55,8 +57,6 @@ print(df["Electric_Field_Ex"])
 #     units:    V/m
 #     full_name: "Electric Field/Ex"
 ```
-
-### Multi file loading
 
 To open a whole simulation at once, pass `preprocess=sdf_xarray.SDFPreprocess()`
 to `xarray.open_mfdataset`:

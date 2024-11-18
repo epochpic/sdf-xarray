@@ -46,7 +46,6 @@ to `xarray.open_mfdataset`:
 
 .. ipython:: python
 
-    import xarray as xr
     from sdf_xarray import SDFPreprocess
     xr.open_mfdataset("tutorial_dataset_1d/*.sdf", preprocess=SDFPreprocess())
 

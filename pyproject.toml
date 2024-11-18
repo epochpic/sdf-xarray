@@ -34,6 +34,7 @@ docs = [
   "sphinx-inline-tabs",
   "pickleshare",
   "ipython",
+  "matplotlib",
 ]
 test = ["pytest >= 3.3.0", "dask[complete]"]
 lint = ["ruff"]

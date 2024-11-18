@@ -1,8 +1,8 @@
-.. _sec-key-functionalities:
+.. _sec-key-functionality:
 
-====================
-Key Functionalities
-====================
+==================
+Key Functionality
+==================
 
 .. ipython:: python
 

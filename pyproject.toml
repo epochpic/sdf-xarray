@@ -33,6 +33,7 @@ docs = [
   "sphinx-argparse-cli>=1.10.0",
   "sphinx-inline-tabs",
   "pickleshare",
+  "ipython",
 ]
 test = ["pytest >= 3.3.0", "dask[complete]"]
 lint = ["ruff"]

@@ -13,7 +13,7 @@ Key Functionality
 
 Loading SDF Files
 -----------------
-There are several ways to load in SDF files using ``sdf-xarray``. You can load in a single file using ``open_dataset``, load in multiple files using ``open_mfdataset`` or load in a single raw SDF file using ``SDFFile``.
+There are several ways to load in SDF files using ``sdf-xarray``. You can load in a single file using :func:`xarray.open_dataset`, load in multiple files using :func:`xarray.open_mfdataset` or :func:`sdf_xarray.open_mfdataset`, or load in a single raw SDF file using :func:`sdf_xarray.sdf_interface.SDFFile`.
 
 Loading a Single SDF File
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -46,7 +46,7 @@ Reading particle data
 
 By default, particle data isn't kept as it takes up a lot of space.
 Pass ``keep_particles=True`` as a keyword argument to
-``open_dataset`` (for single files) or ``open_mfdataset`` (for
+:func:`xarray.open_dataset` (for single files) or :func:`xarray.open_mfdataset` (for
 multiple files)
 
 .. ipython:: python
@@ -76,8 +76,8 @@ looking at when you call ``.values``
 
    ds["Electric_Field_Ex"]
 
-On top of accessing variables you can plot these ``xarray.Datasets``
-using the built-in ``plot()`` function (see
+On top of accessing variables you can plot these :class:`xarray.Dataset`
+using the built-in :meth:`xarray.DataArray.plot()` function (see
 https://docs.xarray.dev/en/stable/user-guide/plotting.html) which is
 a simple call to ``matplotlib``. This also means that you can access
 all the methods from ``matplotlib`` to manipulate your plot.
@@ -91,11 +91,11 @@ all the methods from ``matplotlib`` to manipulate your plot.
    plt.title("Electric Field along the x-axis")
 
 After having loaded in a series of datasets we can select a
-simulation file by calling the ``.isel()`` function where we pass in
+simulation file by calling the :meth:`xarray.Dataset.isel()` function where we pass in
 the parameter of ``time=0`` where ``0`` can be a number between ``0``
 and the total number of simulation files.
 
-We can also use the ``.sel()`` function if we know the exact
+We can also use the :meth:`xarray.Dataset.sel()` function if we know the exact
 simulation time we want to select. There must be a corresponding
 dataset with this time for it work correctly.
 

@@ -13,6 +13,7 @@ plasma PIC code.
    :caption: Contents:
 
    Getting Started <getting_started>
+   Key Functionalities <key_functionalities>
 
 .. toctree::
    :maxdepth: 2

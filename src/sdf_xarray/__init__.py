@@ -255,9 +255,16 @@ class SDFDataStore(AbstractDataStore):
             suffixes = ["x", "y", "z"]
             for prefix in prefixes:
                 for suffix in suffixes:
-                    affix = f"{prefix}{suffix}"
-                    if affix in variable_name:
-                        return variable_name.replace(affix, f"{prefix}$_{suffix}$")
+                    affix_spaces = f" {prefix}{suffix} "
+                    affix_no_spaces = f" {prefix}{suffix}"
+                    if affix_spaces in variable_name:
+                        return variable_name.replace(
+                            affix_spaces, f" {prefix}$_{suffix} $"
+                        )
+                    elif affix_no_spaces in variable_name:
+                        return variable_name.replace(
+                            affix_no_spaces, f" {prefix}$_{suffix}$"
+                        )
             return variable_name
 
         for key, value in self.ds.grids.items():

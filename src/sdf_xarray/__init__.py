@@ -421,7 +421,13 @@ class SDFPreprocess:
             )
 
         ds = ds.expand_dims(time=[ds.attrs["time"]])
-
+        ds = ds.assign_coords(
+            time=(
+                "time",
+                [ds.attrs["time"]],
+                {"units": "s", "long_name": "Time", "full_name": "time"},
+            )
+        )
         # Particles' spartial coordinates also evolve in time
         for coord, value in ds.coords.items():
             if value.attrs.get("point_data", False):

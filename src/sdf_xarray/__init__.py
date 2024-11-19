@@ -259,7 +259,7 @@ class SDFDataStore(AbstractDataStore):
                     affix_no_trailing_space = f" {prefix}{suffix}"
                     if affix_spaces in variable_name:
                         return variable_name.replace(
-                            affix_spaces, f" {prefix}$_{suffix} $"
+                            affix_spaces, f" {prefix}$_{suffix}$ "
                         )
                     elif affix_no_trailing_space in variable_name:
                         return variable_name.replace(

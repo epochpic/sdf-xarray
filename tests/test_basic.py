@@ -108,6 +108,13 @@ def test_erroring_on_mismatched_jobid_files():
         )
 
 
+def test_time_dim_units():
+    df = xr.open_mfdataset(EXAMPLE_ARRAYS_DIR.glob("*.sdf"), preprocess=SDFPreprocess())
+    assert df["time"].units == "s"
+    assert df["time"].long_name == "Time"
+    assert df["time"].full_name == "time"
+
+
 def test_arrays_with_no_grids():
     with xr.open_dataset(EXAMPLE_ARRAYS_DIR / "0001.sdf") as df:
         laser_phase = "laser_x_min_phase"

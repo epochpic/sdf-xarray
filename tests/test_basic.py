@@ -115,6 +115,19 @@ def test_time_dim_units():
     assert df["time"].full_name == "time"
 
 
+def test_latex_rename_variables():
+    df = xr.open_mfdataset(EXAMPLE_ARRAYS_DIR.glob("*.sdf"), preprocess=SDFPreprocess())
+    assert df["Electric_Field_Ex"].attrs["long_name"] == "Electric Field E$_x$"
+    assert df["Electric_Field_Ey"].attrs["long_name"] == "Electric Field E$_y$"
+    assert df["Electric_Field_Ez"].attrs["long_name"] == "Electric Field E$_z$"
+    assert df["Magnetic_Field_Bx"].attrs["long_name"] == "Magnetic Field B$_x$"
+    assert df["Magnetic_Field_By"].attrs["long_name"] == "Magnetic Field B$_y$"
+    assert df["Magnetic_Field_Bz"].attrs["long_name"] == "Magnetic Field B$_z$"
+    assert df["Current_Jx"].attrs["long_name"] == "Current J$_x$"
+    assert df["Current_Jy"].attrs["long_name"] == "Current J$_y$"
+    assert df["Current_Jz"].attrs["long_name"] == "Current J$_z$"
+
+
 def test_arrays_with_no_grids():
     with xr.open_dataset(EXAMPLE_ARRAYS_DIR / "0001.sdf") as df:
         laser_phase = "laser_x_min_phase"

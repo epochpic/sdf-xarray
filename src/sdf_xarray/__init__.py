@@ -250,6 +250,16 @@ class SDFDataStore(AbstractDataStore):
             renamed_name = _rename_with_underscore(transformed_name)
             return renamed_name
 
+        def _process_latex_name(variable_name: str) -> str:
+            prefixes = ["E", "B", "J", "P"]
+            suffixes = ["x", "y", "z"]
+            for prefix in prefixes:
+                for suffix in suffixes:
+                    affix = f"{prefix}{suffix}"
+                    if affix in variable_name:
+                        return variable_name.replace(affix, f"{prefix}$_{suffix}$")
+            return variable_name
+
         for key, value in self.ds.grids.items():
             if "cpu" in key.lower():
                 # Had some problems with these variables, so just ignore them for now
@@ -343,7 +353,7 @@ class SDFDataStore(AbstractDataStore):
 
             # TODO: error handling here? other attributes?
             base_name = _rename_with_underscore(key)
-            long_name = base_name.replace("_", " ")
+            long_name = _process_latex_name(base_name.replace("_", " "))
             data_attrs = {
                 "units": value.units,
                 "point_data": value.is_point_data,

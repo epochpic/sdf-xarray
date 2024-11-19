@@ -256,14 +256,14 @@ class SDFDataStore(AbstractDataStore):
             for prefix in prefixes:
                 for suffix in suffixes:
                     affix_spaces = f" {prefix}{suffix} "
-                    affix_no_spaces = f" {prefix}{suffix}"
+                    affix_no_trailing_space = f" {prefix}{suffix}"
                     if affix_spaces in variable_name:
                         return variable_name.replace(
                             affix_spaces, f" {prefix}$_{suffix} $"
                         )
-                    elif affix_no_spaces in variable_name:
+                    elif affix_no_trailing_space in variable_name:
                         return variable_name.replace(
-                            affix_no_spaces, f" {prefix}$_{suffix}$"
+                            affix_no_trailing_space, f" {prefix}$_{suffix}$"
                         )
             return variable_name
 

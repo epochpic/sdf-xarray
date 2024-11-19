@@ -251,6 +251,17 @@ class SDFDataStore(AbstractDataStore):
             return renamed_name
 
         def _process_latex_name(variable_name: str) -> str:
+            """Converts variable names to LaTeX format where possible
+            using the following rules:
+            - E -> E$_x$
+            - E -> E$_y$
+            - E -> E$_z$
+
+            This repeats for B, J and P. It only changes the variable
+            name if there are spaces around the affix (prefix + suffix)
+            or if there is no trailing space. This is to avoid changing variable
+            names that may contain these affixes as part of the variable name itself.
+            """
             prefixes = ["E", "B", "J", "P"]
             suffixes = ["x", "y", "z"]
             for prefix in prefixes:

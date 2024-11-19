@@ -271,7 +271,7 @@ class SDFDataStore(AbstractDataStore):
                     dim_name,
                     coord,
                     {
-                        "long_name": label,
+                        "long_name": label.replace("_", " "),
                         "units": unit,
                         "point_data": value.is_point_data,
                         "full_name": value.name,
@@ -290,11 +290,6 @@ class SDFDataStore(AbstractDataStore):
                 continue
 
             if isinstance(value, Constant) or value.grid is None:
-                data_attrs = {}
-                data_attrs["full_name"] = key
-                if value.units is not None:
-                    data_attrs["units"] = value.units
-
                 # We don't have a grid, either because it's just a
                 # scalar, or because it's an array over something
                 # else. We have no more information, so just make up
@@ -302,6 +297,12 @@ class SDFDataStore(AbstractDataStore):
                 shape = getattr(value.data, "shape", ())
                 dims = [f"dim_{key}_{n}" for n, _ in enumerate(shape)]
                 base_name = _rename_with_underscore(key)
+
+                data_attrs = {}
+                data_attrs["full_name"] = key
+                data_attrs["long_name"] = base_name.replace("_", " ")
+                if value.units is not None:
+                    data_attrs["units"] = value.units
 
                 data_vars[base_name] = Variable(dims, value.data, attrs=data_attrs)
                 continue
@@ -341,13 +342,15 @@ class SDFDataStore(AbstractDataStore):
                 ]
 
             # TODO: error handling here? other attributes?
+            base_name = _rename_with_underscore(key)
+            long_name = base_name.replace("_", " ")
             data_attrs = {
                 "units": value.units,
                 "point_data": value.is_point_data,
                 "full_name": key,
+                "long_name": long_name,
             }
             lazy_data = indexing.LazilyIndexedArray(SDFBackendArray(key, self))
-            base_name = _rename_with_underscore(key)
             data_vars[base_name] = Variable(var_coords, lazy_data, data_attrs)
 
         # TODO: might need to decode if mult is set?

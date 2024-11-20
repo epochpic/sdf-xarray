@@ -116,7 +116,11 @@ def test_time_dim_units():
 
 
 def test_latex_rename_variables():
-    df = xr.open_mfdataset(EXAMPLE_ARRAYS_DIR.glob("*.sdf"), preprocess=SDFPreprocess())
+    df = xr.open_mfdataset(
+        EXAMPLE_ARRAYS_DIR.glob("*.sdf"),
+        preprocess=SDFPreprocess(),
+        keep_particles=True,
+    )
     assert df["Electric_Field_Ex"].attrs["long_name"] == "Electric Field E$_x$"
     assert df["Electric_Field_Ey"].attrs["long_name"] == "Electric Field E$_y$"
     assert df["Electric_Field_Ez"].attrs["long_name"] == "Electric Field E$_z$"
@@ -126,6 +130,9 @@ def test_latex_rename_variables():
     assert df["Current_Jx"].attrs["long_name"] == "Current J$_x$"
     assert df["Current_Jy"].attrs["long_name"] == "Current J$_y$"
     assert df["Current_Jz"].attrs["long_name"] == "Current J$_z$"
+    assert df["Particles_Px_Electron"].attrs["long_name"] == "Particles P$_x$ Electron"
+    assert df["Particles_Py_Electron"].attrs["long_name"] == "Particles P$_y$ Electron"
+    assert df["Particles_Pz_Electron"].attrs["long_name"] == "Particles P$_z$ Electron"
 
 
 def test_arrays_with_no_grids():

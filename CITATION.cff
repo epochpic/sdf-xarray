@@ -12,5 +12,9 @@ authors:
     given-names: Joel L.
     orcid: 'https://orcid.org/0009-0005-4889-5231'
     affiliation: University of York
+  - family-names: Doherty
+    given-names: Shaun
+    orcid: 'https://orcid.org/0009-0005-0693-030X'
+    affiliation: University of York
 repository-code: 'https://github.com/PlasmaFAIR/sdf-xarray'
 date-released: '2024-07-25'

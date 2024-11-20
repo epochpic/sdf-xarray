@@ -137,6 +137,15 @@ def test_latex_rename_variables():
     assert _process_latex_name("Example") == "Example"
     assert _process_latex_name("PxTest") == "PxTest"
 
+    assert (
+        df["Absorption_Fraction_of_Laser_Energy_Absorbed"].attrs["long_name"]
+        == "Absorption Fraction of Laser Energy Absorbed"
+    )
+    assert (
+        df["Derived_Average_Particle_Energy"].attrs["long_name"]
+        == "Derived Average Particle Energy"
+    )
+
 
 def test_arrays_with_no_grids():
     with xr.open_dataset(EXAMPLE_ARRAYS_DIR / "0001.sdf") as df:

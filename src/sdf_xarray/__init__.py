@@ -1,6 +1,8 @@
 import os
 import pathlib
+import re
 from collections import Counter, defaultdict
+from itertools import product
 from typing import Iterable
 
 import numpy as np
@@ -19,6 +21,30 @@ def _rename_with_underscore(name: str) -> str:
     """A lot of the variable names have spaces, forward slashes and dashes in them, which
     are not valid in netCDF names so we replace them with underscores."""
     return name.replace("/", "_").replace(" ", "_").replace("-", "_")
+
+
+def _process_latex_name(variable_name: str) -> str:
+    """Converts variable names to LaTeX format where possible
+    using the following rules:
+    - E -> $E_x$
+    - E -> $E_y$
+    - E -> $E_z$
+
+    This repeats for B, J and P. It only changes the variable
+    name if there are spaces around the affix (prefix + suffix)
+    or if there is no trailing space. This is to avoid changing variable
+    names that may contain these affixes as part of the variable name itself.
+    """
+    prefixes = ["E", "B", "J", "P"]
+    suffixes = ["x", "y", "z"]
+    for prefix, suffix in product(prefixes, suffixes):
+        # Match affix with preceding space and trailing space or end of string
+        # and capture the leading/trailing spaces
+        affix_pattern = rf"(\s+){prefix}{suffix}(\s*|$)"
+        # Insert LaTeX format while preserving spaces
+        replacement = rf"\1${prefix}_{suffix}$\2"
+        variable_name = re.sub(affix_pattern, replacement, variable_name)
+    return variable_name
 
 
 def combine_datasets(path_glob: Iterable | str, **kwargs) -> xr.Dataset:
@@ -249,34 +275,6 @@ class SDFDataStore(AbstractDataStore):
             transformed_name = transform_func(grid_name)
             renamed_name = _rename_with_underscore(transformed_name)
             return renamed_name
-
-        def _process_latex_name(variable_name: str) -> str:
-            """Converts variable names to LaTeX format where possible
-            using the following rules:
-            - E -> E$_x$
-            - E -> E$_y$
-            - E -> E$_z$
-
-            This repeats for B, J and P. It only changes the variable
-            name if there are spaces around the affix (prefix + suffix)
-            or if there is no trailing space. This is to avoid changing variable
-            names that may contain these affixes as part of the variable name itself.
-            """
-            prefixes = ["E", "B", "J", "P"]
-            suffixes = ["x", "y", "z"]
-            for prefix in prefixes:
-                for suffix in suffixes:
-                    affix_spaces = f" {prefix}{suffix} "
-                    affix_no_trailing_space = f" {prefix}{suffix}"
-                    if affix_spaces in variable_name:
-                        return variable_name.replace(
-                            affix_spaces, f" {prefix}$_{suffix}$ "
-                        )
-                    elif affix_no_trailing_space in variable_name:
-                        return variable_name.replace(
-                            affix_no_trailing_space, f" {prefix}$_{suffix}$"
-                        )
-            return variable_name
 
         for key, value in self.ds.grids.items():
             if "cpu" in key.lower():

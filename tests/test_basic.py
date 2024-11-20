@@ -3,7 +3,7 @@ import pathlib
 import pytest
 import xarray as xr
 
-from sdf_xarray import SDFPreprocess, open_mfdataset
+from sdf_xarray import SDFPreprocess, _process_latex_name, open_mfdataset
 
 EXAMPLE_FILES_DIR = pathlib.Path(__file__).parent / "example_files"
 EXAMPLE_MISMATCHED_FILES_DIR = (
@@ -121,18 +121,21 @@ def test_latex_rename_variables():
         preprocess=SDFPreprocess(),
         keep_particles=True,
     )
-    assert df["Electric_Field_Ex"].attrs["long_name"] == "Electric Field E$_x$"
-    assert df["Electric_Field_Ey"].attrs["long_name"] == "Electric Field E$_y$"
-    assert df["Electric_Field_Ez"].attrs["long_name"] == "Electric Field E$_z$"
-    assert df["Magnetic_Field_Bx"].attrs["long_name"] == "Magnetic Field B$_x$"
-    assert df["Magnetic_Field_By"].attrs["long_name"] == "Magnetic Field B$_y$"
-    assert df["Magnetic_Field_Bz"].attrs["long_name"] == "Magnetic Field B$_z$"
-    assert df["Current_Jx"].attrs["long_name"] == "Current J$_x$"
-    assert df["Current_Jy"].attrs["long_name"] == "Current J$_y$"
-    assert df["Current_Jz"].attrs["long_name"] == "Current J$_z$"
-    assert df["Particles_Px_Electron"].attrs["long_name"] == "Particles P$_x$ Electron"
-    assert df["Particles_Py_Electron"].attrs["long_name"] == "Particles P$_y$ Electron"
-    assert df["Particles_Pz_Electron"].attrs["long_name"] == "Particles P$_z$ Electron"
+    assert df["Electric_Field_Ex"].attrs["long_name"] == "Electric Field $E_x$"
+    assert df["Electric_Field_Ey"].attrs["long_name"] == "Electric Field $E_y$"
+    assert df["Electric_Field_Ez"].attrs["long_name"] == "Electric Field $E_z$"
+    assert df["Magnetic_Field_Bx"].attrs["long_name"] == "Magnetic Field $B_x$"
+    assert df["Magnetic_Field_By"].attrs["long_name"] == "Magnetic Field $B_y$"
+    assert df["Magnetic_Field_Bz"].attrs["long_name"] == "Magnetic Field $B_z$"
+    assert df["Current_Jx"].attrs["long_name"] == "Current $J_x$"
+    assert df["Current_Jy"].attrs["long_name"] == "Current $J_y$"
+    assert df["Current_Jz"].attrs["long_name"] == "Current $J_z$"
+    assert df["Particles_Px_Electron"].attrs["long_name"] == "Particles $P_x$ Electron"
+    assert df["Particles_Py_Electron"].attrs["long_name"] == "Particles $P_y$ Electron"
+    assert df["Particles_Pz_Electron"].attrs["long_name"] == "Particles $P_z$ Electron"
+
+    assert _process_latex_name("Example") == "Example"
+    assert _process_latex_name("PxTest") == "PxTest"
 
 
 def test_arrays_with_no_grids():

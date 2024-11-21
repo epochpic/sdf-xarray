@@ -39,10 +39,9 @@ def _process_latex_name(variable_name: str) -> str:
     suffixes = ["x", "y", "z"]
     for prefix, suffix in product(prefixes, suffixes):
         # Match affix with preceding space and trailing space or end of string
-        # and capture the leading/trailing spaces
-        affix_pattern = rf"(\s+){prefix}{suffix}(\s*|$)"
+        affix_pattern = rf"\b{prefix}{suffix}\b"
         # Insert LaTeX format while preserving spaces
-        replacement = rf"\1${prefix}_{suffix}$\2"
+        replacement = rf"${prefix}_{suffix}$"
         variable_name = re.sub(affix_pattern, replacement, variable_name)
     return variable_name
 

@@ -46,31 +46,29 @@ def generate_animation(
     ax: plt.Axes | None = None,
     **kwargs,
 ) -> FuncAnimation:
-    """Generate an animation for the given target attribute
+    """Generate an animation for the given target attribute.
 
-    Arguments
+    Parameters
     ---------
-        dataset:
-            The dataset containing the simulation data
-        target_attribute:
-            The attribute to plot for each timestep
-        folder_path:
-            The path to save the generated animation (default: None)
-        display:
-            Whether to display the animation in the notebook (default: False)
-        display_sdf_name:
-            Display the sdf file name in the animation title
-        fps:
-            Frames per second for the animation (default: 10)
-        move_window:
-            If the simulation has a moving window, the animation will move along with it (default: False)
-        ax:
-            Matplotlib axes on which to plot
-        kwargs:
-            Dictionary of variables from matplotlib
+    dataset
+        The dataset containing the simulation data
+    target_attribute
+        The attribute to plot for each timestep
+    display_sdf_name
+        Display the sdf file name in the animation title
+    fps
+        Frames per second for the animation (default: 10)
+    move_window
+        If the simulation has a moving window, the animation will move along
+        with it (default: False)
+    ax
+        Matplotlib axes on which to plot.
+    kwargs
+        Keyword arguments to be passed to matplotlib.
+
     Examples
     --------
-    >>> generateAnimation(dataset, "Derived_Number_Density_Electron")
+    >>> generate_animation(dataset, "Derived_Number_Density_Electron")
     """
     import matplotlib.pyplot as plt
     from matplotlib.animation import FuncAnimation
@@ -146,3 +144,31 @@ def generate_animation(
         interval=1000 / fps,
         repeat=True,
     )
+
+
+@xr.register_dataset_accessor("epoch")
+class EpochAccessor:
+    def __init__(self, xarray_obj):
+        self._obj = xarray_obj
+
+    def animate(self, target: str, *args, **kwargs) -> FuncAnimation:
+        """Generate animation of 2D Epoch data.
+
+        Parameters
+        ----------
+        target
+            Attribute to plot for each time step.
+        args
+            Positional arguments passed to :func:`generate_animation`.
+        kwargs
+            Keyword arguments passed to :func:`generate_animation`.
+
+        Examples
+        --------
+        >>> import xarray as xr
+        >>> from sdf_xarray import SDFPreprocess
+        >>> ds = xr.open_mfdataset("*.sdf", preprocess=SDFPreprocess())
+        >>> ani = ds.epoch.animate("Electric_Field_Ey")
+        >>> ani.save("myfile.mp4")
+        """
+        return generate_animation(self._obj, target, *args, **kwargs)

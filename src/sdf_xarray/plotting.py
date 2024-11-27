@@ -10,15 +10,15 @@ if TYPE_CHECKING:
     from matplotlib.animation import FuncAnimation
 
 
-def get_frame_title(dataset: xr.Dataset, frame: int, display_sdf_name: bool) -> str:
+def get_frame_title(data: xr.DataArray, frame: int, display_sdf_name: bool) -> str:
     """Generate the title for a frame"""
     sdf_name = f", {frame:04d}.sdf" if display_sdf_name else ""
-    time = dataset.isel(time=frame)["time"].to_numpy()
+    time = data["time"][frame].to_numpy()
     return f"t = {time:.2e}s{sdf_name}"
 
 
 def calculate_window_velocity_and_edges(
-    dataset: xr.Dataset, target_attribute: str, time_since_start: str, x_axis_coord: str
+    data: xr.DataArray, time_since_start: str, x_axis_coord: str
 ) -> tuple[float, tuple[float, float]]:
     """Calculate the moving window's velocity and initial edges.
 
@@ -27,9 +27,9 @@ def calculate_window_velocity_and_edges(
     3. Produces the index size of the window, indexed at zero
     4. Uses distance moved and final time of the simulation to calculate velocity and initial xlims
     """
-    target_lineout = dataset[target_attribute].values[0, :, 0]
+    target_lineout = data.values[0, :, 0]
     target_lineout_window = target_lineout[~np.isnan(target_lineout)]
-    x_grid = dataset[x_axis_coord].values
+    x_grid = data[x_axis_coord].values
     window_size_index = target_lineout_window.size - 1
 
     velocity_window = (x_grid[-1] - x_grid[window_size_index]) / time_since_start[-1]
@@ -38,8 +38,7 @@ def calculate_window_velocity_and_edges(
 
 
 def generate_animation(
-    dataset: xr.Dataset,
-    target_attribute: str,
+    data: xr.DataArray,
     display_sdf_name: bool = False,
     fps: int = 10,
     move_window: bool = False,
@@ -76,12 +75,12 @@ def generate_animation(
     if ax is None:
         _, ax = plt.subplots()
 
-    N_frames = dataset.sizes.get("time")
+    N_frames = data["time"].size
 
     # Time since the first frame of the simulation
-    time_since_start = dataset["time"].values - dataset["time"].values[0]
+    time_since_start = data["time"].values - data["time"].values[0]
 
-    target_values = dataset[target_attribute].values
+    target_values = data.values
 
     # Removes all NaNs from the target attribute values so that we can
     # compute the 1st and 99th percentiles to exclude extreme outliers.
@@ -97,22 +96,20 @@ def generate_animation(
         kwargs["y"] = "Y_Grid_mid"
 
     # Initialize the plot with the first timestep
-    plot = dataset.isel(time=0)[target_attribute].plot(
-        ax=ax, norm=norm, add_colorbar=False, **kwargs
-    )
+    plot = data.isel(time=0).plot(ax=ax, norm=norm, add_colorbar=False, **kwargs)
 
-    title = get_frame_title(dataset, 0, display_sdf_name)
+    title = get_frame_title(data, 0, display_sdf_name)
     ax.set_title(title)
     cbar = plt.colorbar(plot, ax=ax)
-    long_name = dataset[target_attribute].attrs.get("long_name")
-    units = dataset[target_attribute].attrs.get("units")
+    long_name = data.attrs.get("long_name")
+    units = data.attrs.get("units")
     cbar.set_label(f"{long_name} [${units}$]")
 
     window_initial_edge = (0, 0)
 
     if move_window:
         window_velocity, window_initial_edge = calculate_window_velocity_and_edges(
-            dataset, target_attribute, time_since_start, kwargs["x"]
+            data, time_since_start, kwargs["x"]
         )
 
     # User's choice for initial window edge supercides the one calculated
@@ -131,10 +128,8 @@ def generate_animation(
             )
 
         # Update plot for the new frame
-        dataset.isel(time=frame)[target_attribute].plot(
-            ax=ax, norm=norm, add_colorbar=False, **kwargs
-        )
-        title = get_frame_title(dataset, frame, display_sdf_name)
+        data[frame].plot(ax=ax, norm=norm, add_colorbar=False, **kwargs)
+        title = get_frame_title(data, frame, display_sdf_name)
         ax.set_title(title)
 
     return FuncAnimation(
@@ -146,18 +141,16 @@ def generate_animation(
     )
 
 
-@xr.register_dataset_accessor("epoch")
+@xr.register_dataarray_accessor("epoch")
 class EpochAccessor:
     def __init__(self, xarray_obj):
         self._obj = xarray_obj
 
-    def animate(self, target: str, *args, **kwargs) -> FuncAnimation:
+    def animate(self, *args, **kwargs) -> FuncAnimation:
         """Generate animation of 2D Epoch data.
 
         Parameters
         ----------
-        target
-            Attribute to plot for each time step.
         args
             Positional arguments passed to :func:`generate_animation`.
         kwargs
@@ -171,4 +164,4 @@ class EpochAccessor:
         >>> ani = ds.epoch.animate("Electric_Field_Ey")
         >>> ani.save("myfile.mp4")
         """
-        return generate_animation(self._obj, target, *args, **kwargs)
+        return generate_animation(self._obj, *args, **kwargs)

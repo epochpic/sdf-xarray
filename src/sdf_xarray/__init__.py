@@ -333,9 +333,9 @@ class SDFDataStore(AbstractDataStore):
                 grid_mid = self.ds.grids[value.grid_mid]
                 grid_mid_base_name = _process_grid_name(grid_mid.name, _norm_grid_name)
                 for dim_size, dim_name in zip(grid_mid.shape, grid_mid.labels):
-                    dim_size_lookup[dim_name][dim_size] = (
-                        f"{dim_name}_{grid_mid_base_name}"
-                    )
+                    dim_size_lookup[dim_name][
+                        dim_size
+                    ] = f"{dim_name}_{grid_mid_base_name}"
 
                 var_coords = [
                     dim_size_lookup[dim_name][dim_size]

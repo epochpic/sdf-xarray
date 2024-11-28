@@ -1,6 +1,8 @@
 import os
 import pathlib
+import re
 from collections import Counter, defaultdict
+from itertools import product
 from typing import Iterable
 
 import numpy as np
@@ -21,6 +23,29 @@ def _rename_with_underscore(name: str) -> str:
     """A lot of the variable names have spaces, forward slashes and dashes in them, which
     are not valid in netCDF names so we replace them with underscores."""
     return name.replace("/", "_").replace(" ", "_").replace("-", "_")
+
+
+def _process_latex_name(variable_name: str) -> str:
+    """Converts variable names to LaTeX format where possible
+    using the following rules:
+    - E -> $E_x$
+    - E -> $E_y$
+    - E -> $E_z$
+
+    This repeats for B, J and P. It only changes the variable
+    name if there are spaces around the affix (prefix + suffix)
+    or if there is no trailing space. This is to avoid changing variable
+    names that may contain these affixes as part of the variable name itself.
+    """
+    prefixes = ["E", "B", "J", "P"]
+    suffixes = ["x", "y", "z"]
+    for prefix, suffix in product(prefixes, suffixes):
+        # Match affix with preceding space and trailing space or end of string
+        affix_pattern = rf"\b{prefix}{suffix}\b"
+        # Insert LaTeX format while preserving spaces
+        replacement = rf"${prefix}_{suffix}$"
+        variable_name = re.sub(affix_pattern, replacement, variable_name)
+    return variable_name
 
 
 def combine_datasets(path_glob: Iterable | str, **kwargs) -> xr.Dataset:
@@ -273,7 +298,7 @@ class SDFDataStore(AbstractDataStore):
                     dim_name,
                     coord,
                     {
-                        "long_name": label,
+                        "long_name": label.replace("_", " "),
                         "units": unit,
                         "point_data": value.is_point_data,
                         "full_name": value.name,
@@ -292,11 +317,6 @@ class SDFDataStore(AbstractDataStore):
                 continue
 
             if isinstance(value, Constant) or value.grid is None:
-                data_attrs = {}
-                data_attrs["full_name"] = key
-                if value.units is not None:
-                    data_attrs["units"] = value.units
-
                 # We don't have a grid, either because it's just a
                 # scalar, or because it's an array over something
                 # else. We have no more information, so just make up
@@ -304,6 +324,12 @@ class SDFDataStore(AbstractDataStore):
                 shape = getattr(value.data, "shape", ())
                 dims = [f"dim_{key}_{n}" for n, _ in enumerate(shape)]
                 base_name = _rename_with_underscore(key)
+
+                data_attrs = {}
+                data_attrs["full_name"] = key
+                data_attrs["long_name"] = base_name.replace("_", " ")
+                if value.units is not None:
+                    data_attrs["units"] = value.units
 
                 data_vars[base_name] = Variable(dims, value.data, attrs=data_attrs)
                 continue
@@ -343,13 +369,15 @@ class SDFDataStore(AbstractDataStore):
                 ]
 
             # TODO: error handling here? other attributes?
+            base_name = _rename_with_underscore(key)
+            long_name = _process_latex_name(base_name.replace("_", " "))
             data_attrs = {
                 "units": value.units,
                 "point_data": value.is_point_data,
                 "full_name": key,
+                "long_name": long_name,
             }
             lazy_data = indexing.LazilyIndexedArray(SDFBackendArray(key, self))
-            base_name = _rename_with_underscore(key)
             data_vars[base_name] = Variable(var_coords, lazy_data, data_attrs)
 
         # TODO: might need to decode if mult is set?

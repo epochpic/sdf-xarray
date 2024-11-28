@@ -18,8 +18,8 @@ def get_frame_title(data: xr.DataArray, frame: int, display_sdf_name: bool) -> s
 
 
 def calculate_window_velocity_and_edges(
-    data: xr.DataArray, time_since_start: str, x_axis_coord: str
-) -> tuple[float, tuple[float, float]]:
+    data: xr.DataArray, x_axis_coord: str
+) -> tuple[float, tuple[float, float], np.ndarray]:
     """Calculate the moving window's velocity and initial edges.
 
     1. Finds a lineout of the target atribute in the x coordinate of the first frame
@@ -27,6 +27,8 @@ def calculate_window_velocity_and_edges(
     3. Produces the index size of the window, indexed at zero
     4. Uses distance moved and final time of the simulation to calculate velocity and initial xlims
     """
+    time_since_start = data["time"].values - data["time"].values[0]
+    initial_window_edge = (0, 0)
     target_lineout = data.values[0, :, 0]
     target_lineout_window = target_lineout[~np.isnan(target_lineout)]
     x_grid = data[x_axis_coord].values
@@ -34,7 +36,27 @@ def calculate_window_velocity_and_edges(
 
     velocity_window = (x_grid[-1] - x_grid[window_size_index]) / time_since_start[-1]
     initial_window_edge = (x_grid[0], x_grid[window_size_index])
-    return velocity_window, initial_window_edge
+    return velocity_window, initial_window_edge, time_since_start
+
+
+def compute_global_limits(data: xr.DataArray) -> tuple[float, float]:
+    """Remove all NaN values from the target data to calculate the 1st and 99th percentiles,
+    excluding extreme outliers.
+    """
+    values_no_nan = data.values[~np.isnan(data.values)]
+    global_min = np.percentile(values_no_nan, 1)
+    global_max = np.percentile(values_no_nan, 99)
+    return global_min, global_max
+
+
+def is_1d(data: xr.DataArray) -> bool:
+    """Check if the data is 1D."""
+    return len(data.shape) == 2
+
+
+def is_2d(data: xr.DataArray) -> bool:
+    """Check if the data is 2D or 3D."""
+    return len(data.shape) == 3
 
 
 def generate_animation(
@@ -45,7 +67,7 @@ def generate_animation(
     ax: plt.Axes | None = None,
     **kwargs,
 ) -> FuncAnimation:
-    """Generate an animation for the given target attribute.
+    """Generate an animation
 
     Parameters
     ---------
@@ -67,7 +89,7 @@ def generate_animation(
 
     Examples
     --------
-    >>> generate_animation(dataset, "Derived_Number_Density_Electron")
+    >>> generate_animation(dataset["Derived_Number_Density_Electron"])
     """
     import matplotlib.pyplot as plt
     from matplotlib.animation import FuncAnimation
@@ -76,40 +98,33 @@ def generate_animation(
         _, ax = plt.subplots()
 
     N_frames = data["time"].size
+    global_min, global_max = compute_global_limits(data)
 
-    # Time since the first frame of the simulation
-    time_since_start = data["time"].values - data["time"].values[0]
+    if is_2d(data):
+        kwargs["norm"] = plt.Normalize(vmin=global_min, vmax=global_max)
+        kwargs["add_colorbar"] = False
+        # Set default x and y coordinates for 2D data if not provided
+        kwargs.setdefault("x", "X_Grid_mid")
+        kwargs.setdefault("y", "Y_Grid_mid")
 
-    target_values = data.values
+        # Initialize the plot with the first timestep
+        plot = data.isel(time=0).plot(ax=ax, **kwargs)
+        ax.set_title(get_frame_title(data, 0, display_sdf_name))
 
-    # Removes all NaNs from the target attribute values so that we can
-    # compute the 1st and 99th percentiles to exclude extreme outliers.
-    # This is then used to normilize the global colour bar
-    target_values_no_nan = target_values[~np.isnan(target_values)]
-    global_min = np.percentile(target_values_no_nan, 1)
-    global_max = np.percentile(target_values_no_nan, 99)
-    norm = plt.Normalize(vmin=global_min, vmax=global_max)
+        # Add colorbar
+        long_name = data.attrs.get("long_name")
+        units = data.attrs.get("units")
+        plt.colorbar(plot, ax=ax, label=f"{long_name} [${units}$]")
 
-    if "x" not in kwargs:
-        kwargs["x"] = "X_Grid_mid"
-    if "y" not in kwargs:
-        kwargs["y"] = "Y_Grid_mid"
-
-    # Initialize the plot with the first timestep
-    plot = data.isel(time=0).plot(ax=ax, norm=norm, add_colorbar=False, **kwargs)
-
-    title = get_frame_title(data, 0, display_sdf_name)
-    ax.set_title(title)
-    cbar = plt.colorbar(plot, ax=ax)
-    long_name = data.attrs.get("long_name")
-    units = data.attrs.get("units")
-    cbar.set_label(f"{long_name} [${units}$]")
-
-    window_initial_edge = (0, 0)
+    # Initialise plo and set y-limits for 1D data
+    if is_1d(data):
+        plot = data.isel(time=0).plot(ax=ax, **kwargs)
+        ax.set_title(get_frame_title(data, 0, display_sdf_name))
+        ax.set_ylim(global_min, global_max)
 
     if move_window:
-        window_velocity, window_initial_edge = calculate_window_velocity_and_edges(
-            data, time_since_start, kwargs["x"]
+        window_velocity, window_initial_edge, time_since_start = (
+            calculate_window_velocity_and_edges(data, kwargs["x"])
         )
 
     # User's choice for initial window edge supercides the one calculated
@@ -117,8 +132,6 @@ def generate_animation(
         window_initial_edge = kwargs["xlim"]
 
     def update(frame):
-        ax.clear()
-
         # Set the xlim for each frame in the case of a moving window
         if move_window:
             kwargs["xlim"] = (
@@ -128,9 +141,13 @@ def generate_animation(
             )
 
         # Update plot for the new frame
-        data[frame].plot(ax=ax, norm=norm, add_colorbar=False, **kwargs)
-        title = get_frame_title(data, frame, display_sdf_name)
-        ax.set_title(title)
+        ax.clear()
+        data.isel(time=frame).plot(ax=ax, **kwargs)
+        ax.set_title(get_frame_title(data, frame, display_sdf_name))
+
+        # # Update y-limits for 1D data
+        if is_1d(data):
+            ax.set_ylim(global_min, global_max)
 
     return FuncAnimation(
         ax.get_figure(),
@@ -147,7 +164,7 @@ class EpochAccessor:
         self._obj = xarray_obj
 
     def animate(self, *args, **kwargs) -> FuncAnimation:
-        """Generate animation of 2D Epoch data.
+        """Generate animations of Epoch data.
 
         Parameters
         ----------
@@ -161,7 +178,7 @@ class EpochAccessor:
         >>> import xarray as xr
         >>> from sdf_xarray import SDFPreprocess
         >>> ds = xr.open_mfdataset("*.sdf", preprocess=SDFPreprocess())
-        >>> ani = ds.epoch.animate("Electric_Field_Ey")
+        >>> ani = ds["Electric_Field_Ey"].epoch.animate()
         >>> ani.save("myfile.mp4")
         """
         return generate_animation(self._obj, *args, **kwargs)

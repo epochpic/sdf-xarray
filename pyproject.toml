@@ -15,6 +15,7 @@ readme = "README.md"
 authors = [
   { name = "Peter Hill", email = "peter.hill@york.ac.uk" },
   { name = "Joel Adams", email = "joel.adams@york.ac.uk" },
+  { name = "Shaun Doherty", email = "shaun.doherty@york.ac.uk" },
 ]
 requires-python = ">=3.10"
 dependencies = [

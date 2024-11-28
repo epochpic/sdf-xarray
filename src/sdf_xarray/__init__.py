@@ -14,6 +14,8 @@ from xarray.core import indexing
 from xarray.core.utils import close_on_error, try_read_magic_number_from_path
 from xarray.core.variable import Variable
 
+import sdf_xarray.plotting  # noqa: F401
+
 from .sdf_interface import Constant, SDFFile
 
 

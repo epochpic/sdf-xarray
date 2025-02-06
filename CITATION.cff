@@ -1,8 +1,8 @@
 cff-version: 1.2.0
-title: >-
-  sdf-xarray - Provides a backend for xarray to read SDF files as created by the EPOCH plasma PIC code.
+title: 'sdf-xarray: Read EPOCH SDF files in xarray'
 message: 'If you use this software, please cite it using the metadata from this file.'
 type: software
+repository-code: 'https://github.com/PlasmaFAIR/sdf-xarray'
 authors:
   - family-names: Hill
     given-names: Peter

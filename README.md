@@ -35,7 +35,52 @@ We recommend switching to [uv](https://docs.astral.sh/uv/) to manage packages.
 
 ## Usage
 
-See documentation: <https://sdf-xarray.readthedocs.io/>
+### Single file loading
+
+```python
+import xarray as xr
+
+df = xr.open_dataset("0010.sdf")
+
+print(df["Electric_Field_Ex"])
+
+# <xarray.DataArray 'Electric_Field_Ex' (X_x_px_deltaf_electron_beam: 16)> Size: 128B
+# [16 values with dtype=float64]
+# Coordinates:
+#   * X_x_px_deltaf_electron_beam  (X_x_px_deltaf_electron_beam) float64 128B 1...
+# Attributes:
+#     units:    V/m
+#     full_name: "Electric Field/Ex"
+```
+
+### Multi-file loading
+
+To open a whole simulation at once, pass `preprocess=sdf_xarray.SDFPreprocess()`
+to `xarray.open_mfdataset`:
+
+```python
+import xarray as xr
+from sdf_xarray import SDFPreprocess
+
+with xr.open_mfdataset("*.sdf", preprocess=SDFPreprocess()) as ds:
+    print(ds)
+
+# Dimensions:
+# time: 301, X_Grid_mid: 128, ...
+# Coordinates: (9) ...
+# Data variables: (18) ...
+# Indexes: (9) ...
+# Attributes: (22) ...
+```
+
+`SDFPreprocess` checks that all the files are from the same simulation, as
+ensures there's a `time` dimension so the files are correctly concatenated.
+
+If your simulation has multiple `output` blocks so that not all variables are
+output at every time step, then those variables will have `NaN` values at the
+corresponding time points.
+
+For more in depth documentation please visit: <https://sdf-xarray.readthedocs.io/>
 
 ## Citing
 

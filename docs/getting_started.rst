@@ -17,7 +17,7 @@ or from a local checkout:
 
 .. code:: console
 
-    $ git clone https://github.com/PlasmaFAIR/sdf-xarray.git
+    $ git clone https://github.com/epochpic/sdf-xarray.git
     $ cd sdf-xarray
     $ pip install .
 

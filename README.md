@@ -90,7 +90,7 @@ If sdf-xarray contributes to a project that leads to publication, please acknowl
 
 ![BEAM logo](./BEAM.png)
 
-In line with the FAIR principles—Findable, Accessible, Interoperable, and Reusable—each package is openly published with clear documentation and versioning (Findable), distributed via public repositories (Accessible), designed to follow common standards for data structures and interfaces (Interoperable), and includes licensing and metadata to support long-term use and adaptation (Reusable). The packages are as follows:
+**BEAM** is a collection of independent yet complementary open-source tools for analysing EPOCH simulations, designed to be modular so researchers can adopt only the components they require without being constrained by a rigid framework. In line with the **FAIR principles — Findable**, **Accessible**, **Interoperable**, and **Reusable** — each package is openly published with clear documentation and versioning (Findable), distributed via public repositories (Accessible), designed to follow common standards for data structures and interfaces (Interoperable), and includes licensing and metadata to support long-term use and adaptation (Reusable). The packages are as follows:
 
 - [sdf-xarray](https://github.com/epochpic/sdf-xarray): Reading and processing SDF files and converting them to [xarray](https://docs.xarray.dev/en/stable/).
 - [epydeck](https://github.com/epochpic/epydeck): Input deck reader and writer.

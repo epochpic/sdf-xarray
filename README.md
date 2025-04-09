@@ -1,11 +1,11 @@
 # sdf-xarray
 
 ![PyPI](https://img.shields.io/pypi/v/sdf-xarray?color=blue)
-![Build/Publish](https://github.com/PlasmaFAIR/sdf-xarray/actions/workflows/build_publish.yml/badge.svg)
-![Tests](https://github.com/PlasmaFAIR/sdf-xarray/actions/workflows/tests.yml/badge.svg)
+![Build/Publish](https://github.com/epochpic/sdf-xarray/actions/workflows/build_publish.yml/badge.svg)
+![Tests](https://github.com/epochpic/sdf-xarray/actions/workflows/tests.yml/badge.svg)
 
 sdf-xarray provides a backend for [xarray](https://xarray.dev) to read SDF files as created by
-[EPOCH](https://epochpic.github.io) using the [SDF-C](https://github.com/Warwick-Plasma/SDF_C) library.
+[EPOCH](https://epochpic.github.io) using the [SDF-C](https://github.com/epochpic/SDF_C) library.
 Part of [BEAM](#broad-epoch-analysis-modules-beam) (Broad EPOCH Analysis Modules).
 
 ## Installation
@@ -26,7 +26,7 @@ pip install sdf-xarray
 or from a local checkout:
 
 ```bash
-git clone https://github.com/PlasmaFAIR/sdf-xarray.git
+git clone https://github.com/epochpic/sdf-xarray.git
 cd sdf-xarray
 pip install .
 ```
@@ -90,8 +90,14 @@ If sdf-xarray contributes to a project that leads to publication, please acknowl
 
 ![BEAM logo](./BEAM.png)
 
-BEAM is structured as a set of independent yet complementary open-source tools designed for analysing [EPOCH](https://epochpic.github.io/) simulations where researchers can adopt only the components they need, without being constrained by a rigid framework. The packages are as follows:
+In line with the FAIR principles—Findable, Accessible, Interoperable, and Reusable—each package is openly published with clear documentation and versioning (Findable), distributed via public repositories (Accessible), designed to follow common standards for data structures and interfaces (Interoperable), and includes licensing and metadata to support long-term use and adaptation (Reusable). The packages are as follows:
 
-- [sdf-xarray](https://github.com/PlasmaFAIR/sdf-xarray): Reading and processing SDF files and converting them to [xarray](https://docs.xarray.dev/en/stable/).
-- [epydeck](https://github.com/PlasmaFAIR/epydeck): Input deck reader and writer.
-- [epyscan](https://github.com/PlasmaFAIR/epyscan): Create campaigns over a given parameter space using various sampling methods.
+- [sdf-xarray](https://github.com/epochpic/sdf-xarray): Reading and processing SDF files and converting them to [xarray](https://docs.xarray.dev/en/stable/).
+- [epydeck](https://github.com/epochpic/epydeck): Input deck reader and writer.
+- [epyscan](https://github.com/epochpic/epyscan): Create campaigns over a given parameter space using various sampling methods.
+
+## PlasmaFAIR
+
+![PlasmaFAIR logo](PlasmaFAIR.svg)
+
+Originally developed by [PlasmaFAIR](https://plasmafair.github.io), EPSRC Grant EP/V051822/1

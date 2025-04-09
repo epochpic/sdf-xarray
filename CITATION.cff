@@ -2,7 +2,7 @@ cff-version: 1.2.0
 title: 'sdf-xarray: Read EPOCH SDF files in xarray'
 message: 'If you use this software, please cite it using the metadata from this file.'
 type: software
-repository-code: 'https://github.com/PlasmaFAIR/sdf-xarray'
+repository-code: 'https://github.com/epochpic/sdf-xarray'
 authors:
   - family-names: Hill
     given-names: Peter
@@ -16,5 +16,4 @@ authors:
     given-names: Shaun
     orcid: 'https://orcid.org/0009-0005-0693-030X'
     affiliation: University of York
-repository-code: 'https://github.com/PlasmaFAIR/sdf-xarray'
 date-released: '2024-07-25'

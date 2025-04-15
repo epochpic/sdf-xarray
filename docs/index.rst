@@ -9,11 +9,12 @@ plasma PIC code.
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents:
 
    Getting Started <getting_started>
    Key Functionality <key_functionality>
+   Unit Conversion <unit_conversion>
 
 .. toctree::
    :maxdepth: 2

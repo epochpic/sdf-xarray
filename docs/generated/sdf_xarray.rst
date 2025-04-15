@@ -48,5 +48,6 @@
    :template: custom-module-template.rst
    :recursive:
 
+   plotting
    sdf_interface
 

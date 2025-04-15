@@ -15,7 +15,7 @@ with suppress(ImportError):
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "sdf-xarray"
-copyright = "2024, Peter Hill, Joel Adams"
+copyright = "2024-2025, Peter Hill, Joel Adams"
 author = "Peter Hill, Joel Adams"
 
 # The full version, including alpha/beta/rc tags
@@ -118,4 +118,6 @@ intersphinx_mapping = {
     "numpy": ("https://numpy.org/doc/stable", None),
     "scipy": ("https://docs.scipy.org/doc/scipy", None),
     "xarray": ("https://docs.xarray.dev/en/latest", None),
+    "pint": ("https://pint.readthedocs.io/en/stable", None),
+    "pint-xarray": ("https://pint-xarray.readthedocs.io/en/stable", None),
 }

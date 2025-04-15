@@ -4,22 +4,43 @@
 Unit Conversion
 ===============
 
-``sdf-xarray`` will always attempt to acquire the units for a given dataset from an SDF file and convert them into a ``xarray.Dataset`` attribute called ``units``. This approach is normally fine for most users however we can take this a step further and look to unit conversion using a library called `pint <https://pint.readthedocs.io/en/stable/getting/index.html>`_. This library allows us to specify the units of a given array and convert them to another array which is incredibly handy. We can however take this a step further and utilise the `pint-xarray <https://pint-xarray.readthedocs.io/en/latest/>`_ library which allows us to infer units from an ``xarray.Dataset.attrs`` directly while retaining all the information about ``xarray.Dataset``. 
+The ``sdf-xarray`` package automatically attempts to extract the units for each dataset from an SDF file and stores them as an :class:`xarray.Dataset` attribute called ``"units"``.
 
-To install the pint libraries you can simply run the following optional dependency pip command which will install both the ``pint`` and ``pint-xarray`` libraries.
+While this is sufficient for most use cases, we can enhance this functionality using the `pint <https://pint.readthedocs.io/en/stable/getting/index.html>`_. This library allows us to specify the units of a given array and convert them to another array which is incredibly handy. We can however take this a step further and utilise the `pint-xarray <https://pint-xarray.readthedocs.io/en/latest/>`_ library which allows us to infer units from an :attr:`xarray.Dataset.attrs` directly while retaining all the information about :class:`xarray.Dataset`. 
 
-.. code-block:: bash
 
-    pip install "sdf_xarray[pint]"
+Installing pint and pint-xarray
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In the following example we will extract the time-resolved total particle energy of electrons which is measured in Joules and convert it to electron volts. 
+To install the pint libraries you can simply run the following optional dependency pip command which will install both the ``pint`` and ``pint-xarray`` libraries. You can install these optional dependencies via pip:
+
+.. code:: console
+
+    $ pip install "sdf_xarray[pint]"
+
+Loading Libraries
+~~~~~~~~~~~~~~~~~
+
+First we need to load all the necessary libraries. It's important to import the ``pint_xarray`` library explicitly, even if it appears unused. Without this import, the ``xarray.Dataset.pint`` accessor will not be initialised.
 
 .. ipython:: python
 
     import xarray as xr
     from sdf_xarray import SDFPreprocess
-    # If this isn't imported then pint doesn't work
     import pint_xarray
+
+In the following example we will extract the time-resolved total particle energy of electrons which is measured in Joules and convert it to electron volts.
+
+Quantifying Arrays with Pint
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. warning:: Be aware that unless you're using ``dask`` this will load the data into memory. To avoid that, consider converting to ``dask`` first (e.g. using chunk).
+
+When using ``pint-xarray``, the library attempts to infer units from the ``"units"`` attribute on each :class:`xarray.DataArray`. Alternatively, you can also specify the units yourself by passing a string into the ``xarray.Dataset.pint.quantify()`` function call i.e. ``xarray.Dataset.pint.quantify("J")``. Once the type is inferred the original :class:`xarray.DataArray` will be converted to a :class:`pint.Quantity` and the ``"units"`` attribute will be removed. 
+
+.. note:: Quantification does not alter the underlying data and can be reversed at any time using ``.pint.dequantify()``.
+
+.. ipython:: python
 
     ds = xr.open_mfdataset("tutorial_dataset_1d/*.sdf", preprocess=SDFPreprocess())
 
@@ -27,31 +48,40 @@ In the following example we will extract the time-resolved total particle energy
     
     total_particle_energy_ev = ds["Total_Particle_Energy_Electron"].pint.quantify()
 
-    # The units have now disappeared and the regular array has been replaced by a Quantity
     total_particle_energy_ev
 
 
-Now that this dataset has been converted a ``pint.Quantity`` we can check it's units and dimensionality
+Now that this dataset has been converted a :class:`pint.Quantity`, we can check it's units and dimensionality
 
 .. ipython:: python
 
     total_particle_energy_ev.pint.units
     total_particle_energy_ev.pint.dimensionality
 
-We can now convert it to electron volts utilising the ``pint.Quantity.to`` function
+
+Converting Units (e.g. Joules to eV)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+We can now convert it to electron volts utilising the :attr:`pint.Quantity.to` function
 
 .. ipython:: python
     
     total_particle_energy_ev = total_particle_energy_ev.pint.to("eV")
 
-Prior to plotting we want to get the units back into the ``xarray.Dataset.attrs`` so that it can be picked up by xarray. While this step isn't necessary it does format the ``units`` attribute as ``"eV"`` instead of ``"electron_volt"``. Other formats are available in the `pint formatting <https://pint.readthedocs.io/en/stable/user/formatting.html>`_ documentation.
+Dequantifying and Restoring Units
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Although this step is optional, it demonstrates how to control the formatting of the restored ``"units"`` attribute. If no format is specified, the unit will be set to ``"electron_volt"`` instead of ``"eV"``. The ``format="~P"`` option shortens the unit string. For more options, see the `Pint formatting documentation <https://pint.readthedocs.io/en/stable/user/formatting.html>`_.
 
 .. ipython:: python
     
     total_particle_energy_ev = total_particle_energy_ev.pint.dequantify(format="~P")
     total_particle_energy_ev
 
-To visualise this has worked we can plot the two ``xarray.Dataset``
+Visualising the Converted Data
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To confirm the conversion has worked correctly, we can plot the original and converted :class:`xarray.Dataset` side by side:
 
 .. ipython:: python
 

@@ -49,6 +49,7 @@ Prior to plotting we want to get the units back into the ``xarray.Dataset.attrs`
 .. ipython:: python
     
     total_particle_energy_ev = total_particle_energy_ev.pint.dequantify(format="~P")
+    total_particle_energy_ev
 
 To visualise this has worked we can plot the two ``xarray.Dataset``
 

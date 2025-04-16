@@ -66,6 +66,10 @@ be removed.
     Quantification does not alter the underlying data and can be reversed at
     any time using ``.pint.dequantify()``.
 
+.. warning::
+    Unit conversion is not supported on coordinates, this is due to an
+    underlying issue with how ``xarray`` implements indexes
+
 .. ipython:: python
 
     with xr.open_mfdataset("tutorial_dataset_1d/*.sdf", preprocess=SDFPreprocess()) as ds:
@@ -97,6 +101,34 @@ function
 
     total_particle_energy_ev = total_particle_energy.pint.to("eV")
 
+Unit Propagation
+~~~~~~~~~~~~~~~~
+
+Suppose instead of converting to ``"eV"``, we want to convert to ``"W"``
+(watts). To do this, we divide the total particle energy by time. However,
+since coordinates in :class:`xarray.Dataset` cannot be directly converted to
+:class:`pint.Quantity`, we must first extract the coordinate values manually
+and create a new Pint quantity for time.
+
+Once both arrays are quantified, Pint will automatically handle the unit
+propagation when we perform arithmetic operations like division.
+
+.. note::
+    Pint does not automatically simplify ``"J/s"`` to ``"W"``, so we use
+    :attr:`pint.Quantity.to` to convert the unit string. Since these units are
+    the same it will not change the underlying data, only the units. This is
+    only a small formatting choice and is not required.
+
+.. ipython:: python
+
+    import pint
+    time_values = total_particle_energy.coords["time"].data
+    time = pint.Quantity(time_values, "s")
+    total_particle_energy_w = total_particle_energy / time
+    total_particle_energy_w.pint.units
+    total_particle_energy_w = total_particle_energy_w.pint.to("W")
+    total_particle_energy_w.pint.units
+
 Dequantifying and Restoring Units
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -117,6 +149,7 @@ documentation <https://pint.readthedocs.io/en/stable/user/formatting.html>`_.
 .. ipython:: python
 
     total_particle_energy_ev = total_particle_energy_ev.pint.dequantify(format="~P")
+    total_particle_energy_w = total_particle_energy_w.pint.dequantify(format="~P")
     total_particle_energy_ev
 
 Visualising the Converted Data
@@ -128,9 +161,16 @@ converted :class:`xarray.Dataset` side by side:
 .. ipython:: python
 
     import matplotlib.pyplot as plt
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15,6))
+    plt.rcParams.update({
+        "axes.labelsize": 16,
+        "xtick.labelsize": 14,
+        "ytick.labelsize": 14
+    })
+    fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16,8))
     ds["Total_Particle_Energy_Electron"].plot(ax=ax1)
     total_particle_energy_ev.plot(ax=ax2)
+    total_particle_energy_w.plot(ax=ax3)
+    ax4.set_visible(False)
+    fig.suptitle("Comparison of conversion from Joules to electron volts and watts", fontsize="18")
     @savefig unit_conversion.png width=9in
-    fig.suptitle("Comparison of conversion from Joules to electron volts")
     fig.tight_layout()

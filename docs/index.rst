@@ -5,7 +5,7 @@ sdf-xarray
 read SDF files as created by the `EPOCH <https://epochpic.github.io>`_
 plasma PIC code.
 
-``sdf-xarray`` uses the `SDF-C <https://github.com/Warwick-Plasma/SDF_C>`_ library.
+``sdf-xarray`` uses the `SDF-C <https://github.com/epochpic/SDF_C>`_ library.
 
 
 .. toctree::

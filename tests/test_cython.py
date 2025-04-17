@@ -1,8 +1,8 @@
 import pathlib
+
 import numpy as np
 import numpy.testing as npt
 import pytest
-
 from sdf_xarray import SDFFile
 
 EXAMPLE_FILES_DIR = pathlib.Path(__file__).parent / "example_files"

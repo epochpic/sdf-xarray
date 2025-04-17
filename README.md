@@ -101,7 +101,7 @@ There are many ways to get involved:
 
 All code is automatically linted, formatted, and tested via GitHub Actions.
 
-To run checks locally before opening a pull request, see [contributing documentation](https://sdf-xarray.readthedocs.io/en/latest/contributing.html)
+To run checks locally before opening a pull request, see [CONTRIBUTING.md](CONTRIBUTING.md) or [readthedocs documentation](https://sdf-xarray.readthedocs.io/en/latest/contributing.html)
 
 ## Broad EPOCH Analysis Modules (BEAM)
 

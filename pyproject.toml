@@ -63,3 +63,6 @@ test-command = "pytest {project}/tests"
 
 [tool.uv]
 cache-keys = [{ file = "pyproject.toml" }, { git = true }]
+
+[tool.ruff]
+lint.select = ["I"]

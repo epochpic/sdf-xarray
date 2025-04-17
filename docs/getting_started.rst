@@ -9,17 +9,17 @@ Installation
 
 Install sdf-xarray from PyPI with:
 
-.. code:: console
+.. code-block:: bash
 
-    $ pip install sdf-xarray
+    pip install sdf-xarray
 
 or from a local checkout:
 
-.. code:: console
+.. code-block:: bash
 
-    $ git clone https://github.com/epochpic/sdf-xarray.git
-    $ cd sdf-xarray
-    $ pip install .
+    git clone https://github.com/epochpic/sdf-xarray.git
+    cd sdf-xarray
+    pip install .
 
 Usage
 -----
@@ -41,8 +41,8 @@ Basic usage:
 Multi file loading
 ~~~~~~~~~~~~~~~~~~
 
-To open a whole simulation at once, pass ``preprocess=sdf_xarray.SDFPreprocess()``
-to `xarray.open_mfdataset`:
+To open a whole simulation at once, pass
+``preprocess=sdf_xarray.SDFPreprocess()`` to `xarray.open_mfdataset`:
 
 .. ipython:: python
 
@@ -56,8 +56,8 @@ If your simulation has multiple ``output`` blocks so that not all variables are
 output at every time step, then those variables will have ``NaN`` values at the
 corresponding time points.
 
-Alternatively, we can create a separate time dimensions for each ``output`` block
-(essentially) using `sdf_xarray.open_mfdataset` with ``separate_times=True``:
+Alternatively, we can create a separate time dimensions for each ``output``
+block using `sdf_xarray.open_mfdataset` with ``separate_times=True``:
 
 .. ipython:: python
 
@@ -77,14 +77,14 @@ or `open_mfdataset` (for multiple files):
 .. ipython:: python
 
     xr.open_dataset("tutorial_dataset_1d/0010.sdf", keep_particles=True)
-    
+
 Loading SDF files directly
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-    
+
 For debugging, sometimes it's useful to see the raw SDF files:
 
 .. ipython:: python
-    
+
     from sdf_xarray import SDFFile
     with SDFFile("tutorial_dataset_1d/0010.sdf") as sdf_file:
         print(sdf_file.variables["Electric Field/Ex"])

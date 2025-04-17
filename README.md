@@ -86,6 +86,23 @@ For more in depth documentation please visit: <https://sdf-xarray.readthedocs.io
 
 If sdf-xarray contributes to a project that leads to publication, please acknowledge this by citing sdf-xarray. This can be done by clicking the "cite this repository" button located near the top right of this page.
 
+## Contributing
+
+We welcome contributions to the BEAM ecosystem! Whether it's reporting issues, suggesting features, or submitting pull requests, your input helps improve these tools for the community.
+
+### How to Contribute
+
+There are many ways to get involved:
+- **Report bugs**: Found something not working as expected? Open an issue with as much detail as possible.
+- **Request a feature**: Got an idea for a new feature or enhancement? Open a feature request on [GitHub Issues](https://github.com/epochpic/sdf-xarray/issues)!
+- **Improve the documentation**: We aim to keep our docs clear and helpful—if something's missing or unclear, feel free to suggest edits.
+- **Submit code changes**: Bug fixes, refactoring, or new features are welcome.
+
+
+All code is automatically linted, formatted, and tested via GitHub Actions.
+
+To run checks locally before opening a pull request, see [CONTRIBUTING.md](CONTRIBUTING.md) or [readthedocs documentation](https://sdf-xarray.readthedocs.io/en/latest/contributing.html)
+
 ## Broad EPOCH Analysis Modules (BEAM)
 
 ![BEAM logo](./BEAM.png)

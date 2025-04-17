@@ -36,11 +36,14 @@ docs = [
   "pickleshare",
   "ipython",
   "matplotlib",
+  "pint",
+  "pint-xarray",
 ]
 test = ["pytest >= 3.3.0", "dask[complete]"]
 lint = ["ruff"]
 build = ["cibuildwheel[uv]"]
 jupyter = ["dask[diagnostics]", "ipykernel>=6.29.5"]
+pint = ["pint", "pint-xarray"]
 
 [project.entry-points."xarray.backends"]
 sdf_engine = "sdf_xarray:SDFEntrypoint"

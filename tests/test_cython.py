@@ -1,4 +1,5 @@
 import pathlib
+
 import numpy as np
 import numpy.testing as npt
 import pytest
@@ -120,7 +121,7 @@ def test_cant_read_closed_file():
     f.close()
 
     with pytest.raises(RuntimeError):
-        f.variables["Electric Field/Ex"].data
+        f.variables["Electric Field/Ex"].data  # noqa: B018
 
 
 if __name__ == "__main__":

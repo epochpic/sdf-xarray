@@ -1,9 +1,10 @@
 import os
-import pathlib
 import re
 from collections import Counter, defaultdict
+from collections.abc import Callable, Iterable
 from itertools import product
-from typing import Iterable
+from pathlib import Path
+from typing import ClassVar
 
 import numpy as np
 import xarray as xr
@@ -14,9 +15,7 @@ from xarray.core import indexing
 from xarray.core.utils import close_on_error, try_read_magic_number_from_path
 from xarray.core.variable import Variable
 
-import sdf_xarray.plotting  # noqa: F401
-
-from .sdf_interface import Constant, SDFFile
+from .sdf_interface import Constant, SDFFile  # type: ignore  # noqa: PGH003
 
 
 def _rename_with_underscore(name: str) -> str:
@@ -62,7 +61,7 @@ def combine_datasets(path_glob: Iterable | str, **kwargs) -> xr.Dataset:
 
 
 def open_mfdataset(
-    path_glob: Iterable | str | pathlib.Path | pathlib.Path.glob,
+    path_glob: Iterable | str | Path | Callable[..., Iterable[Path]],
     *,
     separate_times: bool = False,
     keep_particles: bool = False,
@@ -99,10 +98,10 @@ def open_mfdataset(
 
     # TODO: This is not very robust, look at how xarray.open_mfdataset does it
     if isinstance(path_glob, str):
-        path_glob = pathlib.Path().glob(path_glob)
+        path_glob = Path().glob(path_glob)
 
     # Coerce to list because we might need to use the sequence multiple times
-    path_glob = sorted(list(path_glob))
+    path_glob = sorted(list(path_glob))  # noqa: C414
 
     if not separate_times:
         return combine_datasets(path_glob, keep_particles=keep_particles)
@@ -146,14 +145,12 @@ def make_time_dims(path_glob):
                 )
 
     # Count the unique set of lists of times
-    times_count = Counter((tuple(v) for v in vars_count.values()))
+    times_count = Counter(tuple(v) for v in vars_count.values())
 
     # Give each set of times a unique name
     time_dims = {}
-    count = 0
-    for t in times_count:
+    for count, t in enumerate(times_count):
         time_dims[f"time{count}"] = t
-        count += 1
 
     # Map each variable to the name of its time dimension
     var_times_map = {}
@@ -205,11 +202,11 @@ class SDFDataStore(AbstractDataStore):
     """Store for reading and writing data via the SDF library."""
 
     __slots__ = (
-        "lock",
-        "drop_variables",
-        "keep_particles",
         "_filename",
         "_manager",
+        "drop_variables",
+        "keep_particles",
+        "lock",
     )
 
     def __init__(self, manager, drop_variables=None, keep_particles=False, lock=None):
@@ -249,7 +246,7 @@ class SDFDataStore(AbstractDataStore):
     def acquire_context(self, needs_lock=True):
         return self._manager.acquire_context(needs_lock)
 
-    def load(self):
+    def load(self):  # noqa: PLR0912, PLR0915
         # Drop any requested variables
         if self.drop_variables:
             for variable in self.drop_variables:
@@ -274,8 +271,7 @@ class SDFDataStore(AbstractDataStore):
         def _process_grid_name(grid_name: str, transform_func) -> str:
             """Apply the given transformation function and then rename with underscores."""
             transformed_name = transform_func(grid_name)
-            renamed_name = _rename_with_underscore(transformed_name)
-            return renamed_name
+            return _rename_with_underscore(transformed_name)
 
         for key, value in self.ds.grids.items():
             if "cpu" in key.lower():
@@ -404,7 +400,7 @@ class SDFEntrypoint(BackendEntrypoint):
         drop_variables=None,
         keep_particles=False,
     ):
-        if isinstance(filename_or_obj, pathlib.Path):
+        if isinstance(filename_or_obj, Path):
             # sdf library takes a filename only
             # TODO: work out if we need to deal with file handles
             filename_or_obj = str(filename_or_obj)
@@ -417,18 +413,18 @@ class SDFEntrypoint(BackendEntrypoint):
         with close_on_error(store):
             return store.load()
 
-    open_dataset_parameters = ["filename_or_obj", "drop_variables", "keep_particles"]
+    open_dataset_parameters: ClassVar[list[str]] = [
+        "filename_or_obj",
+        "drop_variables",
+        "keep_particles",
+    ]
 
     def guess_can_open(self, filename_or_obj):
         magic_number = try_read_magic_number_from_path(filename_or_obj)
         if magic_number is not None:
             return magic_number.startswith(b"SDF1")
 
-        try:
-            _, ext = os.path.splitext(filename_or_obj)
-        except TypeError:
-            return False
-        return ext in {".sdf", ".SDF"}
+        return Path(filename_or_obj).suffix in {".sdf", ".SDF"}
 
     description = "Use .sdf files in Xarray"
 

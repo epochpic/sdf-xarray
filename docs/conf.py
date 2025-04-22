@@ -37,6 +37,7 @@ extensions = [
     "sphinx_autodoc_typehints",
     "IPython.sphinxext.ipython_directive",
     "IPython.sphinxext.ipython_console_highlighting",
+    "myst_parser",
 ]
 
 # Sometimes the savefig directory doesn't exist and needs to be created

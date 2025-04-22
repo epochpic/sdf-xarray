@@ -46,7 +46,7 @@ When contributing to the documentation:
 ## Running and Adding Tests
 
 We use [pytest](https://docs.pytest.org/en/stable/) to run tests.
-All new functionality should include relevant tests, placed in the `tests/` which is not rqwefwef
+All new functionality should include relevant tests, placed in the `tests/`
 directory and following the existing structure.
 
 Before submitting code changes, ensure that all tests pass:

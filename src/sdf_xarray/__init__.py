@@ -424,11 +424,7 @@ class SDFEntrypoint(BackendEntrypoint):
         if magic_number is not None:
             return magic_number.startswith(b"SDF1")
 
-        try:
-            ext = Path(filename_or_obj).suffix
-        except TypeError:
-            return False
-        return ext in {".sdf", ".SDF"}
+        return Path(filename_or_obj).suffix in {".sdf", ".SDF"}
 
     description = "Use .sdf files in Xarray"
 

@@ -9,6 +9,8 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     name: Build wheels on ${{ matrix.os }}
+    env:
+      TMPDIR: ${{ matrix.os == 'windows-latest' && 'C:\\Windows\\Temp' || '/tmp' }}
 
     steps:
     - name: Checkout

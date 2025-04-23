@@ -40,7 +40,7 @@ docs = [
   "pint-xarray",
   "myst-parser",
 ]
-test = ["pytest >= 3.3.0", "dask[complete]"]
+test = ["pytest >= 3.3.0", "dask[complete]", "matplotlib"]
 lint = ["ruff"]
 build = ["cibuildwheel[uv]"]
 jupyter = ["dask[diagnostics]", "ipykernel>=6.29.5"]

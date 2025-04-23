@@ -30,8 +30,10 @@ def test_animate_headless():
     ) as ds:
         anim = ds["Derived_Number_Density_electron"].epoch.animate()
 
-        with tempfile.NamedTemporaryFile(suffix=".gif") as tmpfile:
+        # Specify a custom writable temporary directory
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_file_path = f"{temp_dir}/output.gif"
             try:
-                anim.save(tmpfile.name, writer=PillowWriter(fps=2))
+                anim.save(temp_file_path, writer=PillowWriter(fps=2))
             except Exception as e:
                 pytest.fail(f"animate().save() failed in headless mode: {e}")

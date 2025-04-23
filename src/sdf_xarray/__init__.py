@@ -15,6 +15,10 @@ from xarray.core import indexing
 from xarray.core.utils import close_on_error, try_read_magic_number_from_path
 from xarray.core.variable import Variable
 
+# NOTE: Do not delete this line, otherwise the "epoch" accessor will not be
+# imported when the user imports sdf_xarray
+import sdf_xarray.plotting  # noqa: F401
+
 from .sdf_interface import Constant, SDFFile  # type: ignore  # noqa: PGH003
 
 

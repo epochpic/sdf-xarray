@@ -1,8 +1,12 @@
 # sdf-xarray
 
-![PyPI](https://img.shields.io/pypi/v/sdf-xarray?color=blue)
+![Dynamic TOML Badge](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fepochpic%2Fsdf-xarray%2Frefs%2Fheads%2Fmain%2Fpyproject.toml&query=%24.project.requires-python&label=python&logo=python)
+[![Available on PyPI](https://img.shields.io/pypi/v/sdf-xarray?color=blue&logo=pypi)](https://pypi.org/project/sdf-xarray/)
 ![Build/Publish](https://github.com/epochpic/sdf-xarray/actions/workflows/build_publish.yml/badge.svg)
 ![Tests](https://github.com/epochpic/sdf-xarray/actions/workflows/tests.yml/badge.svg)
+[![Read the Docs](https://img.shields.io/readthedocs/sdf-xarray?logo=readthedocs&link=https%3A%2F%2Fsdf-xarray.readthedocs.io%2F)](https://sdf-xarray.readthedocs.io)
+[![Formatted with black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
+
 
 sdf-xarray provides a backend for [xarray](https://xarray.dev) to read SDF files as created by
 [EPOCH](https://epochpic.github.io) using the [SDF-C](https://github.com/epochpic/SDF_C) library.

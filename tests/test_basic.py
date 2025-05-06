@@ -10,6 +10,7 @@ EXAMPLE_MISMATCHED_FILES_DIR = (
     pathlib.Path(__file__).parent / "example_mismatched_files"
 )
 EXAMPLE_ARRAYS_DIR = pathlib.Path(__file__).parent / "example_array_no_grids"
+EXAMPLE_3D_DIST_FN = pathlib.Path(__file__).parent / "example_dist_fn"
 
 
 def test_basic():
@@ -178,3 +179,9 @@ def test_arrays_with_no_grids_multifile():
         random_states = "Random_States"
         assert random_states in df
         assert df[random_states].shape == (2, 8)
+
+
+def test_3d_distribution_function():
+    with xr.open_dataset(EXAMPLE_3D_DIST_FN / "0000.sdf") as df:
+        distribution_function = "dist_fn_x_px_py_Electron"
+        assert df[distribution_function].shape == (16, 20, 20)

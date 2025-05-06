@@ -1,0 +1,154 @@
+begin:control
+
+  # global number of gridpoints
+  # Divide nx and ny by 2 from 40 to 20  
+  nx = 16 # in x
+  ny = 8
+  nparticles = nx * ny * 4
+
+  # maximum number of iterations
+  # set to -1 to run until finished
+  nsteps = -1
+
+  # final time of simulation
+  t_end = 200e-15
+
+  # size of domain
+  x_min = 0e-6
+  x_max =  40e-6
+  y_min = -10e-6
+  y_max = -y_min
+
+  dt_multiplier = 0.8
+  dlb_threshold = 0.8
+
+end:control
+
+begin:laser
+
+  boundary = x_min
+  intensity_w_cm2 = 1.0e23
+  lambda = 1e-6
+  phase = 0.0
+  t_profile = gauss(time, 40.0e-15, 30.0e-15)  # This profile means your laser pulse has a maximum intensity at t=40 fs, and the intensity will smoothly decrease as time moves away from this point, with a width parameter of 30 fs.
+  t_start = 0.0
+  t_end = end
+end:laser
+
+begin:collisions
+
+  use_collisions = T
+  coulomb_log = auto
+  collide = all
+
+end:collisions
+
+
+begin:boundaries
+
+  bc_x_min = simple_laser
+  bc_x_max = open
+  bc_y_min = periodic
+  bc_y_max = periodic
+
+end:boundaries
+
+
+begin:species
+
+  # electrons
+  name = Electron
+  fraction = 0.5
+  dump = T
+
+  temperature = 0
+  number_density = if ((x gt 10e-6) and (x lt 30e-6), 1e22, 0)
+  number_density_min = 1
+
+  identify:electron
+
+end:species
+
+
+begin:output_global
+
+  force_final_to_be_restartable = F
+
+end:output_global
+
+
+begin:output
+
+  name = normal
+
+  # If use_offset_grid is true then the code dumps a grid which displays
+  # positions relative to the left hand edge of the window
+  use_offset_grid = F
+
+  # number of timesteps between output dumps
+  dt_snapshot = 100.0e-15 # 100.0e-15 / 100.0
+
+  # Properties at particle positions
+  particles = never
+  px = never
+  py = never
+  pz = never
+  vx = never
+  vy = never
+  vz = never
+  charge = never
+  mass = never
+  particle_weight = never
+  species_id = never
+
+  # Properties on grid
+  grid = always
+  ex = never
+  ey = always
+  ez = never
+  bx = never
+  by = never
+  bz = never
+  jx = never
+  jy = never
+  jz = never
+  poynt_flux = always
+  average_particle_energy = never
+  mass_density = never
+  charge_density = never
+  number_density = never
+  temperature = never
+
+  # extended io
+  distribution_functions = always
+  particle_probes = never
+  absorption = never
+  total_energy_sum = never
+
+end:output
+
+
+begin:dist_fn
+
+  name = x_px_py
+  ndims = 3
+  dumpmask = always
+
+  direction1 = dir_x
+  direction2 = dir_px
+  direction3 = dir_py
+
+  # range is ignored for spatial coordinates
+  range1 = (1, 1)
+  range2 = (1.6e-20, 1.6e-19)
+  range3 = (1.6e-20, 1.6e-19)
+
+  # resolution is ignored for spatial coordinates
+  resolution1 = 1
+  resolution2 = 20
+  resolution3 = 20
+
+  #include_species:Photon
+  include_species:Electron
+
+end:dist_fn

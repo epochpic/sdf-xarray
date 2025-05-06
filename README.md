@@ -2,6 +2,7 @@
 
 ![Dynamic TOML Badge](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fepochpic%2Fsdf-xarray%2Frefs%2Fheads%2Fmain%2Fpyproject.toml&query=%24.project.requires-python&label=python&logo=python)
 [![Available on PyPI](https://img.shields.io/pypi/v/sdf-xarray?color=blue&logo=pypi)](https://pypi.org/project/sdf-xarray/)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15351323.svg)](https://doi.org/10.5281/zenodo.15351323)
 ![Build/Publish](https://github.com/epochpic/sdf-xarray/actions/workflows/build_publish.yml/badge.svg)
 ![Tests](https://github.com/epochpic/sdf-xarray/actions/workflows/tests.yml/badge.svg)
 [![Read the Docs](https://img.shields.io/readthedocs/sdf-xarray?logo=readthedocs&link=https%3A%2F%2Fsdf-xarray.readthedocs.io%2F)](https://sdf-xarray.readthedocs.io)

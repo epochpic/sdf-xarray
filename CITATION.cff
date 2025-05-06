@@ -16,4 +16,7 @@ authors:
     given-names: Shaun
     orcid: 'https://orcid.org/0009-0005-0693-030X'
     affiliation: University of York
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.15351323
 date-released: '2024-07-25'

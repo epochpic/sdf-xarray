@@ -310,6 +310,8 @@ class SDFDataStore(AbstractDataStore):
             # Had some problems with these variables, so just ignore them for now
             if "cpu" in key.lower():
                 continue
+            if "boundary" in key.lower():
+                continue
             if "output file" in key.lower():
                 continue
 

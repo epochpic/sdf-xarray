@@ -25,7 +25,14 @@ Usage
 -----
 
 ``sdf-xarray`` is a backend for xarray, and so is usable directly from
-`xarray`.
+`xarray`. There are several ways to load SDF files:
+
+- To load a single file, use :func:`xarray.open_dataset`.
+- To load multiple files, use :func:`xarray.open_mfdataset` or :func:`sdf_xarray.open_mfdataset`.
+- To access the raw contents of a single SDF file, use :func:`sdf_xarray.sdf_interface.SDFFile`.
+
+.. note::
+   When loading ``*.sdf`` files, variables related to ``boundaries``, ``cpu`` and ``output file`` are excluded as they are problematic.
 
 Single file loading
 ~~~~~~~~~~~~~~~~~~~

@@ -92,7 +92,7 @@ def test_calculate_window_boundaries_1D():
         preprocess=SDFPreprocess(),
         combine="nested",
     ) as ds:
-        data = ds["Derived_Number_Density_electron"][:,:,50]
+        data = ds["Derived_Number_Density_electron"][:, :, 50]
         expected_result = np.array(
             [[0, 1], [0.49, 1.49], [0.99, 1.99], [1.49, 2.49], [1.99, 2.99]]
         )
@@ -120,7 +120,7 @@ def test_calculate_window_boundaries_1D_xlim():
         preprocess=SDFPreprocess(),
         combine="nested",
     ) as ds:
-        data = ds["Derived_Number_Density_electron"][:,:,50]
+        data = ds["Derived_Number_Density_electron"][:, :, 50]
         expected_result = np.array(
             [[0.1, 0.9], [0.59, 1.39], [1.09, 1.89], [1.59, 2.39], [2.09, 2.89]]
         )
@@ -140,7 +140,6 @@ def test_calculate_window_boundaries_2D_xlim():
         )
         result = sxp.calculate_window_boundaries(data, xlim=(0.1, 0.9))
         assert result == pytest.approx(expected_result, abs=0.1)
-
 
 
 def test_compute_global_limits():

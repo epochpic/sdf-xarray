@@ -13,7 +13,9 @@ from sdf_xarray import SDFPreprocess
 mpl.use("Agg")
 
 EXAMPLE_FILES_DIR_1D = pathlib.Path(__file__).parent / "example_files_1D"
-EXAMPLE_FILES_DIR_2D_MW = pathlib.Path(__file__).parent / "example_files_2D_moving_window"
+EXAMPLE_FILES_DIR_2D_MW = (
+    pathlib.Path(__file__).parent / "example_files_2D_moving_window"
+)
 
 
 def test_animation_accessor():
@@ -78,43 +80,47 @@ def test_get_frame_title_custom_title_and_sdf_name():
     ) as ds:
         data = ds["Derived_Number_Density_electron"]
         expected_result = "Test Title, time = 5.47e-14 [s], 0000.sdf"
-        result = sxp.get_frame_title(data, 0, display_sdf_name=True, title_custom="Test Title")
+        result = sxp.get_frame_title(
+            data, 0, display_sdf_name=True, title_custom="Test Title"
+        )
         assert expected_result == result
 
 
 def test_calculate_window_boundaries():
     with xr.open_mfdataset(
-        EXAMPLE_FILES_DIR_2D_MW.glob("*.sdf"), preprocess=SDFPreprocess(), combine='nested'
+        EXAMPLE_FILES_DIR_2D_MW.glob("*.sdf"),
+        preprocess=SDFPreprocess(),
+        combine="nested",
     ) as ds:
         data = ds["Derived_Number_Density_electron"]
-        expected_result = np.array([[0, 1],
-                                   [0.49, 1.49],
-                                   [0.99, 1.99],
-                                   [1.49, 2.49],
-                                   [1.99, 2.99]])
-        result =  sxp.calculate_window_boundaries(data)
-        assert expected_result == pytest.approx(result, abs = 0.1)
+        expected_result = np.array(
+            [[0, 1], [0.49, 1.49], [0.99, 1.99], [1.49, 2.49], [1.99, 2.99]]
+        )
+        result = sxp.calculate_window_boundaries(data)
+        assert expected_result == pytest.approx(result, abs=0.1)
 
 
 def test_calculate_window_boundaries_xlim():
     with xr.open_mfdataset(
-        EXAMPLE_FILES_DIR_2D_MW.glob("*.sdf"), preprocess=SDFPreprocess(), combine='nested'
+        EXAMPLE_FILES_DIR_2D_MW.glob("*.sdf"),
+        preprocess=SDFPreprocess(),
+        combine="nested",
     ) as ds:
         data = ds["Derived_Number_Density_electron"]
-        expected_result = np.array([[0.1, 0.9],
-                                   [0.59, 1.39],
-                                   [1.09, 1.89],
-                                   [1.59, 2.39],
-                                   [2.09, 2.89]])
-        result =  sxp.calculate_window_boundaries(data, xlim = (0.1, 0.9))
-        assert result == pytest.approx(expected_result, abs = 0.1)
+        expected_result = np.array(
+            [[0.1, 0.9], [0.59, 1.39], [1.09, 1.89], [1.59, 2.39], [2.09, 2.89]]
+        )
+        result = sxp.calculate_window_boundaries(data, xlim=(0.1, 0.9))
+        assert result == pytest.approx(expected_result, abs=0.1)
 
 
 def test_compute_global_limits():
     with xr.open_mfdataset(
         EXAMPLE_FILES_DIR_1D.glob("*.sdf"), preprocess=SDFPreprocess()
     ) as ds:
-        result_min, result_max = sxp.compute_global_limits(ds["Derived_Number_Density_electron"])
+        result_min, result_max = sxp.compute_global_limits(
+            ds["Derived_Number_Density_electron"]
+        )
         expected_min = 8.07e19
         expected_max = 1.17e20
         assert expected_min == pytest.approx(result_min, abs=1e18)
@@ -125,7 +131,9 @@ def test_compute_global_limits_percentile():
     with xr.open_mfdataset(
         EXAMPLE_FILES_DIR_1D.glob("*.sdf"), preprocess=SDFPreprocess()
     ) as ds:
-        result_min, result_max = sxp.compute_global_limits(ds["Derived_Number_Density_electron"], 40, 45)
+        result_min, result_max = sxp.compute_global_limits(
+            ds["Derived_Number_Density_electron"], 40, 45
+        )
         expected_min = 9.84e19
         expected_max = 9.94e19
         assert expected_min == pytest.approx(result_min, abs=1e18)
@@ -134,9 +142,13 @@ def test_compute_global_limits_percentile():
 
 def test_compute_global_limits_NaNs():
     with xr.open_mfdataset(
-        EXAMPLE_FILES_DIR_2D_MW.glob("*.sdf"), preprocess=SDFPreprocess(), combine='nested'
+        EXAMPLE_FILES_DIR_2D_MW.glob("*.sdf"),
+        preprocess=SDFPreprocess(),
+        combine="nested",
     ) as ds:
-        result_min, result_max = sxp.compute_global_limits(ds["Derived_Number_Density_electron"])
+        result_min, result_max = sxp.compute_global_limits(
+            ds["Derived_Number_Density_electron"]
+        )
         expected_min = 5.51e-1
         expected_max = 2.70
         assert expected_min == pytest.approx(result_min, abs=1e-2)

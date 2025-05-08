@@ -14,12 +14,12 @@ def get_frame_title(
     data: xr.DataArray,
     frame: int,
     display_sdf_name: bool = False,
-    title_custom: str | None = None
+    title_custom: str | None = None,
 ) -> str:
     """Generate the title for a frame"""
     # Adds custom text to the start of the title, if specified
     title_custom = f"{title_custom}, " if title_custom else ""
-    
+
     # Adds the time and associated units to the title
     time = data["time"][frame].to_numpy()
     title_time = f"time = {time:.2e} [{data["time"].units}]"
@@ -30,21 +30,20 @@ def get_frame_title(
 
 
 def calculate_window_boundaries(
-    data: xr.DataArray,
-    xlim: tuple[float, float] | False = False
+    data: xr.DataArray, xlim: tuple[float, float] | False = False
 ) -> np.ndarray:
     """Calculate the bounderies a moving window frame. If the user specifies xlim, this will
     be used as the initial bounderies and the window will move along acordingly.
     """
     x_grid = data["X_Grid_mid"].values
-    x_half_cell = (x_grid[1] - x_grid[0])/2
+    x_half_cell = (x_grid[1] - x_grid[0]) / 2
     N_frames = data["time"].size
 
     # Find the window bounderies by finding the first and last non-NaN values in the 0th lineout
     # along the x-axis.
     window_boundaries = np.zeros((N_frames, 2))
     for i in range(N_frames):
-        target_lineout = data[i,:,0].values
+        target_lineout = data[i, :, 0].values
         x_grid_non_nan = x_grid[~np.isnan(target_lineout)]
         window_boundaries[i, 0] = x_grid_non_nan[0] - x_half_cell
         window_boundaries[i, 1] = x_grid_non_nan[-1] + x_half_cell
@@ -160,16 +159,14 @@ def animate(
             plt.colorbar(plot, ax=ax, label=f"{long_name} [${units}$]")
 
     # check if there is a moving window by finding NaNs in the data
-    move_window =  np.isnan(np.sum(data.values))
+    move_window = np.isnan(np.sum(data.values))
     if move_window:
         window_boundaries = calculate_window_boundaries(data, kwargs.get("xlim", False))
 
     def update(frame):
         # Set the xlim for each frame in the case of a moving window
         if move_window:
-            kwargs["xlim"] = (
-                window_boundaries[frame]
-            )
+            kwargs["xlim"] = window_boundaries[frame]
 
         # Update plot for the new frame
         ax.clear()

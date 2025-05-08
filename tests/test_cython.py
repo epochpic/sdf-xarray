@@ -6,7 +6,7 @@ import pytest
 
 from sdf_xarray import SDFFile
 
-EXAMPLE_FILES_DIR = pathlib.Path(__file__).parent / "example_files"
+EXAMPLE_FILES_DIR = pathlib.Path(__file__).parent / "example_files_1D"
 
 
 def test_sdffile():

@@ -5,7 +5,7 @@ import xarray as xr
 
 from sdf_xarray import SDFPreprocess, _process_latex_name, open_mfdataset
 
-EXAMPLE_FILES_DIR = pathlib.Path(__file__).parent / "example_files"
+EXAMPLE_FILES_DIR = pathlib.Path(__file__).parent / "example_files_1D"
 EXAMPLE_MISMATCHED_FILES_DIR = (
     pathlib.Path(__file__).parent / "example_mismatched_files"
 )

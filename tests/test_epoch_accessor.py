@@ -10,7 +10,8 @@ from sdf_xarray import SDFPreprocess
 
 mpl.use("Agg")
 
-EXAMPLE_FILES_DIR = pathlib.Path(__file__).parent / "example_files"
+EXAMPLE_FILES_DIR_1D = pathlib.Path(__file__).parent / "example_files_1D"
+EXAMPLE_FILES_DIR_2D_MW = pathlib.Path(__file__).parent / "example_files_2D_moving_window"
 
 
 def test_animation_accessor():
@@ -26,7 +27,7 @@ def test_animation_accessor():
 
 def test_animate_headless():
     with xr.open_mfdataset(
-        EXAMPLE_FILES_DIR.glob("*.sdf"), preprocess=SDFPreprocess()
+        EXAMPLE_FILES_DIR_1D.glob("*.sdf"), preprocess=SDFPreprocess()
     ) as ds:
         anim = ds["Derived_Number_Density_electron"].epoch.animate()
 

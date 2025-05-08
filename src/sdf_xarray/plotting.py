@@ -130,7 +130,6 @@ def animate(
 
     kwargs_original = kwargs.copy()
 
-    print("testing animation function")
     if ax is None:
         _, ax = plt.subplots()
 

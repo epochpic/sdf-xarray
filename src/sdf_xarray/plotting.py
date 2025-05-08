@@ -22,7 +22,7 @@ def get_frame_title(
 
     # Adds the time and associated units to the title
     time = data["time"][frame].to_numpy()
-    title_time = f"time = {time:.2e} [{data["time"].units}]"
+    title_time = f"time = {time:.2e} [{data['time'].units}]"
 
     # Adds sdf name to the title, if specifed
     title_sdf = f", {frame:04d}.sdf" if display_sdf_name else ""

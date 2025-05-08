@@ -43,7 +43,10 @@ def calculate_window_boundaries(
     # along the x-axis.
     window_boundaries = np.zeros((N_frames, 2))
     for i in range(N_frames):
-        target_lineout = data[i, :, 0].values
+        if is_1d(data):
+            target_lineout = data[i].values
+        if is_2d(data):
+            target_lineout = data[i, :, 0].values
         x_grid_non_nan = x_grid[~np.isnan(target_lineout)]
         window_boundaries[i, 0] = x_grid_non_nan[0] - x_half_cell
         window_boundaries[i, 1] = x_grid_non_nan[-1] + x_half_cell

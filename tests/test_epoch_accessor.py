@@ -86,7 +86,21 @@ def test_get_frame_title_custom_title_and_sdf_name():
         assert expected_result == result
 
 
-def test_calculate_window_boundaries():
+def test_calculate_window_boundaries_1D():
+    with xr.open_mfdataset(
+        EXAMPLE_FILES_DIR_2D_MW.glob("*.sdf"),
+        preprocess=SDFPreprocess(),
+        combine="nested",
+    ) as ds:
+        data = ds["Derived_Number_Density_electron"][:,:,50]
+        expected_result = np.array(
+            [[0, 1], [0.49, 1.49], [0.99, 1.99], [1.49, 2.49], [1.99, 2.99]]
+        )
+        result = sxp.calculate_window_boundaries(data)
+        assert expected_result == pytest.approx(result, abs=0.1)
+
+
+def test_calculate_window_boundaries_2D():
     with xr.open_mfdataset(
         EXAMPLE_FILES_DIR_2D_MW.glob("*.sdf"),
         preprocess=SDFPreprocess(),
@@ -100,7 +114,21 @@ def test_calculate_window_boundaries():
         assert expected_result == pytest.approx(result, abs=0.1)
 
 
-def test_calculate_window_boundaries_xlim():
+def test_calculate_window_boundaries_1D_xlim():
+    with xr.open_mfdataset(
+        EXAMPLE_FILES_DIR_2D_MW.glob("*.sdf"),
+        preprocess=SDFPreprocess(),
+        combine="nested",
+    ) as ds:
+        data = ds["Derived_Number_Density_electron"][:,:,50]
+        expected_result = np.array(
+            [[0.1, 0.9], [0.59, 1.39], [1.09, 1.89], [1.59, 2.39], [2.09, 2.89]]
+        )
+        result = sxp.calculate_window_boundaries(data, xlim=(0.1, 0.9))
+        assert result == pytest.approx(expected_result, abs=0.1)
+
+
+def test_calculate_window_boundaries_2D_xlim():
     with xr.open_mfdataset(
         EXAMPLE_FILES_DIR_2D_MW.glob("*.sdf"),
         preprocess=SDFPreprocess(),
@@ -112,6 +140,7 @@ def test_calculate_window_boundaries_xlim():
         )
         result = sxp.calculate_window_boundaries(data, xlim=(0.1, 0.9))
         assert result == pytest.approx(expected_result, abs=0.1)
+
 
 
 def test_compute_global_limits():

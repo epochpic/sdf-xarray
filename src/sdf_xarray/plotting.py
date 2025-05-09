@@ -18,15 +18,17 @@ def get_frame_title(
 ) -> str:
     """Generate the title for a frame"""
     # Adds custom text to the start of the title, if specified
-    title_custom = f"{title_custom}, " if title_custom else ""
-
+    title_custom = "" if title_custom is None else f"{title_custom}, "
     # Adds the time and associated units to the title
     time = data["time"][frame].to_numpy()
-    title_time = f"time = {time:.2e} [{data['time'].units}]"
+
+    time_units = data["time"].attrs.get("units", False)
+    time_units_formatted = f" [{time_units}]" if time_units else ""
+    title_time = f"time = {time:.2e}{time_units_formatted}"
 
     # Adds sdf name to the title, if specifed
     title_sdf = f", {frame:04d}.sdf" if display_sdf_name else ""
-    return title_custom + title_time + title_sdf
+    return f"{title_custom}{title_time}{title_sdf}"
 
 
 def calculate_window_boundaries(

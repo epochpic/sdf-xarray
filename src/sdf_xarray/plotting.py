@@ -43,9 +43,11 @@ def calculate_window_boundaries(
     # along the x-axis.
     window_boundaries = np.zeros((N_frames, 2))
     for i in range(N_frames):
-        if is_1d(data):
+        # Check if data is 1D
+        if data.ndim == 2:
             target_lineout = data[i].values
-        if is_2d(data):
+        # Check if data is 2D
+        if data.ndim == 3:
             target_lineout = data[i, :, 0].values
         x_grid_non_nan = x_grid[~np.isnan(target_lineout)]
         window_boundaries[i, 0] = x_grid_non_nan[0] - x_half_cell
@@ -73,21 +75,6 @@ def compute_global_limits(
     global_min = np.percentile(values_no_nan, min_percentile)
     global_max = np.percentile(values_no_nan, max_percentile)
     return global_min, global_max
-
-
-def is_1d(data: xr.DataArray) -> bool:
-    """Check if the data is 1D."""
-    return len(data.shape) == 2
-
-
-def is_2d(data: xr.DataArray) -> bool:
-    """Check if the data is 2D."""
-    return len(data.shape) == 3
-
-
-def is_Nd(data: xr.DataArray) -> bool:
-    """Check if the data is 3D or greater."""
-    return len(data.shape) > 3
 
 
 def animate(
@@ -137,13 +124,14 @@ def animate(
     global_min, global_max = compute_global_limits(data, min_percentile, max_percentile)
 
     # Initialise plot and set y-limits for 1D data
-    if is_1d(data):
+    if data.ndim == 2:
         kwargs.setdefault("x", "X_Grid_mid")
         plot = data.isel(time=0).plot(ax=ax, **kwargs)
         ax.set_title(get_frame_title(data, 0, display_sdf_name, title))
         ax.set_ylim(global_min, global_max)
 
-    if is_2d(data):
+    # Initilise plot and set colour bar for 2D data
+    if data.ndim == 3:
         kwargs["norm"] = plt.Normalize(vmin=global_min, vmax=global_max)
         kwargs["add_colorbar"] = False
         # Set default x and y coordinates for 2D data if not provided
@@ -177,7 +165,7 @@ def animate(
         ax.set_title(get_frame_title(data, frame, display_sdf_name, title))
 
         # Update y-limits for 1D data
-        if is_1d(data):
+        if data.ndim == 2:
             ax.set_ylim(global_min, global_max)
 
     return FuncAnimation(

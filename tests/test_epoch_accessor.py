@@ -97,7 +97,7 @@ def test_calculate_window_boundaries_1D():
             [[0, 1], [0.49, 1.49], [0.99, 1.99], [1.49, 2.49], [1.99, 2.99]]
         )
         result = sxp.calculate_window_boundaries(data)
-        assert expected_result == pytest.approx(result, abs=0.1)
+        assert result == pytest.approx(expected_result, abs=0.1)
 
 
 def test_calculate_window_boundaries_2D():
@@ -111,7 +111,7 @@ def test_calculate_window_boundaries_2D():
             [[0, 1], [0.49, 1.49], [0.99, 1.99], [1.49, 2.49], [1.99, 2.99]]
         )
         result = sxp.calculate_window_boundaries(data)
-        assert expected_result == pytest.approx(result, abs=0.1)
+        assert result == pytest.approx(expected_result, abs=0.1)
 
 
 def test_calculate_window_boundaries_1D_xlim():
@@ -149,10 +149,10 @@ def test_compute_global_limits():
         result_min, result_max = sxp.compute_global_limits(
             ds["Derived_Number_Density_electron"]
         )
-        expected_min = 8.07e19
-        expected_max = 1.17e20
-        assert expected_min == pytest.approx(result_min, abs=1e18)
-        assert expected_max == pytest.approx(result_max, abs=1e19)
+        expected_result_min = 8.07e19
+        expected_result_max = 1.17e20
+        assert result_min == pytest.approx(expected_result_min, abs=1e18)
+        assert result_max == pytest.approx(expected_result_max, abs=1e19)
 
 
 def test_compute_global_limits_percentile():
@@ -162,10 +162,10 @@ def test_compute_global_limits_percentile():
         result_min, result_max = sxp.compute_global_limits(
             ds["Derived_Number_Density_electron"], 40, 45
         )
-        expected_min = 9.84e19
-        expected_max = 9.94e19
-        assert expected_min == pytest.approx(result_min, abs=1e18)
-        assert expected_max == pytest.approx(result_max, abs=1e18)
+        expected_result_min = 9.84e19
+        expected_result_max = 9.94e19
+        assert result_min == pytest.approx(expected_result_min, abs=1e18)
+        assert result_max == pytest.approx(expected_result_max, abs=1e18)
 
 
 def test_compute_global_limits_NaNs():
@@ -177,7 +177,7 @@ def test_compute_global_limits_NaNs():
         result_min, result_max = sxp.compute_global_limits(
             ds["Derived_Number_Density_electron"]
         )
-        expected_min = 5.51e-1
-        expected_max = 2.70
-        assert expected_min == pytest.approx(result_min, abs=1e-2)
-        assert expected_max == pytest.approx(result_max, abs=1e-1)
+        expected_result_min = 5.51e-1
+        expected_result_max = 2.70
+        assert result_min == pytest.approx(expected_result_min, abs=1e-2)
+        assert result_max == pytest.approx(expected_result_max, abs=1e-1)

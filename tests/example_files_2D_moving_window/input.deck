@@ -1,0 +1,63 @@
+begin:control
+  nx = 100
+  ny = 100
+
+  # final time of simulation
+  t_end = 10e-9
+
+  # size of domain
+  x_min = 0
+  x_end = 1
+
+  y_min = 0
+  y_max = 1
+
+  stdout_frequency = 10
+end:control
+
+
+begin:boundaries
+  bc_x_min = simple_outflow
+  bc_x_max = simple_outflow
+  bc_y_min = periodic
+  bc_y_max = periodic
+end:boundaries
+
+
+begin:window
+  move_window = T
+  window_start_time = 0
+  bc_x_min_after_move = simple_outflow
+  bc_x_max_after_move = simple_outflow
+  window_v_x = 2e8
+end:window
+
+begin:constant
+  x0 = 1.31
+  y0 = 0.5
+  r0 = 0.4^2
+  r2 = (x - x0)^2 + (y - y0)^2
+end:constant
+
+begin:species
+  # electron
+  name = electron
+  charge = -1.0
+  mass = 1.0
+  nparticles_per_cell = 5
+
+  number_density = if(abs(x-x0) lt 0.3, 2, 1)
+  number_density = if(abs(y-y0) lt 0.2, number_density(electron), 1)
+
+  temperature_ev = 0
+end:species
+
+
+begin:output
+  name = normal
+  dt_snapshot = 10e-9/4
+
+  # Properties on grid
+  grid = always
+  number_density = always + species + no_sum
+end:output

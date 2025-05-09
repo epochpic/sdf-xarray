@@ -10,60 +10,82 @@ if TYPE_CHECKING:
     from matplotlib.animation import FuncAnimation
 
 
-def get_frame_title(data: xr.DataArray, frame: int, display_sdf_name: bool) -> str:
+def get_frame_title(
+    data: xr.DataArray,
+    frame: int,
+    display_sdf_name: bool = False,
+    title_custom: str | None = None,
+) -> str:
     """Generate the title for a frame"""
-    sdf_name = f", {frame:04d}.sdf" if display_sdf_name else ""
+    # Adds custom text to the start of the title, if specified
+    title_custom = "" if title_custom is None else f"{title_custom}, "
+    # Adds the time and associated units to the title
     time = data["time"][frame].to_numpy()
-    return f"t = {time:.2e}s{sdf_name}"
+
+    time_units = data["time"].attrs.get("units", False)
+    time_units_formatted = f" [{time_units}]" if time_units else ""
+    title_time = f"time = {time:.2e}{time_units_formatted}"
+
+    # Adds sdf name to the title, if specifed
+    title_sdf = f", {frame:04d}.sdf" if display_sdf_name else ""
+    return f"{title_custom}{title_time}{title_sdf}"
 
 
-def calculate_window_velocity_and_edges(
-    data: xr.DataArray, x_axis_coord: str
-) -> tuple[float, tuple[float, float], np.ndarray]:
-    """Calculate the moving window's velocity and initial edges.
-
-    1. Finds a lineout of the target atribute in the x coordinate of the first frame
-    2. Removes the NaN values to isolate the simulation window
-    3. Produces the index size of the window, indexed at zero
-    4. Uses distance moved and final time of the simulation to calculate velocity and initial xlims
+def calculate_window_boundaries(
+    data: xr.DataArray, xlim: tuple[float, float] | False = False
+) -> np.ndarray:
+    """Calculate the bounderies a moving window frame. If the user specifies xlim, this will
+    be used as the initial bounderies and the window will move along acordingly.
     """
-    time_since_start = data["time"].values - data["time"].values[0]
-    initial_window_edge = (0, 0)
-    target_lineout = data.values[0, :, 0]
-    target_lineout_window = target_lineout[~np.isnan(target_lineout)]
-    x_grid = data[x_axis_coord].values
-    window_size_index = target_lineout_window.size - 1
+    x_grid = data["X_Grid_mid"].values
+    x_half_cell = (x_grid[1] - x_grid[0]) / 2
+    N_frames = data["time"].size
 
-    velocity_window = (x_grid[-1] - x_grid[window_size_index]) / time_since_start[-1]
-    initial_window_edge = (x_grid[0], x_grid[window_size_index])
-    return velocity_window, initial_window_edge, time_since_start
+    # Find the window bounderies by finding the first and last non-NaN values in the 0th lineout
+    # along the x-axis.
+    window_boundaries = np.zeros((N_frames, 2))
+    for i in range(N_frames):
+        # Check if data is 1D
+        if data.ndim == 2:
+            target_lineout = data[i].values
+        # Check if data is 2D
+        if data.ndim == 3:
+            target_lineout = data[i, :, 0].values
+        x_grid_non_nan = x_grid[~np.isnan(target_lineout)]
+        window_boundaries[i, 0] = x_grid_non_nan[0] - x_half_cell
+        window_boundaries[i, 1] = x_grid_non_nan[-1] + x_half_cell
+
+    # User's choice for initial window edge supercides the one calculated
+    if xlim:
+        window_boundaries = window_boundaries + xlim - window_boundaries[0]
+    return window_boundaries
 
 
-def compute_global_limits(data: xr.DataArray) -> tuple[float, float]:
-    """Remove all NaN values from the target data to calculate the 1st and 99th percentiles,
-    excluding extreme outliers.
+def compute_global_limits(
+    data: xr.DataArray,
+    min_percentile: float = 0,
+    max_percentile: float = 100,
+) -> tuple[float, float]:
+    """Remove all NaN values from the target data to calculate the global minimum and maximum of the data.
+    User defined percentiles can remove extreme outliers.
     """
+
+    # Removes NaN values, needed for moving windows
     values_no_nan = data.values[~np.isnan(data.values)]
-    global_min = np.percentile(values_no_nan, 1)
-    global_max = np.percentile(values_no_nan, 99)
+
+    # Finds the global minimum and maximum of the plot, based on the percentile of the data
+    global_min = np.percentile(values_no_nan, min_percentile)
+    global_max = np.percentile(values_no_nan, max_percentile)
     return global_min, global_max
 
 
-def is_1d(data: xr.DataArray) -> bool:
-    """Check if the data is 1D."""
-    return len(data.shape) == 2
-
-
-def is_2d(data: xr.DataArray) -> bool:
-    """Check if the data is 2D or 3D."""
-    return len(data.shape) == 3
-
-
-def generate_animation(
+def animate(
     data: xr.DataArray,
+    fps: float = 10,
+    min_percentile: float = 0,
+    max_percentile: float = 100,
+    title: str | None = None,
     display_sdf_name: bool = False,
-    fps: int = 10,
-    move_window: bool = False,
     ax: plt.Axes | None = None,
     **kwargs,
 ) -> FuncAnimation:
@@ -71,17 +93,18 @@ def generate_animation(
 
     Parameters
     ---------
-    dataset
-        The dataset containing the simulation data
-    target_attribute
-        The attribute to plot for each timestep
-    display_sdf_name
-        Display the sdf file name in the animation title
+    data
+        The dataarray containing the target data
     fps
         Frames per second for the animation (default: 10)
-    move_window
-        If the simulation has a moving window, the animation will move along
-        with it (default: False)
+    min_percentile
+        Minimum percentile of the data (default: 0)
+    max_percentile
+        Maximum percentile of the data (default: 100)
+    title
+        Custom title to add to the plot.
+    display_sdf_name
+        Display the sdf file name in the animation title
     ax
         Matplotlib axes on which to plot.
     kwargs
@@ -89,18 +112,28 @@ def generate_animation(
 
     Examples
     --------
-    >>> generate_animation(dataset["Derived_Number_Density_Electron"])
+    >>> dataset["Derived_Number_Density_Electron"].epoch.animate()
     """
     import matplotlib.pyplot as plt
     from matplotlib.animation import FuncAnimation
+
+    kwargs_original = kwargs.copy()
 
     if ax is None:
         _, ax = plt.subplots()
 
     N_frames = data["time"].size
-    global_min, global_max = compute_global_limits(data)
+    global_min, global_max = compute_global_limits(data, min_percentile, max_percentile)
 
-    if is_2d(data):
+    # Initialise plot and set y-limits for 1D data
+    if data.ndim == 2:
+        kwargs.setdefault("x", "X_Grid_mid")
+        plot = data.isel(time=0).plot(ax=ax, **kwargs)
+        ax.set_title(get_frame_title(data, 0, display_sdf_name, title))
+        ax.set_ylim(global_min, global_max)
+
+    # Initilise plot and set colour bar for 2D data
+    if data.ndim == 3:
         kwargs["norm"] = plt.Normalize(vmin=global_min, vmax=global_max)
         kwargs["add_colorbar"] = False
         # Set default x and y coordinates for 2D data if not provided
@@ -109,44 +142,32 @@ def generate_animation(
 
         # Initialize the plot with the first timestep
         plot = data.isel(time=0).plot(ax=ax, **kwargs)
-        ax.set_title(get_frame_title(data, 0, display_sdf_name))
+        ax.set_title(get_frame_title(data, 0, display_sdf_name, title))
 
         # Add colorbar
-        long_name = data.attrs.get("long_name")
-        units = data.attrs.get("units")
-        plt.colorbar(plot, ax=ax, label=f"{long_name} [${units}$]")
+        if kwargs_original.get("add_colorbar", True):
+            long_name = data.attrs.get("long_name")
+            units = data.attrs.get("units")
+            plt.colorbar(plot, ax=ax, label=f"{long_name} [${units}$]")
 
-    # Initialise plo and set y-limits for 1D data
-    if is_1d(data):
-        plot = data.isel(time=0).plot(ax=ax, **kwargs)
-        ax.set_title(get_frame_title(data, 0, display_sdf_name))
-        ax.set_ylim(global_min, global_max)
-
+    # check if there is a moving window by finding NaNs in the data
+    move_window = np.isnan(np.sum(data.values))
     if move_window:
-        window_velocity, window_initial_edge, time_since_start = (
-            calculate_window_velocity_and_edges(data, kwargs["x"])
-        )
-
-    # User's choice for initial window edge supercides the one calculated
-    if "xlim" in kwargs:
-        window_initial_edge = kwargs["xlim"]
+        window_boundaries = calculate_window_boundaries(data, kwargs.get("xlim", False))
 
     def update(frame):
         # Set the xlim for each frame in the case of a moving window
         if move_window:
-            kwargs["xlim"] = (
-                window_initial_edge[0] + window_velocity * time_since_start[frame],
-                window_initial_edge[1] * 0.99
-                + window_velocity * time_since_start[frame],
-            )
+            kwargs["xlim"] = window_boundaries[frame]
 
         # Update plot for the new frame
         ax.clear()
-        data.isel(time=frame).plot(ax=ax, **kwargs)
-        ax.set_title(get_frame_title(data, frame, display_sdf_name))
 
-        # # Update y-limits for 1D data
-        if is_1d(data):
+        data.isel(time=frame).plot(ax=ax, **kwargs)
+        ax.set_title(get_frame_title(data, frame, display_sdf_name, title))
+
+        # Update y-limits for 1D data
+        if data.ndim == 2:
             ax.set_ylim(global_min, global_max)
 
     return FuncAnimation(
@@ -181,4 +202,4 @@ class EpochAccessor:
         >>> ani = ds["Electric_Field_Ey"].epoch.animate()
         >>> ani.save("myfile.mp4")
         """
-        return generate_animation(self._obj, *args, **kwargs)
+        return animate(self._obj, *args, **kwargs)

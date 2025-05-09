@@ -39,7 +39,7 @@ cdef class Block:
 
 @dataclasses.dataclass
 cdef class Variable(Block):
-    units: tuple[str] | None
+    units: str | None
     mult: float | None
     grid: str | None
     grid_mid: str | None

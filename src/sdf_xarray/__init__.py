@@ -257,8 +257,15 @@ class SDFDataStore(AbstractDataStore):
                 # TODO: nicer error handling
                 self.ds.variables.pop(variable)
 
-        # These two dicts are global metadata about the run or file
-        attrs = {**self.ds.header, **self.ds.run_info}
+                key = _rename_with_underscore(variable)
+                original_name = name_map.get(key)
+
+                if original_name:
+                    self.ds.variables.pop(original_name)
+                else:
+                    raise KeyError(
+                        f"Variable '{variable}' not found (interpreted as '{key}')."
+                    )
 
         data_vars = {}
         coords = {}

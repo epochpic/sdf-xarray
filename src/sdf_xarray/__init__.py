@@ -253,10 +253,10 @@ class SDFDataStore(AbstractDataStore):
     def load(self):  # noqa: PLR0912, PLR0915
         # Drop any requested variables
         if self.drop_variables:
-            for variable in self.drop_variables:
-                # TODO: nicer error handling
-                self.ds.variables.pop(variable)
+            # Build a mapping from underscored names to real variable names
+            name_map = {_rename_with_underscore(var): var for var in self.ds.variables}
 
+            for variable in self.drop_variables:
                 key = _rename_with_underscore(variable)
                 original_name = name_map.get(key)
 
@@ -266,6 +266,9 @@ class SDFDataStore(AbstractDataStore):
                     raise KeyError(
                         f"Variable '{variable}' not found (interpreted as '{key}')."
                     )
+
+        # These two dicts are global metadata about the run or file
+        attrs = {**self.ds.header, **self.ds.run_info}
 
         data_vars = {}
         coords = {}

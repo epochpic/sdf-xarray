@@ -3,7 +3,7 @@ requires = [
   "scikit-build-core>=0.3",
   "setuptools_scm",
   "numpy>=2.0.0",
-  "cython==3.0.*",
+  "cython~=3.0",
 ]
 build-backend = "scikit_build_core.build"
 

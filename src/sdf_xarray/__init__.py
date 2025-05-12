@@ -441,7 +441,7 @@ class SDFEntrypoint(BackendEntrypoint):
 
     description = "Use .sdf files in Xarray"
 
-    url = "https://epochpic.github.io/documentation/visualising_output/python.html"
+    url = "https://epochpic.github.io/documentation/visualising_output/python_beam.html"
 
 
 class SDFPreprocess:

@@ -264,7 +264,7 @@ class SDFDataStore(AbstractDataStore):
                     raise KeyError(
                         f"Variable '{variable}' not found (interpreted as '{key}')."
                     )
-                self.ds.variables.pop(original_name)              
+                self.ds.variables.pop(original_name)
 
         # These two dicts are global metadata about the run or file
         attrs = {**self.ds.header, **self.ds.run_info}

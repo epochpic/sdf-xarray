@@ -219,3 +219,10 @@ def test_drop_variables_mixed():
     ) as df:
         assert "Electric_Field_Ex" not in df
         assert "Electric_Field_Ey" not in df
+
+
+def test_erroring_drop_variables():
+    with pytest.raises(KeyError):
+        xr.open_dataset(
+            EXAMPLE_FILES_DIR / "0000.sdf", drop_variables=["Electric_Field/E"]
+        )

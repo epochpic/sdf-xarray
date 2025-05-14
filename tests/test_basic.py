@@ -185,3 +185,44 @@ def test_3d_distribution_function():
     with xr.open_dataset(EXAMPLE_3D_DIST_FN / "0000.sdf") as df:
         distribution_function = "dist_fn_x_px_py_Electron"
         assert df[distribution_function].shape == (16, 20, 20)
+
+
+def test_drop_variables():
+    with xr.open_dataset(
+        EXAMPLE_FILES_DIR / "0000.sdf", drop_variables=["Electric_Field_Ex"]
+    ) as df:
+        assert "Electric_Field_Ex" not in df
+
+
+def test_drop_variables_multiple():
+    with xr.open_dataset(
+        EXAMPLE_FILES_DIR / "0000.sdf",
+        drop_variables=["Electric_Field_Ex", "Electric_Field_Ey"],
+    ) as df:
+        assert "Electric_Field_Ex" not in df
+        assert "Electric_Field_Ey" not in df
+
+
+def test_drop_variables_original():
+    with xr.open_dataset(
+        EXAMPLE_FILES_DIR / "0000.sdf",
+        drop_variables=["Electric_Field/Ex", "Electric_Field/Ey"],
+    ) as df:
+        assert "Electric_Field_Ex" not in df
+        assert "Electric_Field_Ey" not in df
+
+
+def test_drop_variables_mixed():
+    with xr.open_dataset(
+        EXAMPLE_FILES_DIR / "0000.sdf",
+        drop_variables=["Electric_Field/Ex", "Electric_Field_Ey"],
+    ) as df:
+        assert "Electric_Field_Ex" not in df
+        assert "Electric_Field_Ey" not in df
+
+
+def test_erroring_drop_variables():
+    with pytest.raises(KeyError):
+        xr.open_dataset(
+            EXAMPLE_FILES_DIR / "0000.sdf", drop_variables=["Electric_Field/E"]
+        )

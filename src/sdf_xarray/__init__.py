@@ -253,9 +253,18 @@ class SDFDataStore(AbstractDataStore):
     def load(self):  # noqa: PLR0912, PLR0915
         # Drop any requested variables
         if self.drop_variables:
+            # Build a mapping from underscored names to real variable names
+            name_map = {_rename_with_underscore(var): var for var in self.ds.variables}
+
             for variable in self.drop_variables:
-                # TODO: nicer error handling
-                self.ds.variables.pop(variable)
+                key = _rename_with_underscore(variable)
+                original_name = name_map.get(key)
+
+                if original_name is None:
+                    raise KeyError(
+                        f"Variable '{variable}' not found (interpreted as '{key}')."
+                    )
+                self.ds.variables.pop(original_name)
 
         # These two dicts are global metadata about the run or file
         attrs = {**self.ds.header, **self.ds.run_info}
@@ -434,7 +443,7 @@ class SDFEntrypoint(BackendEntrypoint):
 
     description = "Use .sdf files in Xarray"
 
-    url = "https://epochpic.github.io/documentation/visualising_output/python.html"
+    url = "https://epochpic.github.io/documentation/visualising_output/python_beam.html"
 
 
 class SDFPreprocess:

@@ -15,6 +15,7 @@ plasma PIC code.
    Getting Started <getting_started>
    Key Functionality <key_functionality>
    Unit Conversion <unit_conversion>
+   Known Issues <known_issues>
    Contributing <contributing>
 
 .. toctree::

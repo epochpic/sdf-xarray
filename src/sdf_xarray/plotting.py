@@ -114,8 +114,8 @@ def animate(
     --------
     >>> dataset["Derived_Number_Density_Electron"].epoch.animate()
     """
-    import matplotlib.pyplot as plt
-    from matplotlib.animation import FuncAnimation
+    import matplotlib.pyplot as plt  # noqa: PLC0415
+    from matplotlib.animation import FuncAnimation  # noqa: PLC0415
 
     kwargs_original = kwargs.copy()
 

@@ -347,7 +347,25 @@ class SDFDataStore(AbstractDataStore):
 
             if value.is_point_data:
                 # Point (particle) variables are 1D
-                var_coords = (f"ID_{_process_grid_name(key, _grid_species_name)}",)
+
+                # Particle data does not maintain a fixed dimension size
+                # throughout the simulation. An example of a particle name comes
+                # in the form of `Particles/Px/Ion_H` which is then modified
+                # using `_process_grid_name()` into `Ion_H`. This is fine as the
+                # other components of the momentum (`Py`, `Pz`) will have the same
+                # size as they represent the same bunch of particles.
+
+                # Probes however have names in the form of `Electron_Front_Probe/Px`
+                # which are changed to just `Px`; this is fine when there is only one
+                # probe in the system but when there are multiple they will have
+                # conflicting sizes so we can't keep the names as simply `Px` so we
+                # instead set their dimension as the full name `Electron_Front_Probe_Px`.
+                if "probe" in key.lower():
+                    var_coords = (
+                        f"ID_{_process_grid_name(key, _rename_with_underscore)}",
+                    )
+                else:
+                    var_coords = (f"ID_{_process_grid_name(key, _grid_species_name)}",)
             else:
                 # These are DataArrays
 

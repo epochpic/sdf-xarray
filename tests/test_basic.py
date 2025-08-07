@@ -11,6 +11,7 @@ EXAMPLE_MISMATCHED_FILES_DIR = (
 )
 EXAMPLE_ARRAYS_DIR = pathlib.Path(__file__).parent / "example_array_no_grids"
 EXAMPLE_3D_DIST_FN = pathlib.Path(__file__).parent / "example_dist_fn"
+EXAMPLE_2D_PARTICLE_DATA = pathlib.Path(__file__).parent / "example_two_probes_2D"
 
 
 def test_basic():
@@ -226,3 +227,13 @@ def test_erroring_drop_variables():
         xr.open_dataset(
             EXAMPLE_FILES_DIR / "0000.sdf", drop_variables=["Electric_Field/E"]
         )
+
+
+def test_loading_multiple_probes():
+    with xr.open_dataset(
+        EXAMPLE_2D_PARTICLE_DATA / "0002.sdf", keep_particles=True
+    ) as df:
+        assert "X_Probe_Electron_Front_Probe" in df.coords
+        assert "X_Probe_Electron_Back_Probe" in df.coords
+        assert "ID_Electron_Front_Probe_Px" in df.dims
+        assert "ID_Electron_Back_Probe_Px" in df.dims

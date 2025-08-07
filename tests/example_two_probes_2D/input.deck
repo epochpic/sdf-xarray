@@ -1,0 +1,188 @@
+
+### USER DEFINED CONSTANTS ###
+begin:constant
+  # User input constants
+  n_elec = 6e+29 #average electron number density
+  I_peak = 1e+28 #peak intensity of the laser
+
+  scale_length = 0.5e-6 #scale length of the target
+  L_target_x = 1.5e-6 #length of the target
+  L_target_y = 10e-6 #width of the target
+
+  lambda_L = 800e-9 #wavelength of the laser
+  y_fwhm_L = 2e-6 #intensity fwhm in y
+  tau_fwhm_L = 16e-15 #intensity fwhm in t
+
+  mppc = 100 #macro particles per cell
+end:constant
+
+begin:control
+  nx = 150
+  ny = 200
+  nsteps = -1
+  t_end = 200e-15
+  x_min = -10e-06
+  x_max =  5e-06
+  y_min = -10e-06
+  y_max = -y_min
+  nparticles = nint(((L_target_x * L_target_y) / ((x_max - x_min) * (y_max - y_min))) * nx * ny * mppc)
+  dt_multiplier = 0.8
+  smooth_currents = T
+  dlb_threshold = 0.8
+  stdout_frequency = 100 # Print ETA
+  particle_tstart = 30e-15 # Time before the laser hits the target
+end:control
+
+### CALCULATD CONSTANTS ###
+begin:constant
+  w_t = tau_fwhm_L / (2*sqrt(loge(2)))           # Beam waist in t
+  w_y = y_fwhm_L / (2*sqrt(loge(2)))             # Beam waist in y
+  t_hw01m = 0.5 * tau_fwhm_L * sqrt(loge(10)/loge(2))
+
+  x_foc = -x_min                                 # Boundary to focal point distance
+  k_L = 2.0 * pi / lambda_L                      # Laser wave number
+  x_Rr = pi * w_y^2 / lambda_L                   # Rayleigh range
+  omega_L = 2 * pi * c / lambda_L                # Angular frequency of the laser
+
+  w_boundary = w_y * sqrt(1 + (x_foc/x_Rr)^2)    # Waist on boundary
+  I_boundary = I_peak * (w_y / w_boundary)^2     # Intens. on boundary
+  r_curve = x_foc * (1 + (x_Rr/x_foc)^2)         # Boundary curv. rad.
+  phase_Gouy = atan(-x_foc/r_curve)              # Boundary Gouy shift
+end:constant
+
+begin:laser
+  boundary = x_min
+  intensity = I_boundary
+  omega = omega_L
+  phase = k_L * y^2 / (2 * r_curve) - phase_Gouy
+  profile = gauss(y, 0, w_boundary)
+  t_profile = gauss(time, t_hw01m, w_t) 
+  t_start = 0.0
+  t_end = end
+end:laser
+
+begin:qed
+  use_qed = F
+  qed_start_time = 0
+  produce_photons = T
+  photon_energy_min = 1 * kev
+  produce_pairs = T
+  photon_dynamics = T
+end:qed
+
+begin:collisions
+  use_collisions = T
+  coulomb_log = auto
+  collide = all
+end:collisions
+
+begin:boundaries
+  bc_x_min_particle = simple_outflow
+  bc_x_max_particle = simple_outflow
+  bc_y_min_particle = reflect
+  bc_y_max_particle = reflect
+  bc_x_min_field = simple_laser
+  bc_x_max_field = conduct
+  bc_y_min_field = conduct
+  bc_y_max_field = conduct
+end:boundaries
+
+begin:species
+  name = Electron
+  frac = 0.5
+  dump = T
+  temperature = 300
+  number_density  = if((abs(y) lt L_target_y/2), if((x lt 0) or (x gt L_target_x), 0, if((x gt 0) and (x lt scale_length), n_elec * (1-exp(x/scale_length))/(1-exp(1)), n_elec)), 0)
+  number_density_min = 1
+  identify:electron
+end:species
+
+begin:species
+  name = Ion_C
+  charge = 6
+  atomic_number = 12
+  mass = 1836.2 * 12
+  frac = 0.25
+  dump = T
+  number_density = number_density(Electron) * (6/7)
+  temperature = temperature_x(Electron)
+  number_density_min = 1
+end:species
+
+begin:species
+  name = Ion_H
+  charge = 1
+  atomic_number = 1
+  mass = 1836.2
+  fraction = 0.25
+  dump = T
+  number_density = number_density(Electron) / 7
+  temperature = temperature_x(Electron)
+  number_density_min = 1
+  identify:proton
+end:species
+
+begin:species
+  name = Photon
+  nparticles = 0
+  dump = T
+  identify:photon
+end:species
+
+begin:species
+  name = Positron
+  nparticles = 0
+  dump = T
+  identify:positron
+end:species
+
+### THE MANY PARTICLE PROBES ###
+
+#Electron#
+begin:probe
+  name = Electron_Front_Probe
+  point = (x_min, 0)
+  normal = (-1.0, 0.0)
+  ek_min = 0.0
+  ek_max = -1.0
+  include_species : Electron
+  dumpmask = always
+end:probe
+begin:probe
+  name = Electron_Back_Probe
+  point = (x_max, 0)
+  normal = (1.0, 0.0)
+  ek_min = 0.0
+  ek_max = -1.0
+  include_species : Electron
+  dumpmask = always
+end:probe
+
+################################
+
+begin:output_global
+  force_final_to_be_restartable = F
+end:output_global
+
+begin:output
+  name = normal
+  grid = always
+  particle_probes = always
+  dt_snapshot = 15e-14
+  ex = always + single
+  ey = always + single
+  ez = always + single
+  bx = always + single
+  by = always + single
+  bz = always + single
+  particles = always
+  particle_weight = always
+  px = always + single
+  py = always + single
+  pz = always + single
+  average_particle_energy = always + species + no_sum + single
+  number_density = always + species + no_sum + single
+  absorption = always 
+  total_energy_sum = always + species
+end:output
+

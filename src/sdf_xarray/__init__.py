@@ -69,6 +69,7 @@ def open_mfdataset(
     *,
     separate_times: bool = False,
     keep_particles: bool = False,
+    probe_names: list[str] | None = None,
 ) -> xr.Dataset:
     """Open a set of EPOCH SDF files as one `xarray.Dataset`
 
@@ -98,6 +99,8 @@ def open_mfdataset(
         different output frequencies
     keep_particles :
         If ``True``, also load particle data (this may use a lot of memory!)
+    probe_names :
+        List of EPOCH probe names
     """
 
     # TODO: This is not very robust, look at how xarray.open_mfdataset does it
@@ -108,10 +111,15 @@ def open_mfdataset(
     path_glob = sorted(list(path_glob))  # noqa: C414
 
     if not separate_times:
-        return combine_datasets(path_glob, keep_particles=keep_particles)
+        return combine_datasets(
+            path_glob, keep_particles=keep_particles, probe_names=probe_names
+        )
 
     time_dims, var_times_map = make_time_dims(path_glob)
-    all_dfs = [xr.open_dataset(f, keep_particles=keep_particles) for f in path_glob]
+    all_dfs = [
+        xr.open_dataset(f, keep_particles=keep_particles, probe_names=probe_names)
+        for f in path_glob
+    ]
 
     for df in all_dfs:
         for da in df:
@@ -211,14 +219,23 @@ class SDFDataStore(AbstractDataStore):
         "drop_variables",
         "keep_particles",
         "lock",
+        "probe_names",
     )
 
-    def __init__(self, manager, drop_variables=None, keep_particles=False, lock=None):
+    def __init__(
+        self,
+        manager,
+        drop_variables=None,
+        keep_particles=False,
+        lock=None,
+        probe_names=None,
+    ):
         self._manager = manager
         self._filename = self.ds.filename
         self.drop_variables = drop_variables
         self.keep_particles = keep_particles
         self.lock = ensure_lock(lock)
+        self.probe_names = probe_names
 
     @classmethod
     def open(
@@ -227,6 +244,7 @@ class SDFDataStore(AbstractDataStore):
         lock=None,
         drop_variables=None,
         keep_particles=False,
+        probe_names=None,
     ):
         if isinstance(filename, os.PathLike):
             filename = os.fspath(filename)
@@ -237,6 +255,7 @@ class SDFDataStore(AbstractDataStore):
             lock=lock,
             drop_variables=drop_variables,
             keep_particles=keep_particles,
+            probe_names=probe_names,
         )
 
     def _acquire(self, needs_lock=True):
@@ -360,12 +379,15 @@ class SDFDataStore(AbstractDataStore):
                 # probe in the system but when there are multiple they will have
                 # conflicting sizes so we can't keep the names as simply `Px` so we
                 # instead set their dimension as the full name `Electron_Front_Probe_Px`.
-                if "probe" in key.lower():
-                    var_coords = (
-                        f"ID_{_process_grid_name(key, _rename_with_underscore)}",
-                    )
-                else:
-                    var_coords = (f"ID_{_process_grid_name(key, _grid_species_name)}",)
+                is_probe_name_match = self.probe_names is not None and any(
+                    name in key for name in self.probe_names
+                )
+                name_processor = (
+                    _rename_with_underscore
+                    if is_probe_name_match
+                    else _grid_species_name
+                )
+                var_coords = (f"ID_{_process_grid_name(key, name_processor)}",)
             else:
                 # These are DataArrays
 
@@ -432,6 +454,7 @@ class SDFEntrypoint(BackendEntrypoint):
         *,
         drop_variables=None,
         keep_particles=False,
+        probe_names=None,
     ):
         if isinstance(filename_or_obj, Path):
             # sdf library takes a filename only
@@ -442,6 +465,7 @@ class SDFEntrypoint(BackendEntrypoint):
             filename_or_obj,
             drop_variables=drop_variables,
             keep_particles=keep_particles,
+            probe_names=probe_names,
         )
         with close_on_error(store):
             return store.load()
@@ -450,6 +474,7 @@ class SDFEntrypoint(BackendEntrypoint):
         "filename_or_obj",
         "drop_variables",
         "keep_particles",
+        "probe_names",
     ]
 
     def guess_can_open(self, filename_or_obj):

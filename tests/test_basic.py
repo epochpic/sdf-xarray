@@ -231,9 +231,28 @@ def test_erroring_drop_variables():
 
 def test_loading_multiple_probes():
     with xr.open_dataset(
-        EXAMPLE_2D_PARTICLE_DATA / "0002.sdf", keep_particles=True
+        EXAMPLE_2D_PARTICLE_DATA / "0002.sdf",
+        keep_particles=True,
+        probe_names=["Electron_Front_Probe", "Electron_Back_Probe"],
     ) as df:
         assert "X_Probe_Electron_Front_Probe" in df.coords
         assert "X_Probe_Electron_Back_Probe" in df.coords
         assert "ID_Electron_Front_Probe_Px" in df.dims
         assert "ID_Electron_Back_Probe_Px" in df.dims
+
+
+def test_loading_one_probe_drop_second_probe():
+    with xr.open_dataset(
+        EXAMPLE_2D_PARTICLE_DATA / "0002.sdf",
+        keep_particles=True,
+        drop_variables=[
+            "Electron_Back_Probe_Px",
+            "Electron_Back_Probe_Py",
+            "Electron_Back_Probe_Pz",
+            "Electron_Back_Probe_weight",
+        ],
+        probe_names=["Electron_Front_Probe"],
+    ) as df:
+        assert "X_Probe_Electron_Front_Probe" in df.coords
+        assert "ID_Electron_Front_Probe_Px" in df.dims
+        assert "ID_Electron_Back_Probe_Px" not in df.dims

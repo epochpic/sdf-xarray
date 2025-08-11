@@ -68,6 +68,12 @@ pip install "sdf-xarray[docs]"
 cd docs
 make html
 ```
+
+The documentation can be updated by changing any of the `*.rst` files located
+in the main `docs` directory. The existing documentation hopefully includes most
+of the snippets you'd need to write or update it, however if you are stuck
+please don't hesitate to reach out.
+
 Every time you make changes to the documentation or add a new page, you must
 re-run the `make html` command to regenerate the HTML files.
 

@@ -51,6 +51,12 @@ done via the ``preprocess`` parameter.
 Reading particle data
 ~~~~~~~~~~~~~~~~~~~~~
 
+.. warning::
+   It is **not recommended** to use :func:`xarray.open_mfdataset` or :func:`open_mfdataset` to load particle data from multiple SDF outputs. The number of particles often varies between outputs, which can lead to inconsistent array shapes that these functions cannot handle. Instead, consider loading each file individually and then concatenating them manually.
+
+.. note::
+   When loading multiple probes from a single SDF file, you **must** use the `probe_names` parameter to assign a unique name to each. For example, use `probe_names=["Front_Electron_Probe", "Back_Electron_Probe"]`. Failing to do so will result in dimension name conflicts.
+
 By default, particle data isn't kept as it takes up a lot of space.
 Pass ``keep_particles=True`` as a keyword argument to
 :func:`xarray.open_dataset` (for single files) or :func:`xarray.open_mfdataset` (for

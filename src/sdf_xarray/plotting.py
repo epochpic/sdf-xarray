@@ -87,32 +87,25 @@ def animate(
     title: str | None = None,
     display_sdf_name: bool = False,
     ax: plt.Axes | None = None,
+    *,
+    # 新增：坐标缩放与标签
+    xscale: float = 1.0,
+    yscale: float = 1.0,
+    xlabel: str | None = None,
+    ylabel: str | None = None,
+    # 新增：帧选择
+    frames: "list[int] | range | None" = None,
+    frame_step: int = 1,
+    # 新增：是否跟随移动窗口（x 轴每帧更新）
+    follow_window: bool = True,
     **kwargs,
-) -> FuncAnimation:
-    """Generate an animation
+) -> "FuncAnimation":
+    """Generate an animation (patched)
 
-    Parameters
-    ---------
-    data
-        The dataarray containing the target data
-    fps
-        Frames per second for the animation (default: 10)
-    min_percentile
-        Minimum percentile of the data (default: 0)
-    max_percentile
-        Maximum percentile of the data (default: 100)
-    title
-        Custom title to add to the plot.
-    display_sdf_name
-        Display the sdf file name in the animation title
-    ax
-        Matplotlib axes on which to plot.
-    kwargs
-        Keyword arguments to be passed to matplotlib.
-
-    Examples
-    --------
-    >>> dataset["Derived_Number_Density_Electron"].epoch.animate()
+    - Respects user-provided norm or vmin/vmax
+    - Supports x/y unit scaling and axis labels
+    - Updates x-limits per frame when domain/window moves
+    - Supports frame skipping via `frames` or `frame_step`
     """
     import matplotlib.pyplot as plt  # noqa: PLC0415
     from matplotlib.animation import FuncAnimation  # noqa: PLC0415
@@ -122,58 +115,129 @@ def animate(
     if ax is None:
         _, ax = plt.subplots()
 
-    N_frames = data["time"].size
+    # --------- global limits (can be heavy if data is huge) ----------
+    # 如有需要可改成基于采样帧的分位数来避免一次性拉全量
+    N_frames = data.sizes["time"]
     global_min, global_max = compute_global_limits(data, min_percentile, max_percentile)
 
-    # Initialise plot and set y-limits for 1D data
-    if data.ndim == 2:
-        kwargs.setdefault("x", "X_Grid_mid")
-        plot = data.isel(time=0).plot(ax=ax, **kwargs)
-        ax.set_title(get_frame_title(data, 0, display_sdf_name, title))
-        ax.set_ylim(global_min, global_max)
+    # 选择帧序列
+    if frames is None:
+        frames = range(0, N_frames, frame_step)
 
-    # Initilise plot and set colour bar for 2D data
+    # 维度与坐标名
+    x_name = kwargs.get("x", "X_Grid_mid")
+    y_name = kwargs.get("y", "Y_Grid_mid")
+
+    # ---------- prepare norm / vmin / vmax ----------
+    user_norm = kwargs_original.get("norm", None)
+    user_vmin = kwargs_original.get("vmin", None)
+    user_vmax = kwargs_original.get("vmax", None)
+
     if data.ndim == 3:
-        kwargs["norm"] = plt.Normalize(vmin=global_min, vmax=global_max)
+        if user_norm is not None:
+            kwargs["norm"] = user_norm
+            kwargs.pop("vmin", None)
+            kwargs.pop("vmax", None)
+        elif (user_vmin is not None) or (user_vmax is not None):
+            if user_vmin is None:
+                kwargs["vmin"] = global_min
+            if user_vmax is None:
+                kwargs["vmax"] = global_max
+            kwargs.pop("norm", None)
+        else:
+            kwargs["norm"] = plt.Normalize(vmin=global_min, vmax=global_max)
+
+        # 2D 绘图不让 xarray 自动加色标，统一手动加
         kwargs["add_colorbar"] = False
-        # Set default x and y coordinates for 2D data if not provided
-        kwargs.setdefault("x", "X_Grid_mid")
-        kwargs.setdefault("y", "Y_Grid_mid")
 
-        # Initialize the plot with the first timestep
-        plot = data.isel(time=0).plot(ax=ax, **kwargs)
-        ax.set_title(get_frame_title(data, 0, display_sdf_name, title))
+    # 默认坐标参数（xarray 会按名字找坐标）
+    kwargs.setdefault("x", x_name)
+    kwargs.setdefault("y", y_name)
 
-        # Add colorbar
-        if kwargs_original.get("add_colorbar", True):
-            long_name = data.attrs.get("long_name")
-            units = data.attrs.get("units")
-            plt.colorbar(plot, ax=ax, label=f"{long_name} [${units}$]")
+    # ---------- 初始化第一帧 ----------
+    def get_frame_da(i: int) -> xr.DataArray:
+        da = data.isel(time=i)
+        # 坐标单位缩放（只改坐标，不复制数据）
+        coords_update = {}
+        if xscale != 1.0 and x_name in da.coords:
+            coords_update[x_name] = da.coords[x_name] * xscale
+        if yscale != 1.0 and y_name in da.coords and da.ndim == 3:
+            coords_update[y_name] = da.coords[y_name] * yscale
+        if coords_update:
+            da = da.assign_coords(coords_update)
+        return da
 
-    # check if there is a moving window by finding NaNs in the data
-    move_window = np.isnan(np.sum(data.values))
-    if move_window:
-        window_boundaries = calculate_window_boundaries(data, kwargs.get("xlim", False))
+    first = get_frame_da(frames[0] if hasattr(frames, "__getitem__") else next(iter(frames)))
 
+    # 1D/2D 分开初始化
+    if data.ndim == 2:
+        plot = first.plot(ax=ax, **kwargs)
+        ax.set_ylim(global_min, global_max)
+    else:
+        plot = first.plot(ax=ax, **kwargs)
+
+    # 标题 & 轴标签
+    ax.set_title(get_frame_title(data, frames[0] if hasattr(frames, "__getitem__") else 0, display_sdf_name, title))
+    if xlabel is not None:
+        ax.set_xlabel(xlabel)
+    if ylabel is not None and data.ndim == 3:
+        ax.set_ylabel(ylabel)
+
+    # 手动加 colorbar（仅 2D）
+    if (data.ndim == 3) and kwargs_original.get("add_colorbar", True):
+        long_name = data.attrs.get("long_name")
+        units = data.attrs.get("units")
+        cbar_label = f"{long_name} [${units}$]" if (long_name or units) else None
+        cbar = plt.colorbar(plot, ax=ax, label=cbar_label)
+    else:
+        cbar = None
+
+    # 预计算移动窗口（如果数据用 NaN 指示窗口）
+    move_window_nans = np.isnan(np.sum(data.values))
+    if move_window_nans:
+        window_boundaries = calculate_window_boundaries(data, kwargs_original.get("xlim", False))
+    else:
+        window_boundaries = None
+
+    # ---------- 帧更新 ----------
     def update(frame):
-        # Set the xlim for each frame in the case of a moving window
-        if move_window:
-            kwargs["xlim"] = window_boundaries[frame]
+        da = get_frame_da(frame)
 
-        # Update plot for the new frame
-        ax.clear()
+        # x 轴范围：优先 NaN 窗口，其次直接用该帧坐标范围（follow_window）
+        if data.ndim == 3 and follow_window:
+            if window_boundaries is not None:
+                ax.set_xlim(*window_boundaries[frame] * (xscale if xscale != 1.0 else 1.0))
+            else:
+                x = da.coords[x_name].values
+                if x.ndim == 1:
+                    dx = (x[1] - x[0]) if x.size > 1 else 0.0
+                    ax.set_xlim(x[0] - dx/2, x[-1] + dx/2)
 
-        data.isel(time=frame).plot(ax=ax, **kwargs)
+        # 重新绘图（不 clear 轴，避免把 colorbar 干掉）
+        # xarray 的 plot 返回新 mappable，老的我们移除掉以免堆叠
+        # （也可选择复用 pcolormesh，但这里保持与你现有实现风格一致）
+        nonlocal plot
+        for coll in getattr(plot, "collections", []):
+            coll.remove()
+        plot = da.plot(ax=ax, **kwargs)
+
+        # 更新标题
         ax.set_title(get_frame_title(data, frame, display_sdf_name, title))
 
-        # Update y-limits for 1D data
+        # 1D 固定 y-limits
         if data.ndim == 2:
             ax.set_ylim(global_min, global_max)
+
+        # 同步 colorbar 的 mappable（2D 情况）
+        if cbar is not None and data.ndim == 3:
+            cbar.update_normal(plot)
+
+        return (plot,)
 
     return FuncAnimation(
         ax.get_figure(),
         update,
-        frames=range(N_frames),
+        frames=frames,
         interval=1000 / fps,
         repeat=True,
     )

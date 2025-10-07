@@ -87,9 +87,10 @@ def combine_datasets(path_glob: Iterable | str, **kwargs) -> xr.Dataset:
 
     return xr.open_mfdataset(
         path_glob,
-        data_vars="minimal",
-        coords="minimal",
-        compat="override",
+        data_vars="all",
+        coords="different",
+        compat="no_conflicts",
+        join="outer",
         preprocess=SDFPreprocess(),
         **kwargs,
     )
@@ -159,7 +160,12 @@ def open_mfdataset(
                 )
 
     return xr.combine_by_coords(
-        all_dfs, data_vars="minimal", combine_attrs="drop_conflicts"
+        all_dfs,
+        data_vars="all",
+        coords="different",
+        combine_attrs="drop_conflicts",
+        join="outer",
+        compat="no_conflicts",
     )
 
 
@@ -404,9 +410,7 @@ class SDFDataStore(AbstractDataStore):
                     name in key for name in self.probe_names
                 )
                 name_processor = (
-                    _rename_with_underscore
-                    if is_probe_name_match
-                    else _grid_species_name
+                    _rename_with_underscore if is_probe_name_match else _grid_species_name
                 )
                 var_coords = (f"ID_{_process_grid_name(key, name_processor)}",)
             else:
@@ -431,9 +435,7 @@ class SDFDataStore(AbstractDataStore):
                 grid_mid = self.ds.grids[value.grid_mid]
                 grid_mid_base_name = _process_grid_name(grid_mid.name, _norm_grid_name)
                 for dim_size, dim_name in zip(grid_mid.shape, grid_mid.labels):
-                    dim_size_lookup[dim_name][
-                        dim_size
-                    ] = f"{dim_name}_{grid_mid_base_name}"
+                    dim_size_lookup[dim_name][dim_size] = f"{dim_name}_{grid_mid_base_name}"
 
                 var_coords = [
                     dim_size_lookup[dim_name][dim_size]

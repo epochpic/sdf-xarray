@@ -148,9 +148,7 @@ def open_mfdataset(
 
     for df in all_dfs:
         for da in df:
-            df[da] = df[da].expand_dims(
-                dim={var_times_map[str(da)]: [df.attrs["time"]]}
-            )
+            df[da] = df[da].expand_dims(dim={var_times_map[str(da)]: [df.attrs["time"]]})
         for coord in df.coords:
             if df.coords[coord].attrs.get("point_data", False):
                 # We need to undo our renaming of the coordinates
@@ -177,9 +175,7 @@ def make_time_dims(path_glob):
             for key in sdf_file.variables:
                 vars_count[_rename_with_underscore(key)].append(sdf_file.header["time"])
             for grid in sdf_file.grids.values():
-                vars_count[_rename_with_underscore(grid.name)].append(
-                    sdf_file.header["time"]
-                )
+                vars_count[_rename_with_underscore(grid.name)].append(sdf_file.header["time"])
 
     # Count the unique set of lists of times
     times_count = Counter(tuple(v) for v in vars_count.values())

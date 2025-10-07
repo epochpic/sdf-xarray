@@ -72,11 +72,25 @@ def _resolve_glob(path_glob: PathLike | Iterable[PathLike]):
     Normalise input path_glob into a sorted list of absolute, resolved Path objects.
     """
 
-    try:
+    if isinstance(path_glob, str):
         p = Path(path_glob)
-        paths = list(p.parent.glob(p.name)) if p.name == "*.sdf" else list(p)
-    except TypeError:
+        paths = list(p.parent.glob(p.name))
+    elif isinstance(path_glob, Path):
+        if path_glob.name == "*.sdf":
+            paths = list(path_glob)
+        else:
+            raise FileNotFoundError(
+                "Single Path input must end with '*.sdf' or utilise the `.glob('*.sdf'). "
+                "To pass a single literal file, wrap it in a list. "
+                f"Got: {path_glob!r}"
+            )
+    elif isinstance(path_glob, Iterable):
         paths = list({Path(p) for p in path_glob})
+    else:
+        raise TypeError(
+            f"Unsupported type for path_glob: {type(path_glob).__name__}. "
+            "Must be str, Path, or Iterable"
+        )
 
     paths = sorted(p.resolve() for p in paths)
     if not paths:

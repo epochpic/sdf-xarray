@@ -1,11 +1,17 @@
 import pathlib
+from importlib.metadata import version
 
 import numpy as np
 import numpy.testing as npt
 import pytest
 import xarray as xr
+from packaging.version import Version
 
 from sdf_xarray import SDFPreprocess, _process_latex_name, _resolve_glob, open_mfdataset
+
+# TODO Remove this once the new kwarg options are fully implemented
+if Version(version("xarray")) >= Version("2025.8.0"):
+    xr.set_options(use_new_combine_kwarg_defaults=True)
 
 EXAMPLE_FILES_DIR = pathlib.Path(__file__).parent / "example_files_1D"
 EXAMPLE_MISMATCHED_FILES_DIR = (

@@ -28,7 +28,7 @@ Usage
 `xarray`. There are several ways to load SDF files:
 
 - To load a single file, use :func:`xarray.open_dataset`.
-- To load multiple files, use :func:`xarray.open_mfdataset` or :func:`sdf_xarray.open_mfdataset`.
+- To load multiple files, use :func:`xarray.open_mfdataset` or :func:`sdf_xarray.open_mfdataset` (Recommended). 
 - To access the raw contents of a single SDF file, use :func:`sdf_xarray.sdf_interface.SDFFile`.
 
 .. note::
@@ -42,21 +42,32 @@ Basic usage:
 .. ipython:: python
 
     import xarray as xr
+    import sdf_xarray as sdfxr
     with xr.open_dataset("tutorial_dataset_1d/0010.sdf") as df:
         print(df["Electric_Field_Ex"])
 
 Multi file loading
 ~~~~~~~~~~~~~~~~~~
 
-To open a whole simulation at once, pass
-``preprocess=sdf_xarray.SDFPreprocess()`` to `xarray.open_mfdataset`:
+To open a whole simulation's files at once use the :func:`sdf_xarray.open_mfdataset` function:
+
+.. ipython:: python
+    
+    sdfxr.open_mfdataset("tutorial_dataset_1d/*.sdf")
+
+You can alternatively open the dataset using the xarray's :func:`xarray.open_mfdataset`
+along with the ``preprocess=sdfxr.SDFPreprocess()``:
 
 .. ipython:: python
 
-    from sdf_xarray import SDFPreprocess
-    xr.open_mfdataset("tutorial_dataset_1d/*.sdf", preprocess=SDFPreprocess())
+    xr.open_mfdataset(
+        "tutorial_dataset_1d/*.sdf",
+        join="outer",
+        compat="no_conflicts",
+        preprocess=sdfxr.SDFPreprocess()
+    )
 
-`SDFPreprocess` checks that all the files are from the same simulation, and
+:class:`sdf_xarray.SDFPreprocess` checks that all the files are from the same simulation, and
 ensures there's a ``time`` dimension so the files are correctly concatenated.
 
 If your simulation has multiple ``output`` blocks so that not all variables are
@@ -64,12 +75,11 @@ output at every time step, then those variables will have ``NaN`` values at the
 corresponding time points.
 
 Alternatively, we can create a separate time dimensions for each ``output``
-block using `sdf_xarray.open_mfdataset` with ``separate_times=True``:
+block using :func:`sdf_xarray.open_mfdataset` with ``separate_times=True``:
 
 .. ipython:: python
 
-    from sdf_xarray import open_mfdataset
-    open_mfdataset("tutorial_dataset_1d/*.sdf", separate_times=True)
+    sdfxr.open_mfdataset("tutorial_dataset_1d/*.sdf", separate_times=True)
 
 This is better for memory consumption, at the cost of perhaps slightly less
 friendly comparisons between variables on different time coordinates.

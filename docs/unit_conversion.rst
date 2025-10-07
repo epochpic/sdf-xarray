@@ -38,8 +38,7 @@ import, the ``xarray.Dataset.pint`` accessor will not be initialised.
 
 .. ipython:: python
 
-    import xarray as xr
-    from sdf_xarray import SDFPreprocess
+    from sdf_xarray import open_mfdataset
     import pint_xarray
 
 In the following example we will extract the time-resolved total particle
@@ -72,7 +71,7 @@ be removed.
 
 .. ipython:: python
 
-    with xr.open_mfdataset("tutorial_dataset_1d/*.sdf", preprocess=SDFPreprocess()) as ds:
+    with open_mfdataset("tutorial_dataset_1d/*.sdf") as ds:
         total_particle_energy = ds["Total_Particle_Energy_Electron"]
 
     total_particle_energy

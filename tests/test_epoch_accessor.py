@@ -1,11 +1,13 @@
 import pathlib
 import tempfile
+from importlib.metadata import version
 
 import matplotlib as mpl
 import numpy as np
 import pytest
 import xarray as xr
 from matplotlib.animation import PillowWriter
+from packaging.version import Version
 
 import sdf_xarray.plotting as sxp
 from sdf_xarray import SDFPreprocess, open_mfdataset
@@ -13,12 +15,11 @@ from sdf_xarray import SDFPreprocess, open_mfdataset
 mpl.use("Agg")
 
 # TODO Remove this once the new kwarg options are fully implemented
-xr.set_options(use_new_combine_kwarg_defaults=True)
+if Version(version("xarray")) >= Version("2025.8.0"):
+    xr.set_options(use_new_combine_kwarg_defaults=True)
 
 EXAMPLE_FILES_DIR_1D = pathlib.Path(__file__).parent / "example_files_1D"
-EXAMPLE_FILES_DIR_2D_MW = (
-    pathlib.Path(__file__).parent / "example_files_2D_moving_window"
-)
+EXAMPLE_FILES_DIR_2D_MW = pathlib.Path(__file__).parent / "example_files_2D_moving_window"
 
 
 def test_animation_accessor():
@@ -111,9 +112,7 @@ def test_xr_get_frame_title_custom_title_and_sdf_name():
     ) as ds:
         data = ds["Derived_Number_Density_electron"]
         expected_result = "Test Title, time = 5.47e-14 [s], 0000.sdf"
-        result = sxp.get_frame_title(
-            data, 0, display_sdf_name=True, title_custom="Test Title"
-        )
+        result = sxp.get_frame_title(data, 0, display_sdf_name=True, title_custom="Test Title")
         assert expected_result == result
 
 

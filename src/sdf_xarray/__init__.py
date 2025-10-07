@@ -140,7 +140,7 @@ def open_mfdataset(
             path_glob, keep_particles=keep_particles, probe_names=probe_names
         )
 
-    time_dims, var_times_map = make_time_dims(path_glob)
+    _, var_times_map = make_time_dims(path_glob)
     all_dfs = [
         xr.open_dataset(f, keep_particles=keep_particles, probe_names=probe_names)
         for f in path_glob

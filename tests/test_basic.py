@@ -99,7 +99,59 @@ def test_multiple_files_multiple_time_dims():
         assert df["Absorption_Total_Laser_Energy_Injected"].shape == (11,)
 
 
-def test_erroring_on_mismatched_jobid_files():
+def test_resolve_glob_from_string_pattern():
+    pattern = str(EXAMPLE_FILES_DIR / "*.sdf")
+    result = _resolve_glob(pattern)
+    expected = sorted(EXAMPLE_FILES_DIR.glob("*.sdf"))
+    assert result == expected
+
+
+def test_resolve_glob_from_path_glob():
+    pattern = EXAMPLE_FILES_DIR.glob("*.sdf")
+    result = _resolve_glob(pattern)
+    expected = sorted(EXAMPLE_FILES_DIR.glob("*.sdf"))
+    assert result == expected
+
+
+def test_resolve_glob_from_path_missing_glob():
+    pattern = EXAMPLE_FILES_DIR
+    with pytest.raises(FileNotFoundError):
+        _resolve_glob(pattern)
+
+
+def test_resolve_glob_from_path_list():
+    pattern = [EXAMPLE_FILES_DIR / "0000.sdf"]
+    result = _resolve_glob(pattern)
+    expected = [EXAMPLE_FILES_DIR / "0000.sdf"]
+    assert result == expected
+
+
+def test_resolve_glob_from_path_list_multiple():
+    pattern = [EXAMPLE_FILES_DIR / "0000.sdf", EXAMPLE_FILES_DIR / "0001.sdf"]
+    result = _resolve_glob(pattern)
+    expected = [EXAMPLE_FILES_DIR / "0000.sdf", EXAMPLE_FILES_DIR / "0001.sdf"]
+    assert result == expected
+
+
+def test_resolve_glob_from_path_list_multiple_unordered():
+    pattern = [EXAMPLE_FILES_DIR / "0001.sdf", EXAMPLE_FILES_DIR / "0000.sdf"]
+    result = _resolve_glob(pattern)
+    expected = [EXAMPLE_FILES_DIR / "0000.sdf", EXAMPLE_FILES_DIR / "0001.sdf"]
+    assert result == expected
+
+
+def test_resolve_glob_from_path_list_multiple_duplicates():
+    pattern = [
+        EXAMPLE_FILES_DIR / "0000.sdf",
+        EXAMPLE_FILES_DIR / "0000.sdf",
+        EXAMPLE_FILES_DIR / "0001.sdf",
+    ]
+    result = _resolve_glob(pattern)
+    expected = [EXAMPLE_FILES_DIR / "0000.sdf", EXAMPLE_FILES_DIR / "0001.sdf"]
+    assert result == expected
+
+
+def test_xr_erroring_on_mismatched_jobid_files():
     with pytest.raises(ValueError):  # noqa: PT011
         xr.open_mfdataset(
             EXAMPLE_MISMATCHED_FILES_DIR.glob("*.sdf"),

@@ -51,6 +51,37 @@ def _process_latex_name(variable_name: str) -> str:
     return variable_name
 
 
+def _resolve_glob(path_glob: str | Path | Iterable[str] | Iterable[Path]):
+    """
+    Normalise input path_glob into a sorted list of absolute, resolved Path objects.
+    """
+
+    if isinstance(path_glob, str):
+        p = Path(path_glob)
+        paths = list(p.parent.glob(p.name))
+    elif isinstance(path_glob, Path):
+        if path_glob.name == "*.sdf":
+            paths = list(path_glob)
+        else:
+            raise FileNotFoundError(
+                "Single Path input must end with '*.sdf' or utilise the `.glob('*.sdf'). "
+                "To pass a single literal file, wrap it in a list. "
+                f"Got: {path_glob!r}"
+            )
+    elif isinstance(path_glob, Iterable):
+        paths = list({Path(p) for p in path_glob})
+    else:
+        raise TypeError(
+            f"Unsupported type for path_glob: {type(path_glob).__name__}. "
+            "Must be str, Path, or Iterable"
+        )
+
+    paths = sorted(p.resolve() for p in paths)
+    if not paths:
+        raise FileNotFoundError(f"No files matched pattern or input: {path_glob!r}")
+    return paths
+
+
 def combine_datasets(path_glob: Iterable | str, **kwargs) -> xr.Dataset:
     """Combine all datasets using a single time dimension"""
 
@@ -103,13 +134,7 @@ def open_mfdataset(
         List of EPOCH probe names
     """
 
-    # TODO: This is not very robust, look at how xarray.open_mfdataset does it
-    if isinstance(path_glob, str):
-        path_glob = Path().glob(path_glob)
-
-    # Coerce to list because we might need to use the sequence multiple times
-    path_glob = sorted(list(path_glob))  # noqa: C414
-
+    path_glob = _resolve_glob(path_glob)
     if not separate_times:
         return combine_datasets(
             path_glob, keep_particles=keep_particles, probe_names=probe_names

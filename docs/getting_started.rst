@@ -7,6 +7,15 @@
 Installation
 ------------
 
+.. |python_versions_pypi| image:: https://img.shields.io/pypi/pyversions/sdf-xarray.svg
+   :alt: Supported Python versions
+   :target: https://pypi.org/project/sdf-xarray/
+
+.. important::
+
+   To install this package, ensure that you are using one of the supported Python
+   versions: |python_versions_pypi|
+
 Install sdf-xarray from PyPI with:
 
 .. code-block:: bash

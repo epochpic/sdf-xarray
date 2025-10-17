@@ -14,9 +14,7 @@ if Version(version("xarray")) >= Version("2025.8.0"):
     xr.set_options(use_new_combine_kwarg_defaults=True)
 
 EXAMPLE_FILES_DIR = pathlib.Path(__file__).parent / "example_files_1D"
-EXAMPLE_MISMATCHED_FILES_DIR = (
-    pathlib.Path(__file__).parent / "example_mismatched_files"
-)
+EXAMPLE_MISMATCHED_FILES_DIR = pathlib.Path(__file__).parent / "example_mismatched_files"
 EXAMPLE_ARRAYS_DIR = pathlib.Path(__file__).parent / "example_array_no_grids"
 EXAMPLE_3D_DIST_FN = pathlib.Path(__file__).parent / "example_dist_fn"
 EXAMPLE_2D_PARTICLE_DATA = pathlib.Path(__file__).parent / "example_two_probes_2D"
@@ -161,9 +159,7 @@ def test_multiple_files_multiple_time_dims():
     with open_mfdataset(
         EXAMPLE_FILES_DIR.glob("*.sdf"), separate_times=True, keep_particles=True
     ) as df:
-        assert list(df["Electric_Field_Ex"].coords) != list(
-            df["Electric_Field_Ez"].coords
-        )
+        assert list(df["Electric_Field_Ex"].coords) != list(df["Electric_Field_Ez"].coords)
         assert df["Electric_Field_Ex"].shape == (11, 16)
         assert df["Electric_Field_Ez"].shape == (1, 16)
         assert df["Particles_Px_proton"].shape == (1, 1920)
@@ -337,15 +333,9 @@ def test_xr_latex_rename_variables():
         assert df["Current_Jx"].attrs["long_name"] == "Current $J_x$"
         assert df["Current_Jy"].attrs["long_name"] == "Current $J_y$"
         assert df["Current_Jz"].attrs["long_name"] == "Current $J_z$"
-        assert (
-            df["Particles_Px_Electron"].attrs["long_name"] == "Particles $P_x$ Electron"
-        )
-        assert (
-            df["Particles_Py_Electron"].attrs["long_name"] == "Particles $P_y$ Electron"
-        )
-        assert (
-            df["Particles_Pz_Electron"].attrs["long_name"] == "Particles $P_z$ Electron"
-        )
+        assert df["Particles_Px_Electron"].attrs["long_name"] == "Particles $P_x$ Electron"
+        assert df["Particles_Py_Electron"].attrs["long_name"] == "Particles $P_y$ Electron"
+        assert df["Particles_Pz_Electron"].attrs["long_name"] == "Particles $P_z$ Electron"
 
         assert _process_latex_name("Example") == "Example"
         assert _process_latex_name("PxTest") == "PxTest"
@@ -428,9 +418,7 @@ def test_xr_drop_variables_mixed():
 
 def test_xr_erroring_drop_variables():
     with pytest.raises(KeyError):
-        xr.open_dataset(
-            EXAMPLE_FILES_DIR / "0000.sdf", drop_variables=["Electric_Field/E"]
-        )
+        xr.open_dataset(EXAMPLE_FILES_DIR / "0000.sdf", drop_variables=["Electric_Field/E"])
 
 
 def test_xr_loading_multiple_probes():

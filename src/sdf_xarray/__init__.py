@@ -3,6 +3,7 @@ import re
 from collections import Counter, defaultdict
 from collections.abc import Callable, Iterable
 from itertools import product
+from os import PathLike as os_PathLike
 from pathlib import Path
 from typing import ClassVar
 
@@ -20,6 +21,8 @@ from xarray.core.variable import Variable
 import sdf_xarray.plotting  # noqa: F401
 
 from .sdf_interface import Constant, SDFFile  # type: ignore  # noqa: PGH003
+
+PathLike = str | os_PathLike
 
 
 def _rename_with_underscore(name: str) -> str:
@@ -51,30 +54,16 @@ def _process_latex_name(variable_name: str) -> str:
     return variable_name
 
 
-def _resolve_glob(path_glob: str | Path | Iterable[str] | Iterable[Path]):
+def _resolve_glob(path_glob: PathLike | Iterable[PathLike]):
     """
     Normalise input path_glob into a sorted list of absolute, resolved Path objects.
     """
 
-    if isinstance(path_glob, str):
+    try:
         p = Path(path_glob)
-        paths = list(p.parent.glob(p.name))
-    elif isinstance(path_glob, Path):
-        if path_glob.name == "*.sdf":
-            paths = list(path_glob)
-        else:
-            raise FileNotFoundError(
-                "Single Path input must end with '*.sdf' or utilise the `.glob('*.sdf'). "
-                "To pass a single literal file, wrap it in a list. "
-                f"Got: {path_glob!r}"
-            )
-    elif isinstance(path_glob, Iterable):
+        paths = list(p.parent.glob(p.name)) if p.name == "*.sdf" else list(p)
+    except TypeError:
         paths = list({Path(p) for p in path_glob})
-    else:
-        raise TypeError(
-            f"Unsupported type for path_glob: {type(path_glob).__name__}. "
-            "Must be str, Path, or Iterable"
-        )
 
     paths = sorted(p.resolve() for p in paths)
     if not paths:
@@ -149,9 +138,7 @@ def open_mfdataset(
 
     for df in all_dfs:
         for da in df:
-            df[da] = df[da].expand_dims(
-                dim={var_times_map[str(da)]: [df.attrs["time"]]}
-            )
+            df[da] = df[da].expand_dims(dim={var_times_map[str(da)]: [df.attrs["time"]]})
         for coord in df.coords:
             if df.coords[coord].attrs.get("point_data", False):
                 # We need to undo our renaming of the coordinates
@@ -183,9 +170,7 @@ def make_time_dims(path_glob):
             for key in sdf_file.variables:
                 vars_count[_rename_with_underscore(key)].append(sdf_file.header["time"])
             for grid in sdf_file.grids.values():
-                vars_count[_rename_with_underscore(grid.name)].append(
-                    sdf_file.header["time"]
-                )
+                vars_count[_rename_with_underscore(grid.name)].append(sdf_file.header["time"])
 
     # Count the unique set of lists of times
     times_count = Counter(tuple(v) for v in vars_count.values())
@@ -414,9 +399,7 @@ class SDFDataStore(AbstractDataStore):
                     name in key for name in self.probe_names
                 )
                 name_processor = (
-                    _rename_with_underscore
-                    if is_probe_name_match
-                    else _grid_species_name
+                    _rename_with_underscore if is_probe_name_match else _grid_species_name
                 )
                 var_coords = (f"ID_{_process_grid_name(key, name_processor)}",)
             else:
@@ -441,9 +424,7 @@ class SDFDataStore(AbstractDataStore):
                 grid_mid = self.ds.grids[value.grid_mid]
                 grid_mid_base_name = _process_grid_name(grid_mid.name, _norm_grid_name)
                 for dim_size, dim_name in zip(grid_mid.shape, grid_mid.labels):
-                    dim_size_lookup[dim_name][
-                        dim_size
-                    ] = f"{dim_name}_{grid_mid_base_name}"
+                    dim_size_lookup[dim_name][dim_size] = f"{dim_name}_{grid_mid_base_name}"
 
                 var_coords = [
                     dim_size_lookup[dim_name][dim_size]

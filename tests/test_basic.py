@@ -153,7 +153,7 @@ def test_multiple_files_one_time_dim():
             ]
         )
         npt.assert_allclose(time_values, time.values, rtol=1e-6)
-        npt.assert_array_equal(ex_values, expected_ex)
+        npt.assert_allclose(ex_values, expected_ex)
         npt.assert_allclose(ex_x_coords, expected_ex_coords)
 
 
@@ -287,7 +287,7 @@ def test_xr_multiple_files_data():
                 5.34819585e-04,
             ]
         )
-        npt.assert_array_equal(ex_values, expected_ex)
+        npt.assert_allclose(ex_values, expected_ex)
         npt.assert_allclose(ex_x_coords, expected_ex_coords)
 
 

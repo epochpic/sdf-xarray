@@ -2,6 +2,7 @@ import os
 import re
 from collections import Counter, defaultdict
 from collections.abc import Callable, Iterable
+from importlib.metadata import version
 from itertools import product
 from os import PathLike as os_PathLike
 from pathlib import Path
@@ -9,6 +10,7 @@ from typing import ClassVar
 
 import numpy as np
 import xarray as xr
+from packaging.version import Version
 from xarray.backends import AbstractDataStore, BackendArray, BackendEntrypoint
 from xarray.backends.file_manager import CachingFileManager
 from xarray.backends.locks import ensure_lock
@@ -21,6 +23,10 @@ from xarray.core.variable import Variable
 import sdf_xarray.plotting  # noqa: F401
 
 from .sdf_interface import Constant, SDFFile  # type: ignore  # noqa: PGH003
+
+# TODO Remove this once the new kwarg options are fully implemented
+if Version(version("xarray")) >= Version("2025.8.0"):
+    xr.set_options(use_new_combine_kwarg_defaults=True)
 
 PathLike = str | os_PathLike
 

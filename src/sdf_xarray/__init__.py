@@ -2,12 +2,15 @@ import os
 import re
 from collections import Counter, defaultdict
 from collections.abc import Callable, Iterable
+from importlib.metadata import version
 from itertools import product
+from os import PathLike as os_PathLike
 from pathlib import Path
 from typing import ClassVar
 
 import numpy as np
 import xarray as xr
+from packaging.version import Version
 from xarray.backends import AbstractDataStore, BackendArray, BackendEntrypoint
 from xarray.backends.file_manager import CachingFileManager
 from xarray.backends.locks import ensure_lock
@@ -20,6 +23,12 @@ from xarray.core.variable import Variable
 import sdf_xarray.plotting  # noqa: F401
 
 from .sdf_interface import Constant, SDFFile  # type: ignore  # noqa: PGH003
+
+# TODO Remove this once the new kwarg options are fully implemented
+if Version(version("xarray")) >= Version("2025.8.0"):
+    xr.set_options(use_new_combine_kwarg_defaults=True)
+
+PathLike = str | os_PathLike
 
 
 def _rename_with_underscore(name: str) -> str:
@@ -51,14 +60,32 @@ def _process_latex_name(variable_name: str) -> str:
     return variable_name
 
 
+def _resolve_glob(path_glob: PathLike | Iterable[PathLike]):
+    """
+    Normalise input path_glob into a sorted list of absolute, resolved Path objects.
+    """
+
+    try:
+        p = Path(path_glob)
+        paths = list(p.parent.glob(p.name)) if p.name == "*.sdf" else list(p)
+    except TypeError:
+        paths = list({Path(p) for p in path_glob})
+
+    paths = sorted(p.resolve() for p in paths)
+    if not paths:
+        raise FileNotFoundError(f"No files matched pattern or input: {path_glob!r}")
+    return paths
+
+
 def combine_datasets(path_glob: Iterable | str, **kwargs) -> xr.Dataset:
     """Combine all datasets using a single time dimension"""
 
     return xr.open_mfdataset(
         path_glob,
-        data_vars="minimal",
-        coords="minimal",
-        compat="override",
+        data_vars="all",
+        coords="different",
+        compat="no_conflicts",
+        join="outer",
         preprocess=SDFPreprocess(),
         **kwargs,
     )
@@ -103,19 +130,13 @@ def open_mfdataset(
         List of EPOCH probe names
     """
 
-    # TODO: This is not very robust, look at how xarray.open_mfdataset does it
-    if isinstance(path_glob, str):
-        path_glob = Path().glob(path_glob)
-
-    # Coerce to list because we might need to use the sequence multiple times
-    path_glob = sorted(list(path_glob))  # noqa: C414
-
+    path_glob = _resolve_glob(path_glob)
     if not separate_times:
         return combine_datasets(
             path_glob, keep_particles=keep_particles, probe_names=probe_names
         )
 
-    time_dims, var_times_map = make_time_dims(path_glob)
+    _, var_times_map = make_time_dims(path_glob)
     all_dfs = [
         xr.open_dataset(f, keep_particles=keep_particles, probe_names=probe_names)
         for f in path_glob
@@ -136,7 +157,12 @@ def open_mfdataset(
                 )
 
     return xr.combine_by_coords(
-        all_dfs, data_vars="minimal", combine_attrs="drop_conflicts"
+        all_dfs,
+        data_vars="all",
+        coords="different",
+        combine_attrs="drop_conflicts",
+        join="outer",
+        compat="no_conflicts",
     )
 
 

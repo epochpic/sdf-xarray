@@ -6,17 +6,17 @@ Key Functionality
 
 .. ipython:: python
 
+   import xarray as xr
+   import sdf_xarray as sdfxr
    import matplotlib.pyplot as plt
    from IPython.display import display, HTML
-   import xarray as xr
-   from sdf_xarray import SDFFile, SDFPreprocess
 
 Loading SDF Files
 -----------------
 There are several ways to load SDF files:
 
 - To load a single file, use :func:`xarray.open_dataset`.
-- To load multiple files, use :func:`xarray.open_mfdataset` or :func:`sdf_xarray.open_mfdataset`.
+- To load multiple files, use :func:`sdf_xarray.open_mfdataset` or :func:`xarray.open_mfdataset`.
 - To access the raw contents of a single SDF file, use :func:`sdf_xarray.sdf_interface.SDFFile`.
 
 .. note::
@@ -34,28 +34,48 @@ Loading a Single Raw SDF File
 
 .. ipython:: python
 
-   with SDFFile("tutorial_dataset_1d/0010.sdf") as sdf_file:
+   with sdfxr.SDFFile("tutorial_dataset_1d/0010.sdf") as sdf_file:
       print(sdf_file.variables)
 
 Loading all SDF Files for a Simulation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When loading in all the files we have do some processing of the data
+Multiple files can be loaded using one of two methods. The first of which
+is by using the :func:`sdf_xarray.open_mfdataset`
+
+.. ipython:: python
+
+   sdfxr.open_mfdataset("tutorial_dataset_1d/*.sdf")
+
+Alternatively files can be loaded using :func:`xarray.open_mfdataset`
+however when loading in all the files we have do some processing of the data
 so that we can correctly align it along the time dimension; This is
 done via the ``preprocess`` parameter.
 
 .. ipython:: python
 
-   xr.open_mfdataset("tutorial_dataset_1d/*.sdf", preprocess=SDFPreprocess())
+   xr.open_mfdataset(
+      "tutorial_dataset_1d/*.sdf",
+      join="outer",
+      compat="no_conflicts",
+      preprocess=sdfxr.SDFPreprocess())
 
 Reading particle data
 ~~~~~~~~~~~~~~~~~~~~~
 
 .. warning::
-   It is **not recommended** to use :func:`xarray.open_mfdataset` or :func:`open_mfdataset` to load particle data from multiple SDF outputs. The number of particles often varies between outputs, which can lead to inconsistent array shapes that these functions cannot handle. Instead, consider loading each file individually and then concatenating them manually.
+   It is **not recommended** to use :func:`xarray.open_mfdataset` or
+   :func:`sdf_xarray.open_mfdataset` to load particle data from multiple
+   SDF outputs. The number of particles often varies between outputs,
+   which can lead to inconsistent array shapes that these functions
+   cannot handle. Instead, consider loading each file individually and
+   then concatenating them manually.
 
 .. note::
-   When loading multiple probes from a single SDF file, you **must** use the `probe_names` parameter to assign a unique name to each. For example, use `probe_names=["Front_Electron_Probe", "Back_Electron_Probe"]`. Failing to do so will result in dimension name conflicts.
+   When loading multiple probes from a single SDF file, you **must** use the
+   ``probe_names`` parameter to assign a unique name to each. For example,
+   use ``probe_names=["Front_Electron_Probe", "Back_Electron_Probe"]``.
+   Failing to do so will result in dimension name conflicts.
 
 By default, particle data isn't kept as it takes up a lot of space.
 Pass ``keep_particles=True`` as a keyword argument to
@@ -85,7 +105,7 @@ looking at when you call ``.values``
 
 .. ipython:: python
 
-   ds = xr.open_mfdataset("tutorial_dataset_1d/*.sdf", preprocess=SDFPreprocess())
+   ds = sdfxr.open_mfdataset("tutorial_dataset_1d/*.sdf")
 
    ds["Electric_Field_Ex"]
 

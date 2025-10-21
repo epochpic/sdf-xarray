@@ -33,7 +33,7 @@ To run these tools locally, install the optional dependencies and run:
 
 ```bash
 pip install "sdf-xarray[lint]"
-ruff check
+ruff check src tests
 ```
 
 ### Running and Adding Tests

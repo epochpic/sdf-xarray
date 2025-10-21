@@ -8,9 +8,9 @@ from importlib.metadata import version as get_version
 from pathlib import Path
 
 with suppress(ImportError):
-    import matplotlib
+    import matplotlib as mpl
 
-    matplotlib.use("Agg")
+    mpl.use("Agg")
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 

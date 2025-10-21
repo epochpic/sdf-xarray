@@ -13,6 +13,9 @@ sdf-xarray provides a backend for [xarray](https://xarray.dev) to read SDF files
 [EPOCH](https://epochpic.github.io) using the [SDF-C](https://github.com/epochpic/SDF_C) library.
 Part of [BEAM](#broad-epoch-analysis-modules-beam) (Broad EPOCH Analysis Modules).
 
+> [!IMPORTANT]
+> To install this package make sure you are using one of the Python versions listed above.
+
 ## Installation
 
 Install from PyPI with:

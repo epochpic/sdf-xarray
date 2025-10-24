@@ -1,0 +1,65 @@
+begin:control
+  nx = 64
+  ny = 64
+
+  # Final time of simulation
+  t_end = 5 * femto
+
+  # Size of domain
+  x_min = 0
+  x_max = 6 * micron
+
+  y_min = 0
+  y_max = 6 * micron
+
+  stdout_frequency = 1
+  nparticles = nx * ny * 50
+end:control
+
+begin:constant
+    n_elec = 1000
+    L_target_x = 2 * micron
+    L_target_y = 4 * micron
+
+    x_center = (x_min + x_max) / 2
+    y_center = (y_min + y_max) / 2
+
+    density_profile = if( (abs(x - x_center) lt L_target_x/2), if( (abs(y - y_center) lt L_target_y/2), 1, 0), 0)
+end:constant
+
+begin:boundaries
+  bc_x_min = periodic
+  bc_x_max = periodic
+  bc_y_min = periodic
+  bc_y_max = periodic
+end:boundaries
+
+
+begin:species
+  name = Electron
+  frac = 0.5
+  number_density = n_elec * density_profile
+  identify:electron
+end:species
+
+begin:species
+  name = Ion
+  frac = 0.5
+  number_density = n_elec * density_profile
+  identify:proton
+end:species
+
+begin:output_global
+    force_last_to_be_restartable = F
+end:output_global
+
+begin:output
+  name = normal
+
+  dt_snapshot = 1 * femto
+
+  grid = always
+  number_density = always + species
+
+end:output
+

@@ -1,3 +1,4 @@
+import contextlib
 import os
 import re
 from collections import Counter, defaultdict
@@ -22,6 +23,11 @@ from xarray.core.variable import Variable
 # accessors will not be imported when the user imports sdf_xarray
 import sdf_xarray.dataset_accessor
 import sdf_xarray.plotting  # noqa: F401
+
+# NOTE: This attempts to initialise with the "pint" accessor if the user
+# has installed the package
+with contextlib.suppress(ImportError):
+    import pint_xarray  # noqa: F401
 
 from .sdf_interface import Constant, SDFFile  # type: ignore  # noqa: PGH003
 

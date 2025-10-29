@@ -27,7 +27,9 @@ Rescaling Coordinates
 =====================
 
 For simple scaling and unit relabeling of coordinates (e.g., converting meters to microns),
-the most straightforward approach is to use the custom ``xarray.Dataset.epoch`` dataset accessor.
+the most straightforward approach is to use the ``rescale_coords()`` method  
+via the custom ``xarray.Dataset.epoch`` dataset accessor.  
+
 This method scales the coordinate values by a given multiplier and updates the ``"units"``
 attribute in one step.
 
@@ -84,16 +86,16 @@ Unit Conversion with pint-xarray
 ================================
 
 While this is sufficient for most use cases, we can enhance this functionality
-using the `pint <https://pint.readthedocs.io/en/stable/getting/index.html>`_.
-This library allows us to specify the units of a given array and convert them
-to another array which is incredibly handy. We can however take this a step
-further and utilise the `pint-xarray
-<https://pint-xarray.readthedocs.io/en/latest/>`_ library which allows us to
-infer units from an :attr:`xarray.Dataset.attrs` directly while retaining all
-the information about :class:`xarray.Dataset`. This works very similarly
-to taking numpy array and multiplying it by some constant or another array
-which returns a new array however this will library will also retain
-the ``"units"`` logic.
+using the `pint <https://pint.readthedocs.io/en/stable/getting/index.html>`_ library.
+Pint allows us to specify the units of a given array and convert them
+to another, which is incredibly handy. We can take this a step further,
+however, and utilize the `pint-xarray
+<https://pint-xarray.readthedocs.io/en/latest/>`_ library. This library
+allows us to infer units directly from an `xarray.Dataset.attrs` while
+retaining all the information about the `xarray.Dataset`. This works
+very similarly to taking a NumPy array and multiplying it by a constant or
+another array, which returns a new array; however, this library will also
+retain the unit logic (specifically the ``"units"`` information).
 
 .. note::
     Unit conversion is not supported on coordinates in ``pint-xarray`` which is due to an
@@ -111,7 +113,7 @@ libraries. You can install these optional dependencies via pip:
     $ pip install "sdf_xarray[pint]"
 
 .. note::
-    Once you install `pint-xarray` it is automatically picked up and loaded
+    Once you install ``pint-xarray`` it is automatically picked up and loaded
     by the code so you should have access to the ``xarray.Dataset.pint`` accessor.
 
 Quantifying Arrays

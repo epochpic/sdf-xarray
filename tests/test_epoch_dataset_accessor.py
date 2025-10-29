@@ -66,6 +66,35 @@ def test_rescale_coords_X_Y():
         assert ds_rescaled["Z_Grid_mid"].attrs["full_name"] == "Grid/Grid_mid"
 
 
+def test_rescale_coords_X_Y_tuple():
+    multiplier = 1e2
+    unit_label = "cm"
+
+    with xr.open_dataset(EXAMPLE_FILES_DIR / "0000.sdf") as ds:
+        ds_rescaled = ds.epoch.rescale_coords(
+            multiplier=multiplier,
+            unit_label=unit_label,
+            coord_names=("X_Grid_mid", "Y_Grid_mid"),
+        )
+
+        expected_x = ds["X_Grid_mid"].values * multiplier
+        assert np.allclose(ds_rescaled["X_Grid_mid"].values, expected_x)
+        assert ds_rescaled["X_Grid_mid"].attrs["units"] == unit_label
+        assert ds_rescaled["X_Grid_mid"].attrs["long_name"] == "X"
+        assert ds_rescaled["X_Grid_mid"].attrs["full_name"] == "Grid/Grid_mid"
+
+        expected_y = ds["Y_Grid_mid"].values * multiplier
+        assert np.allclose(ds_rescaled["Y_Grid_mid"].values, expected_y)
+        assert ds_rescaled["Y_Grid_mid"].attrs["units"] == unit_label
+        assert ds_rescaled["Y_Grid_mid"].attrs["long_name"] == "Y"
+        assert ds_rescaled["Y_Grid_mid"].attrs["full_name"] == "Grid/Grid_mid"
+
+        assert np.allclose(ds_rescaled["Z_Grid_mid"].values, ds["Z_Grid_mid"].values)
+        assert ds_rescaled["Z_Grid_mid"].attrs["units"] == "m"
+        assert ds_rescaled["Z_Grid_mid"].attrs["long_name"] == "Z"
+        assert ds_rescaled["Z_Grid_mid"].attrs["full_name"] == "Grid/Grid_mid"
+
+
 def test_rescale_coords_attributes_copied():
     multiplier = 1e6
     unit_label = "µm"

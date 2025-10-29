@@ -54,7 +54,7 @@ class EpochAccessor:
             # Use the provided list
             coords_to_process = coord_names
         else:
-            raise TypeError("`coord_names` must be a string or a list of strings.")
+            coords_to_process = list(coord_names)
 
         for coord_name in coords_to_process:
             if coord_name not in ds.coords:

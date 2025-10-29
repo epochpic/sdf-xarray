@@ -1,0 +1,54 @@
+begin:control
+  nx = 64
+  ny = 64
+  nz = 64
+
+  # Final time of simulation
+  t_end = 5 * femto
+
+  # Size of domain
+  x_min = 0
+  x_max = 5.0e5
+
+  y_min = 0
+  y_max = 5.0e5
+
+  z_min = 0
+  z_max = 5.0e5
+
+  stdout_frequency = 1
+end:control
+
+
+begin:boundaries
+  bc_x_min = periodic
+  bc_x_max = periodic
+  bc_y_min = periodic
+  bc_y_max = periodic
+  bc_z_min = periodic
+  bc_z_max = periodic
+end:boundaries
+
+
+begin:species
+  name = electron
+  charge = -1
+  mass = 1.0
+  temperature_x = 273
+  number_density = 10
+  nparticles = nx * ny * nz * 2
+end:species
+
+begin:output_global
+    force_last_to_be_restartable = F
+end:output_global
+
+begin:output
+  name = normal
+
+  dt_snapshot = 1 * femto
+
+  grid = always
+
+end:output
+

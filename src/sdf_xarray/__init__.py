@@ -144,7 +144,8 @@ def open_mfdataset_variable(
 
             new_da.append(da_step)
         i+=1
-                    
+    if len(new_da) == 0:
+        raise KeyError(f"Variable '{variable}' does not exist in any SDF file")                
     da = xr.concat(new_da, dim="time", join="exact")
     return da.to_dataset(name=variable)
     

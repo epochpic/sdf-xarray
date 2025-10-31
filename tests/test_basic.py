@@ -465,6 +465,11 @@ def test_open_mfdataset_variable():
         assert df[x_coord].attrs["long_name"] == "X"
 
 
+def test_open_mfdataset_variable_nodata():
+    with pytest.raises(KeyError):
+        open_mfdataset_variable(EXAMPLE_FILES_DIR.glob("*.sdf"), "Electric_Field")
+
+
 def test_open_mfdataset_variable_particles():
     with open_mfdataset_variable(EXAMPLE_FILES_DIR.glob("*.sdf"), "Particles_Px_proton", keep_particles=True) as df:
         px_protons = "Particles_Px_proton"

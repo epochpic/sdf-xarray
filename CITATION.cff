@@ -16,5 +16,9 @@ authors:
     given-names: Shaun
     orcid: 'https://orcid.org/0009-0005-0693-030X'
     affiliation: University of York
+  - family-names: Herdman
+    given-names: Chris
+    orcid: 'https://orcid.org/0000-0002-5159-0130'
+    affiliation: University of York
 doi: 10.5281/zenodo.15351323
 date-released: '2024-07-25'

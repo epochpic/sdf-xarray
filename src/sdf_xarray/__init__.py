@@ -84,6 +84,71 @@ def _resolve_glob(path_glob: PathLike | Iterable[PathLike]):
     return paths
 
 
+def open_mfdataset_variable(
+    path_glob: Iterable | str | Path | Callable[..., Iterable[Path]],
+    variable: str,
+    keep_particles: bool = False,
+) -> xr.Dataset:
+    """Open a set of EPOCH SDF files, one by one, extract data for only one
+    variable from them all, and return only that variable as one dataset.
+        
+    EPOCH can output variables at different intervals, so some SDF files
+    may not contain the requested variable. We combine this data into one
+    dataset by concatenating across the time dimension. The returned
+    dataset only contains data from SDF files where the variable is present.
+    
+    With large SDF files, this method will save on memory consumption when
+    compared to open_mfdataset by only loading data for the requested variable.
+    
+    Parameters
+    ----------
+    path_glob :
+        List of filenames or string glob pattern
+    variable :
+        Variable of data to be extracted from files
+    keep_particles :
+        If ``True``, also load particle data (this may use a lot of memory!)
+    """
+    path_glob = _resolve_glob(path_glob)
+
+    new_da = []
+    ref_coords = {}
+    i = 0
+    for dataset in path_glob:
+        with xr.open_dataset(dataset, keep_particles=keep_particles) as ds:
+            # If the variable isn't in this .sdf file, then skip it
+            if variable not in ds:
+                continue
+            
+            da_step = ds[variable].load()
+            current_time = ds.attrs["time"]
+            da_step = da_step.expand_dims(time=[current_time]).assign_coords(
+                time = (
+                    "time",
+                    [current_time],
+                    {"units": "s", "long_name": "Time", "full_name": "time"}
+                )
+            )
+
+            if i == 0:
+                # For the first file, save its coordinates as the reference
+                ref_coords = da_step.coords.copy()
+                # Delete time since this will be set by attrs
+                del ref_coords["time"]
+            else:
+                # Reassign coords to those in the reference
+                for coord_name in ref_coords._names:
+                    if da_step[coord_name].size != ref_coords[coord_name].size:
+                        raise ValueError(f"Coordinate '{coord_name}' size does not match reference coordinate")
+                    da_step[coord_name] = ref_coords[coord_name]
+
+            new_da.append(da_step)
+        i+=1
+                    
+    da = xr.concat(new_da, dim="time", join="exact")
+    return da.to_dataset(name=variable)
+    
+
 def combine_datasets(path_glob: Iterable | str, **kwargs) -> xr.Dataset:
     """Combine all datasets using a single time dimension"""
 

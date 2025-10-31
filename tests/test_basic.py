@@ -5,7 +5,7 @@ import numpy.testing as npt
 import pytest
 import xarray as xr
 
-from sdf_xarray import SDFPreprocess, _process_latex_name, _resolve_glob, open_mfdataset
+from sdf_xarray import SDFPreprocess, _process_latex_name, _resolve_glob, open_mfdataset, open_mfdataset_variable
 
 EXAMPLE_FILES_DIR = pathlib.Path(__file__).parent / "example_files_1D"
 EXAMPLE_MISMATCHED_FILES_DIR = (
@@ -454,3 +454,49 @@ def test_xr_oading_one_probe_drop_second_probe():
         assert "X_Probe_Electron_Front_Probe" in df.coords
         assert "ID_Electron_Front_Probe_Px" in df.dims
         assert "ID_Electron_Back_Probe_Px" not in df.dims
+
+
+def test_open_mfdataset_variable():
+    with open_mfdataset_variable(EXAMPLE_FILES_DIR.glob("*.sdf"), "Electric_Field_Ex") as df:
+        ex_field = "Electric_Field_Ex"
+        assert ex_field in df
+        x_coord = "X_Grid_mid"
+        assert x_coord in df[ex_field].coords
+        assert df[x_coord].attrs["long_name"] == "X"
+
+
+def test_open_mfdataset_variable_particles():
+    with open_mfdataset_variable(EXAMPLE_FILES_DIR.glob("*.sdf"), "Particles_Px_proton", keep_particles=True) as df:
+        px_protons = "Particles_Px_proton"
+        assert px_protons in df
+        x_coord = "X_Particles_proton"
+        assert x_coord in df[px_protons].coords
+        assert df[x_coord].attrs["long_name"] == "X"
+        assert df["time"].size == 1
+        npt.assert_approx_equal(2.416958e-09, df["time"].values[0])
+        
+
+def test_open_mfdataset_variable_time():
+    with open_mfdataset_variable(EXAMPLE_FILES_DIR.glob("*.sdf"), "Electric_Field_Ex") as df:
+        time = df["time"]
+        assert time.units == "s"
+        assert time.long_name == "Time"
+        assert time.full_name == "time"
+
+        time_values = np.array(
+            [
+                5.466993e-14,
+                2.417504e-10,
+                4.833915e-10,
+                7.251419e-10,
+                9.667830e-10,
+                1.208533e-09,
+                1.450175e-09,
+                1.691925e-09,
+                1.933566e-09,
+                2.175316e-09,
+                2.416958e-09,
+            ]
+        )
+
+        npt.assert_allclose(time_values, time.values, rtol=1e-6)

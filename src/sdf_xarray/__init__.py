@@ -556,7 +556,7 @@ class SDFPreprocess:
     """Preprocess SDF files for xarray ensuring matching job ids and sets
     time dimension.
 
-    This class is used as a 'preprocess' function within xr.open_mfdataset. It
+    This class is used as a 'preprocess' function within ``xr.open_mfdataset``. It
     performs three main duties on each individual file's Dataset:
 
     1. Checks for a **matching job ID** across all files to ensure dataset consistency.

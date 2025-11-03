@@ -5,7 +5,12 @@ import numpy.testing as npt
 import pytest
 import xarray as xr
 
-from sdf_xarray import SDFPreprocess, _process_latex_name, _resolve_glob, open_mfdataset, open_mfdataset_variable
+from sdf_xarray import (
+    SDFPreprocess,
+    _process_latex_name,
+    _resolve_glob,
+    open_mfdataset,
+)
 
 EXAMPLE_FILES_DIR = pathlib.Path(__file__).parent / "example_files_1D"
 EXAMPLE_MISMATCHED_FILES_DIR = (
@@ -456,33 +461,118 @@ def test_xr_oading_one_probe_drop_second_probe():
         assert "ID_Electron_Back_Probe_Px" not in df.dims
 
 
-def test_open_mfdataset_variable():
-    with open_mfdataset_variable(EXAMPLE_FILES_DIR.glob("*.sdf"), "Electric_Field_Ex") as df:
+def test_open_mfdataset_data_vars_single():
+    with open_mfdataset(
+        EXAMPLE_FILES_DIR.glob("*.sdf"),
+        data_vars=["Electric_Field_Ex"],
+    ) as df:
         ex_field = "Electric_Field_Ex"
-        assert ex_field in df
         x_coord = "X_Grid_mid"
+        assert ex_field in df
         assert x_coord in df[ex_field].coords
+        assert "time" in df[ex_field].coords
+        assert df[x_coord].attrs["long_name"] == "X"
+
+        assert "Electric_Field_Ey" not in df
+
+
+def test_open_mfdataset_data_vars_multiple():
+    with open_mfdataset(
+        EXAMPLE_FILES_DIR.glob("*.sdf"),
+        data_vars=["Electric_Field_Ex", "Electric_Field_Ey"],
+    ) as df:
+        ex_field = "Electric_Field_Ex"
+        x_coord = "X_Grid_mid"
+        assert ex_field in df
+        assert x_coord in df[ex_field].coords
+        assert "time" in df[ex_field].coords
+        assert df[x_coord].attrs["long_name"] == "X"
+
+        ey_field = "Electric_Field_Ey"
+        x_coord = "X_Grid_mid"
+        assert ey_field in df
+        assert x_coord in df[ey_field].coords
+        assert "time" in df[ey_field].coords
         assert df[x_coord].attrs["long_name"] == "X"
 
 
-def test_open_mfdataset_variable_nodata():
-    with pytest.raises(KeyError):
-        open_mfdataset_variable(EXAMPLE_FILES_DIR.glob("*.sdf"), "Electric_Field")
+def test_open_mfdataset_data_vars_sparse_multiple():
+    with open_mfdataset(
+        EXAMPLE_FILES_DIR.glob("*.sdf"),
+        keep_particles=True,
+        data_vars=[
+            "Particles_Particles_Per_Cell_proton",
+            "Electric_Field_Ez",
+            "dist_fn_x_px_proton",
+        ],
+    ) as df:
+        ppc_proton = "Particles_Particles_Per_Cell_proton"
+        assert ppc_proton in df
+        assert "time" in df[ppc_proton].coords
+        assert (
+            df[ppc_proton].attrs["long_name"] == "Particles Particles Per Cell proton"
+        )
+
+        ez_field = "Electric_Field_Ez"
+        assert ez_field in df
+        assert len(df[ez_field].coords) == 2
+        assert "time" in df[ez_field].coords
+        assert "X_Grid_mid" in df[ez_field].coords
+        assert df[ez_field].attrs["long_name"] == "Electric Field $E_z$"
+
+        dist_fn = "dist_fn_x_px_proton"
+        assert dist_fn in df
+        assert len(df[dist_fn].coords) == 3
+        assert "time" in df[dist_fn].coords
+        assert "X_x_px_proton" in df[dist_fn].coords
+        assert "Px_x_px_proton" in df[dist_fn].coords
+
+        assert df["time"].size == 11
 
 
-def test_open_mfdataset_variable_particles():
-    with open_mfdataset_variable(EXAMPLE_FILES_DIR.glob("*.sdf"), "Particles_Px_proton", keep_particles=True) as df:
-        px_protons = "Particles_Px_proton"
-        assert px_protons in df
-        x_coord = "X_Particles_proton"
-        assert x_coord in df[px_protons].coords
-        assert df[x_coord].attrs["long_name"] == "X"
-        assert df["time"].size == 1
-        npt.assert_approx_equal(2.416958e-09, df["time"].values[0])
-        
+def test_open_mfdataset_data_vars_invalid_var():
+    with open_mfdataset(
+        EXAMPLE_FILES_DIR.glob("*.sdf"),
+        data_vars=["Electric_Field"],
+    ) as df:
+        assert len(df.variables.keys()) == 1
+        assert df["time"].size == 11
 
-def test_open_mfdataset_variable_time():
-    with open_mfdataset_variable(EXAMPLE_FILES_DIR.glob("*.sdf"), "Electric_Field_Ex") as df:
+
+def test_open_mfdataset_data_vars_time():
+    with open_mfdataset(
+        EXAMPLE_FILES_DIR.glob("*.sdf"),
+        data_vars=["Electric_Field_Ex"],
+    ) as df:
+        time = df["time"]
+        assert time.units == "s"
+        assert time.long_name == "Time"
+        assert time.full_name == "time"
+
+        time_values = np.array(
+            [
+                5.466993e-14,
+                2.417504e-10,
+                4.833915e-10,
+                7.251419e-10,
+                9.667830e-10,
+                1.208533e-09,
+                1.450175e-09,
+                1.691925e-09,
+                1.933566e-09,
+                2.175316e-09,
+                2.416958e-09,
+            ]
+        )
+
+        npt.assert_allclose(time_values, time.values, rtol=1e-6)
+
+
+def test_open_mfdataset_data_vars_sparse_time():
+    with open_mfdataset(
+        EXAMPLE_FILES_DIR.glob("*.sdf"),
+        data_vars=["Particles_Particles_Per_Cell_proton"],
+    ) as df:
         time = df["time"]
         assert time.units == "s"
         assert time.long_name == "Time"

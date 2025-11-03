@@ -84,71 +84,25 @@ def _resolve_glob(path_glob: PathLike | Iterable[PathLike]):
     return paths
 
 
-def open_mfdataset_variable(
-    path_glob: Iterable | str | Path | Callable[..., Iterable[Path]],
-    variable: str,
-    keep_particles: bool = False,
+def combine_datasets_across_vars(
+    path_glob: Iterable | str, data_vars: list[str], **kwargs
 ) -> xr.Dataset:
-    """Open a set of EPOCH SDF files, one by one, extract data for only one
-    variable from them all, and return only that variable as one dataset.
-        
-    EPOCH can output variables at different intervals, so some SDF files
-    may not contain the requested variable. We combine this data into one
-    dataset by concatenating across the time dimension. The returned
-    dataset only contains data from SDF files where the variable is present.
-    
-    With large SDF files, this method will save on memory consumption when
-    compared to open_mfdataset by only loading data for the requested variable.
-    
-    Parameters
-    ----------
-    path_glob :
-        List of filenames or string glob pattern
-    variable :
-        Variable of data to be extracted from files
-    keep_particles :
-        If ``True``, also load particle data (this may use a lot of memory!)
     """
-    path_glob = _resolve_glob(path_glob)
+    Extract data from only the listed data_vars and combine resulting
+    datasets using a single time dimension
+    """
 
-    new_da = []
-    ref_coords = {}
-    i = 0
-    for dataset in path_glob:
-        with xr.open_dataset(dataset, keep_particles=keep_particles) as ds:
-            # If the variable isn't in this .sdf file, then skip it
-            if variable not in ds:
-                continue
-            
-            da_step = ds[variable].load()
-            current_time = ds.attrs["time"]
-            da_step = da_step.expand_dims(time=[current_time]).assign_coords(
-                time = (
-                    "time",
-                    [current_time],
-                    {"units": "s", "long_name": "Time", "full_name": "time"}
-                )
-            )
+    return xr.open_mfdataset(
+        path_glob,
+        join="outer",
+        coords="different",
+        compat="no_conflicts",
+        combine="nested",
+        concat_dim="time",
+        preprocess=SDFPreprocess(data_vars=data_vars),
+        **kwargs,
+    )
 
-            if i == 0:
-                # For the first file, save its coordinates as the reference
-                ref_coords = da_step.coords.copy()
-                # Delete time since this will be set by attrs
-                del ref_coords["time"]
-            else:
-                # Reassign coords to those in the reference
-                for coord_name in ref_coords._names:
-                    if da_step[coord_name].size != ref_coords[coord_name].size:
-                        raise ValueError(f"Coordinate '{coord_name}' size does not match reference coordinate")
-                    da_step[coord_name] = ref_coords[coord_name]
-
-            new_da.append(da_step)
-        i+=1
-    if len(new_da) == 0:
-        raise KeyError(f"Variable '{variable}' does not exist in any SDF file")                
-    da = xr.concat(new_da, dim="time", join="exact")
-    return da.to_dataset(name=variable)
-    
 
 def combine_datasets(path_glob: Iterable | str, **kwargs) -> xr.Dataset:
     """Combine all datasets using a single time dimension"""
@@ -170,6 +124,7 @@ def open_mfdataset(
     separate_times: bool = False,
     keep_particles: bool = False,
     probe_names: list[str] | None = None,
+    data_vars: list[str] | None = None,
 ) -> xr.Dataset:
     """Open a set of EPOCH SDF files as one `xarray.Dataset`
 
@@ -201,9 +156,18 @@ def open_mfdataset(
         If ``True``, also load particle data (this may use a lot of memory!)
     probe_names :
         List of EPOCH probe names
+    data_vars :
+        List of data vars to load in (If not specified loads in all variables)
     """
 
     path_glob = _resolve_glob(path_glob)
+    if data_vars:
+        return combine_datasets_across_vars(
+            path_glob,
+            data_vars=data_vars,
+            keep_particles=keep_particles,
+            probe_names=probe_names,
+        )
     if not separate_times:
         return combine_datasets(
             path_glob, keep_particles=keep_particles, probe_names=probe_names
@@ -589,10 +553,43 @@ class SDFEntrypoint(BackendEntrypoint):
 
 
 class SDFPreprocess:
-    """Preprocess SDF files for xarray ensuring matching job ids and sets time dimension"""
+    """Preprocess SDF files for xarray ensuring matching job ids and sets
+    time dimension.
 
-    def __init__(self):
+    This class is used as a 'preprocess' function within xr.open_mfdataset. It
+    performs three main duties on each individual file's Dataset:
+
+    1. Checks for a **matching job ID** across all files to ensure dataset consistency.
+    2. **Filters** the Dataset to keep only the variables specified in `data_vars`
+       and their required coordinates.
+    3. **Expands dimensions** to include a single 'time' coordinate, preparing the
+       Dataset for concatenation.
+
+    EPOCH can output variables at different intervals, so some SDF files
+    may not contain the requested variable. We combine this data into one
+    dataset by concatenating across the time dimension.
+
+    The combination is performed using `join="outer"` (in the calling `open_mfdataset` function),
+    meaning that the final combined dataset will contain the variable across the
+    entire time span, with NaNs filling the time steps where the variable was absent in
+    the individual file.
+
+    With large SDF files, this filtering method will save on memory consumption when
+    compared to loading all variables from all files before concatenation.
+
+    Parameters
+    ----------
+    data_vars :
+        A list of data variables to load in (If not specified loads
+        in all variables)
+    """
+
+    def __init__(
+        self,
+        data_vars: list[str] | None = None,
+    ):
         self.job_id: int | None = None
+        self.data_vars = set(data_vars) if data_vars else None
 
     def __call__(self, ds: xr.Dataset) -> xr.Dataset:
         if self.job_id is None:
@@ -603,17 +600,34 @@ class SDFPreprocess:
                 f"Mismatching job ids (got {ds.attrs['jobid1']}, expected {self.job_id})"
             )
 
-        ds = ds.expand_dims(time=[ds.attrs["time"]])
+        # If the user has exclusively requested only certain variables be
+        # loaded in then we purge all other variables and coordinates
+        if self.data_vars:
+            existing_data_vars = set(ds.data_vars.keys())
+            vars_to_keep = self.data_vars & existing_data_vars
+            vars_to_drop = existing_data_vars - vars_to_keep
+            ds = ds.drop_vars(vars_to_drop)
+
+            existing_coords = set(ds.coords.keys())
+            coords_to_keep = set()
+            for var in vars_to_keep:
+                coords_to_keep.update(ds[var].coords._names)
+
+            coords_to_drop = existing_coords - coords_to_keep
+            ds = ds.drop_vars(coords_to_drop)
+
+        time_val = ds.attrs.get("time", np.nan)
+        ds = ds.expand_dims(time=[time_val])
         ds = ds.assign_coords(
             time=(
                 "time",
-                [ds.attrs["time"]],
+                [time_val],
                 {"units": "s", "long_name": "Time", "full_name": "time"},
             )
         )
         # Particles' spartial coordinates also evolve in time
         for coord, value in ds.coords.items():
             if value.attrs.get("point_data", False):
-                ds.coords[coord] = value.expand_dims(time=[ds.attrs["time"]])
+                ds.coords[coord] = value.expand_dims(time=[time_val])
 
         return ds

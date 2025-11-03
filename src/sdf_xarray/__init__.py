@@ -589,7 +589,7 @@ class SDFPreprocess:
         data_vars: list[str] | None = None,
     ):
         self.job_id: int | None = None
-        self.data_vars = set(data_vars) if data_vars else None
+        self.data_vars = None if data_vars is None else set(data_vars)
 
     def __call__(self, ds: xr.Dataset) -> xr.Dataset:
         if self.job_id is None:

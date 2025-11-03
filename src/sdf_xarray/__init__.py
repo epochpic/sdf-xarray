@@ -569,7 +569,7 @@ class SDFPreprocess:
     may not contain the requested variable. We combine this data into one
     dataset by concatenating across the time dimension.
 
-    The combination is performed using `join="outer"` (in the calling `open_mfdataset` function),
+    The combination is performed using ``join="outer"`` (in the calling ``open_mfdataset`` function),
     meaning that the final combined dataset will contain the variable across the
     entire time span, with NaNs filling the time steps where the variable was absent in
     the individual file.

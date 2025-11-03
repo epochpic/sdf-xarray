@@ -161,7 +161,7 @@ def open_mfdataset(
     """
 
     path_glob = _resolve_glob(path_glob)
-    if data_vars:
+    if data_vars is not None:
         return combine_datasets_across_vars(
             path_glob,
             data_vars=data_vars,

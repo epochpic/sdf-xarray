@@ -595,3 +595,93 @@ def test_open_mfdataset_data_vars_sparse_time():
         )
 
         npt.assert_allclose(time_values, time.values, rtol=1e-6)
+
+
+def test_open_mfdataset_data_vars_separate_times_single():
+    with open_mfdataset(
+        EXAMPLE_FILES_DIR.glob("*.sdf"),
+        data_vars=["Electric_Field_Ex"],
+        separate_times=True,
+    ) as df:
+        coords = df.coords.sizes
+        assert len(coords) == 2
+        assert coords["time0"] == 11
+        assert coords["X_Grid_mid"] == 16
+
+        elec_x = "Electric_Field_Ex"
+        elec_x_coords = df[elec_x].coords.sizes
+        assert elec_x in df
+        assert len(elec_x_coords) == 2
+        assert "time0" in elec_x_coords
+        assert "X_Grid_mid" in elec_x_coords
+
+        assert elec_x_coords["time0"] == 11
+        assert elec_x_coords["X_Grid_mid"] == 16
+
+
+def test_open_mfdataset_data_vars_separate_times_multiple():
+    with open_mfdataset(
+        EXAMPLE_FILES_DIR.glob("*.sdf"),
+        data_vars=["Electric_Field_Ex", "Electric_Field_Ey"],
+        separate_times=True,
+    ) as df:
+        coords = df.coords.sizes
+        assert len(coords) == 2
+        assert coords["time0"] == 11
+        assert coords["X_Grid_mid"] == 16
+
+        elec_x = "Electric_Field_Ex"
+        elec_x_coords = df[elec_x].coords.sizes
+        assert elec_x in df
+        assert len(elec_x_coords) == 2
+        assert "time0" in elec_x_coords
+        assert "X_Grid_mid" in elec_x_coords
+
+        assert elec_x_coords["time0"] == 11
+        assert elec_x_coords["X_Grid_mid"] == 16
+
+        elec_y = "Electric_Field_Ey"
+        elec_y_coords = df[elec_y].coords.sizes
+        assert elec_y in df
+        assert len(elec_y_coords) == 2
+        assert "time0" in elec_y_coords
+        assert "X_Grid_mid" in elec_y_coords
+
+        assert elec_y_coords["time0"] == 11
+        assert elec_y_coords["X_Grid_mid"] == 16
+
+
+def test_open_mfdataset_data_vars_separate_times_multiple_times_keep_particles():
+    with open_mfdataset(
+        EXAMPLE_FILES_DIR.glob("*.sdf"),
+        data_vars=["Electric_Field_Ex", "Particles_Px_electron_beam"],
+        separate_times=True,
+        keep_particles=True,
+    ) as df:
+        coords = df.coords.sizes
+        assert len(coords) == 5
+        assert coords["time0"] == 11
+        assert coords["time1"] == 1
+        assert coords["time2"] == 1
+        assert coords["X_Grid_mid"] == 16
+        assert coords["ID_electron_beam"] == 1440
+
+        elec_x = "Electric_Field_Ex"
+        elec_x_coords = df[elec_x].coords.sizes
+        assert elec_x in df
+        assert len(elec_x_coords) == 2
+        assert "time0" in elec_x_coords
+        assert "X_Grid_mid" in elec_x_coords
+
+        assert elec_x_coords["time0"] == 11
+        assert elec_x_coords["X_Grid_mid"] == 16
+
+        particle_px = "Particles_Px_electron_beam"
+        particle_px_coords = df[particle_px].coords.sizes
+        assert particle_px in df
+        assert len(particle_px_coords) == 2
+        assert "time2" in particle_px_coords
+        assert "ID_electron_beam" in particle_px_coords
+
+        assert particle_px_coords["time2"] == 1
+        assert particle_px_coords["ID_electron_beam"] == 1440

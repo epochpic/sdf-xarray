@@ -124,10 +124,6 @@ def combine_datasets(
             **kwargs,
         )
 
-
-def combine_datasets(path_glob: Iterable | str, **kwargs) -> xr.Dataset:
-    """Combine all datasets using a single time dimension"""
-
     return xr.open_mfdataset(
         path_glob,
         data_vars="all",
@@ -190,16 +186,21 @@ def open_mfdataset(
             keep_particles=keep_particles,
             probe_names=probe_names,
         )
-    if not separate_times:
-        return combine_datasets(
-            path_glob, keep_particles=keep_particles, probe_names=probe_names
-        )
 
     _, var_times_map = make_time_dims(path_glob)
-    all_dfs = [
-        xr.open_dataset(f, keep_particles=keep_particles, probe_names=probe_names)
-        for f in path_glob
-    ]
+
+    all_dfs = []
+    for f in path_glob:
+        ds = xr.open_dataset(f, keep_particles=keep_particles, probe_names=probe_names)
+
+        # If the data_vars are specified then only load them in and disregard the rest.
+        # If there are no remaining data variables then skip adding the dataset to list
+        if data_vars is not None:
+            ds = purge_unselected_data_vars(ds, data_vars)
+            if not ds.data_vars:
+                continue
+
+        all_dfs.append(ds)
 
     for df in all_dfs:
         for da in df:
@@ -217,7 +218,6 @@ def open_mfdataset(
 
     return xr.combine_by_coords(
         all_dfs,
-        data_vars="all",
         coords="different",
         combine_attrs="drop_conflicts",
         join="outer",

@@ -84,24 +84,45 @@ def _resolve_glob(path_glob: PathLike | Iterable[PathLike]):
     return paths
 
 
-def combine_datasets_across_vars(
+def purge_unselected_data_vars(ds: xr.Dataset, data_vars: list[str]) -> xr.Dataset:
+    """
+    If the user has exclusively requested only certain variables be
+    loaded in then we purge all other variables and dimensions
+    """
+    existing_data_vars = set(ds.data_vars.keys())
+    vars_to_keep = set(data_vars) & existing_data_vars
+    vars_to_drop = existing_data_vars - vars_to_keep
+    ds = ds.drop_vars(vars_to_drop)
+
+    existing_dims = set(ds.sizes)
+    dims_to_keep = set()
+    for var in vars_to_keep:
+        dims_to_keep.update(ds[var].coords._names)
+        dims_to_keep.update(ds[var].dims)
+
+    coords_to_drop = existing_dims - dims_to_keep
+    return ds.drop_dims(coords_to_drop)
+
+
+def combine_datasets(
     path_glob: Iterable | str, data_vars: list[str], **kwargs
 ) -> xr.Dataset:
     """
-    Extract data from only the listed data_vars and combine resulting
-    datasets using a single time dimension
+    Combine all datasets using a single time dimension, optionally extract
+    data from only the listed data_vars
     """
 
-    return xr.open_mfdataset(
-        path_glob,
-        join="outer",
-        coords="different",
-        compat="no_conflicts",
-        combine="nested",
-        concat_dim="time",
-        preprocess=SDFPreprocess(data_vars=data_vars),
-        **kwargs,
-    )
+    if data_vars is not None:
+        return xr.open_mfdataset(
+            path_glob,
+            join="outer",
+            coords="different",
+            compat="no_conflicts",
+            combine="nested",
+            concat_dim="time",
+            preprocess=SDFPreprocess(data_vars=data_vars),
+            **kwargs,
+        )
 
 
 def combine_datasets(path_glob: Iterable | str, **kwargs) -> xr.Dataset:
@@ -161,8 +182,9 @@ def open_mfdataset(
     """
 
     path_glob = _resolve_glob(path_glob)
-    if data_vars is not None:
-        return combine_datasets_across_vars(
+
+    if not separate_times:
+        return combine_datasets(
             path_glob,
             data_vars=data_vars,
             keep_particles=keep_particles,
@@ -589,7 +611,7 @@ class SDFPreprocess:
         data_vars: list[str] | None = None,
     ):
         self.job_id: int | None = None
-        self.data_vars = None if data_vars is None else set(data_vars)
+        self.data_vars = data_vars
 
     def __call__(self, ds: xr.Dataset) -> xr.Dataset:
         if self.job_id is None:
@@ -603,18 +625,7 @@ class SDFPreprocess:
         # If the user has exclusively requested only certain variables be
         # loaded in then we purge all other variables and coordinates
         if self.data_vars:
-            existing_data_vars = set(ds.data_vars.keys())
-            vars_to_keep = self.data_vars & existing_data_vars
-            vars_to_drop = existing_data_vars - vars_to_keep
-            ds = ds.drop_vars(vars_to_drop)
-
-            existing_coords = set(ds.coords.keys())
-            coords_to_keep = set()
-            for var in vars_to_keep:
-                coords_to_keep.update(ds[var].coords._names)
-
-            coords_to_drop = existing_coords - coords_to_keep
-            ds = ds.drop_vars(coords_to_drop)
+            ds = purge_unselected_data_vars(ds, self.data_vars)
 
         time_val = ds.attrs.get("time", np.nan)
         ds = ds.expand_dims(time=[time_val])

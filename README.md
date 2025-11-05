@@ -13,10 +13,10 @@ sdf-xarray provides a backend for [xarray](https://xarray.dev) to read SDF files
 [EPOCH](https://epochpic.github.io) using the [SDF-C](https://github.com/epochpic/SDF_C) library.
 Part of [BEAM](#broad-epoch-analysis-modules-beam) (Broad EPOCH Analysis Modules).
 
+## Installation
+
 > [!IMPORTANT]
 > To install this package make sure you are using one of the Python versions listed above.
-
-## Installation
 
 Install from PyPI with:
 
@@ -24,17 +24,10 @@ Install from PyPI with:
 pip install sdf-xarray
 ```
 
-> [!NOTE]
-> For use within jupyter notebooks, run this additional command after installation:
->
-> ```bash
-> pip install "sdf-xarray[jupyter]"
-> ```
-
-or from a local checkout:
+or download this code locally:
 
 ```bash
-git clone https://github.com/epochpic/sdf-xarray.git
+git clone --recursive https://github.com/epochpic/sdf-xarray.git
 cd sdf-xarray
 pip install .
 ```
@@ -42,6 +35,9 @@ pip install .
 We recommend switching to [uv](https://docs.astral.sh/uv/) to manage packages.
 
 ## Usage
+
+Below are some simple examples to get you started. Please read the full
+documentation here <https://sdf-xarray.readthedocs.io>.
 
 ### Single file loading
 
@@ -63,15 +59,19 @@ print(df["Electric_Field_Ex"])
 
 ### Multi-file loading
 
-To open a whole simulation at once, pass `preprocess=sdf_xarray.SDFPreprocess()`
-to `xarray.open_mfdataset`:
+You can open all the SDF files for a given simulation by calling the `open_mfdataset`
+function from `sdf_xarray`. This will additionally add a time dimension using the `"time"`
+value stored in each files attributes.
+
+> [!IMPORTANT]
+> If your simulation has multiple `output` blocks so that not all variables are
+> output at every time step, then at the timesteps where those variables are not present they will have have a value of nan.
 
 ```python
-import xarray as xr
-from sdf_xarray import SDFPreprocess
+from sdf_xarray import open_mfdataset
 
-with xr.open_mfdataset("*.sdf", preprocess=SDFPreprocess()) as ds:
-    print(ds)
+ds = open_mfdataset("*.sdf")
+print(ds)
 
 # Dimensions:
 # time: 301, X_Grid_mid: 128, ...
@@ -80,15 +80,6 @@ with xr.open_mfdataset("*.sdf", preprocess=SDFPreprocess()) as ds:
 # Indexes: (9) ...
 # Attributes: (22) ...
 ```
-
-`SDFPreprocess` checks that all the files are from the same simulation, as
-ensures there's a `time` dimension so the files are correctly concatenated.
-
-If your simulation has multiple `output` blocks so that not all variables are
-output at every time step, then those variables will have `NaN` values at the
-corresponding time points.
-
-For more in depth documentation please visit: <https://sdf-xarray.readthedocs.io/>
 
 ## Citing
 

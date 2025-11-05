@@ -22,13 +22,17 @@ Install sdf-xarray from PyPI with:
 
     pip install sdf-xarray
 
-or from a local checkout:
+or download this code locally:
 
 .. code-block:: bash
 
     git clone https://github.com/epochpic/sdf-xarray.git
     cd sdf-xarray
     pip install .
+
+.. note::
+    If you wish to visualise the code within a jupyter notebook additionally
+    run the command ``pip install "sdf-xarray[jupyter]"``
 
 Usage
 -----

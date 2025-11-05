@@ -20,6 +20,12 @@ There are many ways to get involved:
 
 ## Code
 
+```bash
+git clone --recursive https://github.com/epochpic/sdf-xarray.git
+cd sdf-xarray
+pip install .
+```
+
 ### Style
 
 We follow [PEP 8](https://peps.python.org/pep-0008/) and use the

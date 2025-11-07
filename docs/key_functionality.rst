@@ -72,10 +72,10 @@ is by using the `sdf_xarray.open_mfdataset`.
 
    sdfxr.open_mfdataset("tutorial_dataset_1d/*.sdf")
 
-Alternatively files can be loaded using `xarray.open_mfdataset`
-however when loading in all the files we have do some processing of the data
-so that we can correctly align it along the time dimension; This is
-done via the ``preprocess`` parameter.
+Alternatively files can be loaded using `xarray.open_mfdataset` however when loading in
+all the files we have do some processing of the data so that we can correctly align it along
+the time dimension; This is done via the ``preprocess`` parameter utilising the
+`sdf_xarray.SDFPreprocess` function.
 
 .. jupyter-execute::
 

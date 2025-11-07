@@ -91,10 +91,13 @@ done via the ``preprocess`` parameter.
 Loading sparse data
 ~~~~~~~~~~~~~~~~~~~
 
-Alternatively, we can create a separate time dimensions for each ``output``
-block using `sdf_xarray.open_mfdataset` with ``separate_times=True``. This is
-better for memory consumption, at the cost of perhaps slightly less friendly
-comparisons between variables on different time coordinates.
+When dealing with sparse data (where different variables are saved at different,
+non-overlapping time steps) you can optimize memory usage by loading the data with
+`sdf_xarray.open_mfdataset` using the parameter ``separate_times=True``. This
+approach creates a distinct time dimension for each output block, avoiding the
+need for a single, large time dimension that would be filled with nan values. This
+significantly reduces memory consumption, though it requires more deliberate handling
+if you need to compare variables that exist on these different time coordinates.
 
 .. jupyter-execute::
 

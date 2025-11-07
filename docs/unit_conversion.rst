@@ -1,88 +1,81 @@
 .. _sec-unit-conversion:
 
+.. |rescale_coords_accessor| replace:: `xarray.Dataset.epoch.rescale_coords
+    <sdf_xarray.dataset_accessor.EpochAccessor.rescale_coords>`
+    
 ===============
 Unit Conversion
 ===============
 
 The ``sdf-xarray`` package automatically extracts the units for each
-coordinate/variable/constant from an SDF file and stores them as an :class:`xarray.Dataset`
+coordinate/variable/constant from an SDF file and stores them as an `xarray.Dataset`
 attribute called ``"units"``. Sometimes we want to convert our data from one format to
 another, e.g. converting the grid coordinates from meters to microns, time from seconds 
 to femto-seconds or particle energy from Joules to electron-volts.
 
-.. ipython:: python
+.. jupyter-execute::
 
     from sdf_xarray import open_mfdataset
     import matplotlib.pyplot as plt
+    %matplotlib inline
     plt.rcParams.update({
         "axes.labelsize": 16,
         "xtick.labelsize": 14,
         "ytick.labelsize": 14,
-        "axes.titlesize": 16
+        "axes.titlesize": 16,
+        "figure.titlesize": 18,
     })
 
 
 =====================
-Rescaling Coordinates
+Rescaling coordinates
 =====================
 
-For simple scaling and unit relabeling of coordinates (e.g., converting meters to microns),
-the most straightforward approach is to use the ``rescale_coords()`` method  
-via the custom ``xarray.Dataset.epoch`` dataset accessor.  
+For simple scaling and unit relabelling of coordinates (e.g., converting meters to microns),
+the most straightforward approach is to use the |rescale_coords_accessor| dataset accessor.
+This function scales the coordinate values by a given multiplier and updates the
+``"units"`` attribute in one step.
 
-This method scales the coordinate values by a given multiplier and updates the ``"units"``
-attribute in one step.
-
-Rescaling Grid Coordinates
+Rescaling grid coordinates
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-We can use the ``xarray.Dataset.epoch.rescale_coords()`` method to convert X, Y, and Z
-coordinates from meters (m) to microns (µm) by applying a multiplier of ``1e6``.
+We can use the |rescale_coords_accessor| method to convert X, Y, and Z coordinates from meters
+(``m``) to microns (``µm``) by applying a multiplier of ``1e6``.
 
-.. ipython:: python
+.. jupyter-execute::
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
 
-    with open_mfdataset("tutorial_dataset_2d/*.sdf") as ds:
-        ds_in_microns = ds.epoch.rescale_coords(
-            multiplier=1e6, 
-            unit_label="µm", 
-            coord_names=["X_Grid_mid", "Y_Grid_mid"]
-        )
-        derived_number_density = ds["Derived_Number_Density_Electron"].isel(time=0).compute()
-        derived_number_density_microns = ds_in_microns["Derived_Number_Density_Electron"].isel(time=0).compute()
+    ds = open_mfdataset("tutorial_dataset_2d/*.sdf")
+    ds_in_microns = ds.epoch.rescale_coords(1e6, "µm", ["X_Grid_mid", "Y_Grid_mid"])
 
-    derived_number_density.plot(ax=ax1, x="X_Grid_mid", y="Y_Grid_mid")
+    ds["Derived_Number_Density_Electron"].isel(time=0).plot(ax=ax1, x="X_Grid_mid", y="Y_Grid_mid")
     ax1.set_title("Original X Coordinate (m)")
 
-    derived_number_density_microns.plot(ax=ax2, x="X_Grid_mid", y="Y_Grid_mid")
+    ds_in_microns["Derived_Number_Density_Electron"].isel(time=0).plot(ax=ax2, x="X_Grid_mid", y="Y_Grid_mid")
     ax2.set_title("Rescaled X Coordinate (µm)")
 
-    @savefig coordinate_conversion.png width=9in
     fig.tight_layout()
 
 
-Rescaling Time Coordinate
+Rescaling time coordinate
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-We can also use the ``xarray.Dataset.epoch.rescale_coords()`` method to convert the time
-coordinate from seconds (s) to femto-seconds (fs) by applying a multiplier of ``1e15``.
+We can also use the |rescale_coords_accessor| method to convert the time coordinate from
+seconds (``s``) to femto-seconds (``fs``) by applying a multiplier of ``1e15``.
 
-.. ipython:: python
+.. jupyter-execute::
     
-    with open_mfdataset("tutorial_dataset_2d/*.sdf") as ds:
-        ds_time_in_femto = ds.epoch.rescale_coords(
-            multiplier=1e15, 
-            unit_label="fs", 
-            coord_names="time"
-        )
+    ds = open_mfdataset("tutorial_dataset_2d/*.sdf")
+    ds["time"]
 
-        print(f"[Original] units: {ds['time'].attrs['units']}, values: {ds['time'].values}")
-        print(f"[Rescaled] units: {ds_time_in_femto['time'].attrs['units']}, values: {ds_time_in_femto['time'].values}")
+.. jupyter-execute::
 
+    ds = ds.epoch.rescale_coords(1e15, "fs", "time")
+    ds["time"]
 
 ================================
-Unit Conversion with pint-xarray
+Unit conversion with pint-xarray
 ================================
 
 While this is sufficient for most use cases, we can enhance this functionality
@@ -116,53 +109,54 @@ libraries. You can install these optional dependencies via pip:
     Once you install ``pint-xarray`` it is automatically picked up and loaded
     by the code so you should have access to the ``xarray.Dataset.pint`` accessor.
 
-Quantifying Arrays
-~~~~~~~~~~~~~~~~~~
+Quantifying DataArrays
+~~~~~~~~~~~~~~~~~~~~~~
 
 When using ``pint-xarray``, the library attempts to infer units from the
-``"units"`` attribute on each `xarray.DataArray`. Alternatively, you can
-also specify the units yourself by passing a string into the 
-``xarray.Dataset.DataArray.pint.quantify()`` function call. Once the type is inferred
-the original `xarray.DataArray` will be converted to a `pint.Quantity`
-and the ``"units"`` attribute will
-be removed.
+``"units"`` attribute on each `xarray.DataArray`. In the following example we will
+extract the time-resolved total particle energy of electrons which is measured in
+Joules and convert it to electron volts.
 
-In the following example we will extract the time-resolved total particle
-energy of electrons which is measured in Joules and convert it to electron
-volts.
+.. jupyter-execute::
 
-.. ipython:: python
+    ds = open_mfdataset("tutorial_dataset_1d/*.sdf")
+    ds["Total_Particle_Energy_Electron"]
 
-    with open_mfdataset("tutorial_dataset_1d/*.sdf") as ds:
-        total_particle_energy = ds["Total_Particle_Energy_Electron"]
+Once you call `xarray.DataArray.pint.quantify` the type is inferred the original
+`xarray.DataArray` ``"units"`` attribute which is then removed and the data is
+converted to a `pint.Quantity`.
 
-    total_particle_energy
+.. note::
+    You can also specify the units yourself by passing it as a string 
+    (e.g. ``"J"``) into the `xarray.DataArray.pint.quantify` function call. 
+
+.. jupyter-execute::
 
     total_particle_energy = ds["Total_Particle_Energy_Electron"].pint.quantify()
-
     total_particle_energy
 
 
 Now that this dataset has been converted a `pint.Quantity`, we can check
 it's units and dimensionality
 
-.. ipython:: python
+.. jupyter-execute::
 
-    total_particle_energy.pint.units
-    total_particle_energy.pint.dimensionality
+    print(total_particle_energy.pint.units)
+    print(total_particle_energy.pint.dimensionality)
 
 
-Converting Units
+Converting units
 ~~~~~~~~~~~~~~~~
 
-We can now convert it to electron volts utilising the `pint.Quantity.to`
+We can now convert it to electron volts utilising the `xarray.DataArray.pint.to`
 function
 
-.. ipython:: python
+.. jupyter-execute::
 
     total_particle_energy_ev = total_particle_energy.pint.to("eV")
+    total_particle_energy_ev
 
-Unit Propagation
+Unit propagation
 ~~~~~~~~~~~~~~~~
 
 Suppose instead of converting to ``"eV"``, we want to convert to ``"W"``
@@ -176,21 +170,20 @@ propagation when we perform arithmetic operations like division.
 
 .. note::
     Pint does not automatically simplify ``"J/s"`` to ``"W"``, so we use
-    `pint.Quantity.to` to convert the unit string. Since these units are
+    `xarray.DataArray.pint.to` to convert the unit string. Since these units are
     the same it will not change the underlying data, only the units. This is
     only a small formatting choice and is not required.
 
-.. ipython:: python
+.. jupyter-execute::
 
     import pint
+
     time_values = total_particle_energy.coords["time"].data
     time = pint.Quantity(time_values, "s")
-    total_particle_energy_w = total_particle_energy / time
-    total_particle_energy_w.pint.units
-    total_particle_energy_w = total_particle_energy_w.pint.to("W")
-    total_particle_energy_w.pint.units
+    total_particle_energy_w = total_particle_energy / time # units: joule / second
+    total_particle_energy_w = total_particle_energy_w.pint.to("W") # units: watt
 
-Dequantifying and Restoring Units
+Dequantifying and restoring units
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. note::
@@ -199,7 +192,7 @@ Dequantifying and Restoring Units
     name of the units. i.e. instead of returning ``"eV"`` it will return
     ``"electron_volt"``.
 
-The ``xarray.Dataset.DataArray.pint.dequantify`` function converts the data from
+The `xarray.DataArray.pint.dequantify` function converts the data from
 `pint.Quantity` back to the original `xarray.DataArray` and adds
 the ``"units"`` attribute back in. It also has an optional ``format`` parameter
 that allows you to specify the formatting type of ``"units"`` attribute. We
@@ -207,7 +200,7 @@ have used the ``format="~P"`` option as it shortens the unit to its
 "short pretty" format (``"eV"``). For more options, see the `Pint formatting
 documentation <https://pint.readthedocs.io/en/stable/user/formatting.html>`_.
 
-.. ipython:: python
+.. jupyter-execute::
 
     total_particle_energy_ev = total_particle_energy_ev.pint.dequantify(format="~P")
     total_particle_energy_w = total_particle_energy_w.pint.dequantify(format="~P")
@@ -216,13 +209,12 @@ documentation <https://pint.readthedocs.io/en/stable/user/formatting.html>`_.
 To confirm the conversion has worked correctly, we can plot the original and
 converted `xarray.Dataset` side by side:
 
-.. ipython:: python
+.. jupyter-execute::
     
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16,8))
     ds["Total_Particle_Energy_Electron"].plot(ax=ax1)
     total_particle_energy_ev.plot(ax=ax2)
     total_particle_energy_w.plot(ax=ax3)
     ax4.set_visible(False)
-    fig.suptitle("Comparison of conversion from Joules to electron volts and watts", fontsize="18")
-    @savefig unit_conversion.png width=9in
+    fig.suptitle("Comparison of conversion from Joules to electron volts and watts")
     fig.tight_layout()

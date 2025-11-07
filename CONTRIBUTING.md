@@ -4,7 +4,7 @@ We welcome contributions to the BEAM ecosystem! Whether it's reporting issues,
 suggesting features, improving the documentation, or submitting pull requests,
 your input helps improve these tools for the community.
 
-## How to Contribute
+## How to contribute
 
 There are many ways to get involved:
 
@@ -42,7 +42,7 @@ pip install "sdf-xarray[lint]"
 ruff check src tests
 ```
 
-### Running and Adding Tests
+### Running and adding tests
 
 We use [pytest](https://docs.pytest.org/en/stable/) to run tests.
 All new functionality should include relevant tests, placed in the `tests/`
@@ -65,7 +65,7 @@ When contributing to the documentation:
 - Follow the format of existing `.rst` files.
 - Link to external functions or tools when possible.
 
-### Compiling and Adding Documentation
+### Compiling and adding documentation
 
 To build the documentation locally, first install the required packages:
 
@@ -83,9 +83,9 @@ please don't hesitate to reach out.
 Every time you make changes to the documentation or add a new page, you must
 re-run the `make html` command to regenerate the HTML files.
 
-### Previewing Documentation
+### Previewing documentation
 
-#### Using VS Code Extensions
+#### Using VS Code extensions
 
 Once the html web pages have been made you can review them installing the
 [Live Server](https://marketplace.visualstudio.com/items/?itemName=ritwickdey.LiveServer)
@@ -93,17 +93,17 @@ VS Code extension. Navigate to the `_build/html` folder, right-click the
 `index.html`, and select **"Open with Live Server"**. This
 will open a live preview of the documentation in your web browser.
 
-#### Using a Simple Python Server
+#### Using a simple python server
 
 Alternatively, if you're not using VS Code, you can start a simple local server with Python:
 
 ```bash
-python -m http.server -d _build/htm
+python -m http.server -d _build/html
 ```
 
 Then open http://localhost:8000 in your browser to view the documentation.
 
-## Continuous Integration
+## Continuous integration
 
 All pull requests are automatically checked using GitHub Actions for:
 

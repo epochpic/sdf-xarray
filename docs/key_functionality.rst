@@ -165,29 +165,42 @@ all the methods from ``matplotlib`` to manipulate your plot.
    plt.title("Electric field along the x-axis")
    plt.show()
 
-After having loaded in a series of datasets we can select a
-simulation file by calling the `xarray.Dataset.isel` function where we pass in
-the parameter of ``time=0`` where ``0`` can be a number between ``0``
-and the total number of simulation files.
-
-We can also use the `xarray.Dataset.sel` function if we know the exact
-simulation time we want to select. There must be a corresponding
-dataset with this time for it work correctly.
+When loading a multi-file dataset using `sdf_xarray.open_mfdataset`, a
+time dimension is automatically added to the resulting `xarray.Dataset`.
+This dimension represents all the recorded simulation steps and allows
+for easy indexing. To quickly determine the number of time steps available,
+you can check the size of the time dimension.
 
 .. jupyter-execute::
 
-   # This is the same as the number of SDF files in the folder
-   print(f"There are a total of {ds["time"].size} time steps")
+   # This corresponds to the number of individual SDF files loaded
+   print(f"There are a total of {ds['time'].size} time steps")
 
-   # The time at the 20th simulation step
-   sim_time = ds['time'].isel(time=20).values
+   # You can look up the actual simulation time for any given index
+   sim_time = ds['time'].values[20]
    print(f"The time at the 20th simulation step is {sim_time:.2e} s")
 
+You can select and extract a single simulation snapshot using the integer
+index of the time step with the `xarray.Dataset.isel` function. This can be
+done by passsing the index to the ``time`` parameter (e.g., ``time=0`` for
+the first snapshot).
+
+.. jupyter-execute::
+
    # We can plot the variable at a given time index
-   ds["Electric_Field_Ex"].isel(time=20).plot()
-   # Or we can plot the variable at a specific value of the time
-   # ds["Electric_Field_Ex"].sel(time=sim_time).plot()
-   plt.show()
+   ds["Electric_Field_Ex"].isel(time=20)
+
+We can also use the `xarray.Dataset.sel` function if you wish to pass a
+value intead of an index.
+
+.. tip::
+
+   If you know roughly what time you wish to select but not the exact value
+   you can use the parameter ``method="nearest"``.
+
+.. jupyter-execute::
+
+   ds["Electric_Field_Ex"].sel(time=sim_time)
 
 Manipulating data
 -----------------

@@ -5,7 +5,6 @@
 
 from contextlib import suppress
 from importlib.metadata import version as get_version
-from pathlib import Path
 
 with suppress(ImportError):
     import matplotlib as mpl
@@ -20,8 +19,18 @@ author = "Peter Hill, Joel Adams"
 
 # The full version, including alpha/beta/rc tags
 release = get_version("sdf_xarray")
+# Strip the git release identifier
+if "+" in release:
+    release = release.split("+")[0]
+
 # Major.minor version
 version = ".".join(release.split(".")[:2])
+
+main_release = ".".join(release.split(".")[:3])
+dev_release = release.split(".")[-1]
+
+# Set html title manually for nicer formatting
+html_title = f"{project} {main_release} [{dev_release}] documentation"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -35,17 +44,10 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.todo",
     "sphinx_autodoc_typehints",
-    "IPython.sphinxext.ipython_directive",
-    "IPython.sphinxext.ipython_console_highlighting",
     "myst_parser",
+    "jupyter_sphinx",
+    "sphinx_copybutton",
 ]
-
-# Sometimes the savefig directory doesn't exist and needs to be created
-# https://github.com/ipython/ipython/issues/8733
-# becomes obsolete when we can pin ipython>=5.2; see ci/requirements/doc.yml
-ipython_savefig_dir = Path(__file__).resolve().parent / "_build" / "html" / "_static"
-ipython_savefig_dir.mkdir(parents=True, exist_ok=True)
-ipython_savefig_dir = str(ipython_savefig_dir)
 
 autosummary_generate = True
 
@@ -96,8 +98,10 @@ html_theme = "sphinx_book_theme"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-# html_static_path = ["_static"]
-html_static_path = []
+html_static_path = ["_static"]
+html_css_files = [
+    "force_render_dark_xarray_objects.css",
+]
 
 html_theme_options = {
     "repository_url": "https://github.com/epochpic/sdf-xarray",

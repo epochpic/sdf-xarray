@@ -36,6 +36,7 @@ extensions = [
     "sphinx_autodoc_typehints",
     "myst_parser",
     "jupyter_sphinx",
+    "sphinx_copybutton",
 ]
 
 autosummary_generate = True

@@ -48,6 +48,7 @@ docs = [
   "pint-xarray",
   "myst-parser",
   "jupyter-sphinx",
+  "sphinx-copybutton",
 ]
 test = ["pytest >= 3.3.0", "dask[complete]", "matplotlib"]
 lint = ["ruff"]

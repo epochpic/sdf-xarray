@@ -5,7 +5,6 @@
 
 from contextlib import suppress
 from importlib.metadata import version as get_version
-from pathlib import Path
 
 with suppress(ImportError):
     import matplotlib as mpl
@@ -35,17 +34,9 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.todo",
     "sphinx_autodoc_typehints",
-    "IPython.sphinxext.ipython_directive",
-    "IPython.sphinxext.ipython_console_highlighting",
     "myst_parser",
+    "jupyter_sphinx",
 ]
-
-# Sometimes the savefig directory doesn't exist and needs to be created
-# https://github.com/ipython/ipython/issues/8733
-# becomes obsolete when we can pin ipython>=5.2; see ci/requirements/doc.yml
-ipython_savefig_dir = Path(__file__).resolve().parent / "_build" / "html" / "_static"
-ipython_savefig_dir.mkdir(parents=True, exist_ok=True)
-ipython_savefig_dir = str(ipython_savefig_dir)
 
 autosummary_generate = True
 

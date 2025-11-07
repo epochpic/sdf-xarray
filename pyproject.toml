@@ -43,11 +43,11 @@ docs = [
   "sphinx-argparse-cli>=1.10.0",
   "sphinx-inline-tabs",
   "pickleshare",
-  "ipython",
   "matplotlib",
   "pint",
   "pint-xarray",
   "myst-parser",
+  "jupyter-sphinx",
 ]
 test = ["pytest >= 3.3.0", "dask[complete]", "matplotlib"]
 lint = ["ruff"]

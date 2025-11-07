@@ -61,6 +61,13 @@ Loading multiple files
 Multiple files can be loaded using one of two methods. The first of which
 is by using the `sdf_xarray.open_mfdataset`.
 
+.. tip::
+
+   If your simulation includes multiple ``output`` blocks that specify different variables
+   for output at various time steps, variables not present at a specific step will default
+   to a nan value. To clean your dataset by removing these nan values we suggest using the
+   `xarray.DataArray.dropna` function or :ref:`loading-sparse-data`.
+
 .. jupyter-execute::
 
    sdfxr.open_mfdataset("tutorial_dataset_1d/*.sdf")
@@ -79,9 +86,7 @@ done via the ``preprocess`` parameter.
       preprocess=sdfxr.SDFPreprocess()
    )
 
-If your simulation has multiple ``output`` blocks so that not all variables are
-output at every time step, then those variables will have ``NaN`` values at the
-corresponding time points.
+.. _loading-sparse-data:
 
 Loading sparse data
 ~~~~~~~~~~~~~~~~~~~

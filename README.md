@@ -65,7 +65,10 @@ value stored in each files attributes.
 
 > [!IMPORTANT]
 > If your simulation has multiple `output` blocks so that not all variables are
-> output at every time step, then at the timesteps where those variables are not present they will have have a value of nan.
+> output at every time step, then at the timesteps where those variables are not
+> present they will have have a value of nan. To clean your dataset by removing
+> these nan values we suggest using the `xarray.DataArray.dropna` function or
+> loading sparse data along separate time dimensions using `separate_times=True`.
 
 ```python
 from sdf_xarray import open_mfdataset

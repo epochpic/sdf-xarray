@@ -19,8 +19,18 @@ author = "Peter Hill, Joel Adams"
 
 # The full version, including alpha/beta/rc tags
 release = get_version("sdf_xarray")
+# Strip the git release identifier
+if "+" in release:
+    release = release.split("+")[0]
+
 # Major.minor version
 version = ".".join(release.split(".")[:2])
+
+main_release = ".".join(release.split(".")[:3])
+dev_release = release.split(".")[-1]
+
+# Set html title manually for nicer formatting
+html_title = f"{project} {main_release} [{dev_release}] documentation"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

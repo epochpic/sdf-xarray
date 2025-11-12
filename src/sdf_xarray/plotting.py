@@ -9,6 +9,7 @@ if TYPE_CHECKING:
     import matplotlib.pyplot as plt
     from matplotlib.animation import FuncAnimation
 
+from types import MethodType
 
 def get_frame_title(
     data: xr.DataArray,
@@ -17,7 +18,22 @@ def get_frame_title(
     title_custom: str | None = None,
     t: str = "time",
 ) -> str:
-    """Generate the title for a frame"""
+    """Generate the title for a frame
+    
+    Parameters
+    ----------
+    data
+        DataArray containing the target data
+    frame
+        Frame number
+    display_sdf_name
+        Display the sdf file name in the animation title
+    title_custom
+        Custom title to add to the plot
+    t
+        Time coordinate
+    """
+
     # Adds custom text to the start of the title, if specified
     title_custom = "" if title_custom is None else f"{title_custom}, "
     # Adds the time axis and associated units to the title
@@ -40,6 +56,17 @@ def calculate_window_boundaries(
 ) -> np.ndarray:
     """Calculate the bounderies a moving window frame. If the user specifies xlim, this will
     be used as the initial bounderies and the window will move along acordingly.
+    
+    Parameters
+    ----------
+    data
+        DataArray containing the target data
+    xlim
+        x limits
+    x_axis_name
+        Name of coordinate to assign to the x-axis
+    t
+        Time coordinate
     """
     x_grid = data[x_axis_name].values
     x_half_cell = (x_grid[1] - x_grid[0]) / 2
@@ -72,6 +99,15 @@ def compute_global_limits(
 ) -> tuple[float, float]:
     """Remove all NaN values from the target data to calculate the global minimum and maximum of the data.
     User defined percentiles can remove extreme outliers.
+    
+    Parameters
+    ----------
+    data
+        DataArray containing the target data
+    min_percentile
+        Minimum percentile of the data
+    max_percentile
+        Maximum percentile of the data    
     """
 
     # Removes NaN values, needed for moving windows
@@ -94,32 +130,32 @@ def animate(
     ax: plt.Axes | None = None,
     **kwargs,
 ) -> FuncAnimation:
-    """Generate an animation
+    """Generate an animation using an xarray.DataArray
 
     Parameters
     ---------
     data
-        The dataarray containing the target data
+        DataArray containing the target data
     fps
-        Frames per second for the animation (default: 10)
+        Frames per second for the animation
     min_percentile
-        Minimum percentile of the data (default: 0)
+        Minimum percentile of the data
     max_percentile
-        Maximum percentile of the data (default: 100)
+        Maximum percentile of the data
     title
-        Custom title to add to the plot.
+        Custom title to add to the plot
     display_sdf_name
         Display the sdf file name in the animation title
     t
         Coordinate for t axis (the coordinate which will be animated over). If `None`, use data.dims[0]
     ax
-        Matplotlib axes on which to plot.
+        Matplotlib axes on which to plot
     kwargs
-        Keyword arguments to be passed to matplotlib.
+        Keyword arguments to be passed to matplotlib
 
     Examples
     --------
-    >>> dataset["Derived_Number_Density_Electron"].epoch.animate()
+    >>> ds["Derived_Number_Density_Electron"].epoch.animate()
     """
     import matplotlib.pyplot as plt  # noqa: PLC0415
     from matplotlib.animation import FuncAnimation  # noqa: PLC0415
@@ -143,14 +179,12 @@ def animate(
     N_frames = data[t].size
     global_min, global_max = compute_global_limits(data, min_percentile, max_percentile)
 
-    # Initialise plot and set y-limits for 1D data
     if data.ndim == 2:
         kwargs.setdefault("x", coord_names[0])
         plot = data.isel({t:0}).plot(ax=ax, **kwargs)
         ax.set_title(get_frame_title(data, 0, display_sdf_name, title, t))
         ax.set_ylim(global_min, global_max)
 
-    # Initilise plot and set colour bar for 2D data
     if data.ndim == 3:
         kwargs.setdefault("norm", plt.Normalize(vmin = global_min, vmax = global_max))
         kwargs["add_colorbar"] = False
@@ -161,7 +195,7 @@ def animate(
         # Finds the time step with the minimum data value
         # This is needed so that the animation can use the correct colour bar
         argmin_time = np.unravel_index(data.argmin(), data.shape)[0]
-
+        
         # Initialize the plot, the final output will still start at the first time step
         plot = data.isel({t:argmin_time}).plot(ax = ax, **kwargs)
         ax.set_title(get_frame_title(data, 0, display_sdf_name, title, t))
@@ -190,17 +224,16 @@ def animate(
         plot = data.isel({t:frame}).plot(ax = ax, **kwargs)
         ax.set_title(get_frame_title(data, frame, display_sdf_name, title, t))
 
-        # Update y-limits for 1D data
         if data.ndim == 2:
             ax.set_ylim(global_min, global_max)
         return plot
-
+    
     return FuncAnimation(
         ax.get_figure(),
         update,
-        frames=range(N_frames),
-        interval=1000 / fps,
-        repeat=True,
+        frames = range(N_frames),
+        interval = 1000 / fps,
+        repeat = True,
     )
 
 def show(anim):

@@ -32,12 +32,14 @@ def get_frame_title(
 
 
 def calculate_window_boundaries(
-    data: xr.DataArray, xlim: tuple[float, float] | False = False
+    data: xr.DataArray,
+    xlim: tuple[float, float] | bool = False,
+    x_axis_name: str = "X_Grid_mid",
 ) -> np.ndarray:
     """Calculate the bounderies a moving window frame. If the user specifies xlim, this will
     be used as the initial bounderies and the window will move along acordingly.
     """
-    x_grid = data["X_Grid_mid"].values
+    x_grid = data[x_axis_name].values
     x_half_cell = (x_grid[1] - x_grid[0]) / 2
     N_frames = data["time"].size
 
@@ -153,7 +155,7 @@ def animate(
     # check if there is a moving window by finding NaNs in the data
     move_window = np.isnan(np.sum(data.values))
     if move_window:
-        window_boundaries = calculate_window_boundaries(data, kwargs.get("xlim", False))
+        window_boundaries = calculate_window_boundaries(data, kwargs.get("xlim", False), kwargs["x"])
 
     def update(frame):
         # Set the xlim for each frame in the case of a moving window

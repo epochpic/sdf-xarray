@@ -121,8 +121,10 @@ def animate(
 
     kwargs_original = kwargs.copy()
 
+    # Create plot if no ax is provided
     if ax is None:
-        _, ax = plt.subplots()
+        fig, ax = plt.subplots()
+        plt.close(fig)
 
     N_frames = data["time"].size
     global_min, global_max = compute_global_limits(data, min_percentile, max_percentile)

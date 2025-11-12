@@ -145,7 +145,7 @@ def animate(
 
     # Initialise plot and set y-limits for 1D data
     if data.ndim == 2:
-        kwargs.setdefault("x", "X_Grid_mid")
+        kwargs.setdefault("x", coord_names[0])
         plot = data.isel({t:0}).plot(ax=ax, **kwargs)
         ax.set_title(get_frame_title(data, 0, display_sdf_name, title, t))
         ax.set_ylim(global_min, global_max)
@@ -154,6 +154,10 @@ def animate(
     if data.ndim == 3:
         kwargs["norm"] = plt.Normalize(vmin=global_min, vmax=global_max)
         kwargs["add_colorbar"] = False
+        # Set default x and y coordinates for 3D data if not provided
+        kwargs.setdefault("x", coord_names[0])
+        kwargs.setdefault("y", coord_names[1])
+
         # Finds the time step with the minimum data value
         # This is needed so that the animation can use the correct colour bar
         argmin_time = np.unravel_index(data.argmin(), data.shape)[0]

@@ -245,7 +245,7 @@ def show(anim):
     anim
         `matplotlib.animation.FuncAnimation`
     """
-    from IPython.display import HTML
+    from IPython.display import HTML  # noqa: PLC0415
 
     return HTML(anim.to_jshtml())
 

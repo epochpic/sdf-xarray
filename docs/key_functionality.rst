@@ -211,7 +211,7 @@ would with ``numpy`` arrays.
 .. jupyter-execute::
 
    ds["Laser_Absorption_Fraction_in_Simulation"] = (
-      ds["Total_Particle_Energy_in_Simulation"]
+      (ds["Total_Particle_Energy_in_Simulation"] - ds["Total_Particle_Energy_in_Simulation"][0])
       / ds["Absorption_Total_Laser_Energy_Injected"]
    ) * 100
 
@@ -229,9 +229,7 @@ labels by delaying the call to ``plt.show()``.
 .. jupyter-execute::
 
    ds["Total_Particle_Energy_Electron"].plot(label="Electron")
-   ds["Total_Particle_Energy_Photon"].plot(label="Photon")
    ds["Total_Particle_Energy_Ion"].plot(label="Ion")
-   ds["Total_Particle_Energy_Positron"].plot(label="Positron")
    plt.title("Particle Energy in Simulation per Species")
    plt.legend()
    plt.show()
@@ -239,6 +237,6 @@ labels by delaying the call to ``plt.show()``.
 
 .. jupyter-execute::
 
-   print(f"Total laser energy injected: {ds["Absorption_Total_Laser_Energy_Injected"].max().values:.1e} J")
-   print(f"Total particle energy absorbed: {ds["Total_Particle_Energy_in_Simulation"].max().values:.1e} J")
-   print(f"The laser absorption fraction: {ds["Laser_Absorption_Fraction_in_Simulation"].max().values:.1f} %")
+   print(f"Total laser energy injected: {ds["Absorption_Total_Laser_Energy_Injected"][-1].values:.1e} J")
+   print(f"Total particle energy absorbed: {ds["Total_Particle_Energy_in_Simulation"][-1].values:.1e} J")
+   print(f"The laser absorption fraction: {ds["Laser_Absorption_Fraction_in_Simulation"][-1].values:.1f} %")

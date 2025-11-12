@@ -180,6 +180,17 @@ def animate(
         repeat=True,
     )
 
+def show(anim):
+    """Shows the FuncAnimation in a Jupyter notebook.
+    
+    Parameters
+    ----------
+    anim
+        `matplotlib.animation.FuncAnimation`    
+    """
+    from IPython.display import HTML
+
+    return HTML(anim.to_jshtml())
 
 @xr.register_dataarray_accessor("epoch")
 class EpochAccessor:
@@ -192,16 +203,21 @@ class EpochAccessor:
         Parameters
         ----------
         args
-            Positional arguments passed to :func:`generate_animation`.
+            Positional arguments passed to :func:`animation`.
         kwargs
-            Keyword arguments passed to :func:`generate_animation`.
+            Keyword arguments passed to :func:`animation`.
 
         Examples
         --------
-        >>> import xarray as xr
-        >>> from sdf_xarray import SDFPreprocess
-        >>> ds = xr.open_mfdataset("*.sdf", preprocess=SDFPreprocess())
-        >>> ani = ds["Electric_Field_Ey"].epoch.animate()
-        >>> ani.save("myfile.mp4")
+        >>> anim = ds["Electric_Field_Ey"].epoch.animate()
+        >>> anim.save("myfile.mp4")
+        >>> # Or in a jupyter notebook:
+        >>> anim.show()
         """
-        return animate(self._obj, *args, **kwargs)
+
+        # Add anim.show() functionality
+        # anim.show() will display the animation in a jupyter notebook
+        anim = animate(self._obj, *args, **kwargs)
+        anim.show = MethodType(show, anim)
+
+        return anim

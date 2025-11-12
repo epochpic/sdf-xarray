@@ -1,0 +1,83 @@
+begin:constant
+  n_elec_back_0 = 2e18
+  n_elec_beam_0 = 5e16
+  n_posi_beam_0 = 5e10
+  density_profile = gauss(x,25e-2,10e-2)*gauss(y,25e-2,10e-2)
+end:constant
+
+begin:control
+  nx = 256
+  ny = 256
+  t_end = 10e-9
+  x_min = 0
+  x_max = 50e-2
+  y_min = 0
+  y_max = 50e-2
+  stdout_frequency = 10
+end:control
+
+begin:boundaries
+  bc_x_min = simple_outflow
+  bc_x_max = simple_outflow
+  bc_y_min = periodic
+  bc_y_max = periodic
+end:boundaries
+
+begin:window
+  move_window = T
+  window_start_time = 0
+  bc_x_min_after_move = simple_outflow
+  bc_x_max_after_move = simple_outflow
+  window_v_x = 2.98e8
+end:window
+
+begin:qed
+  use_qed = T
+  qed_start_time = 0 
+  produce_photons = F
+  photon_energy_min = 0
+  produce_pairs = F
+  photon_dynamics = F
+end:qed
+
+begin:species
+  # Background electrons
+  name = Background_Electron
+  nparticles_per_cell = 5
+  number_density = n_elec_back_0
+  temperature_ev = 0
+  identify:electron
+end:species
+
+begin:species
+  # Beam electrons
+  name = Beam_Electrons
+  nparticles_per_cell = 5
+  number_density = n_elec_beam_0 * density_profile
+  drift_px = 0.19*1.6e-10/ c
+  temperature_ev = 0
+  identify:electron
+end:species
+
+begin:species
+  # Beam electrons
+  name = Beam_Positrons
+  nparticles_per_cell = 5
+  number_density = n_posi_beam_0 * density_profile
+  drift_px = 0.19*1.6e-10/ c
+  temperature_ev = 0
+  identify:positron
+end:species
+
+begin:output_global
+  force_final_to_be_restartable = F
+end:output_global
+
+begin:output
+  name = normal
+  dt_snapshot = 1e-9
+
+  # Properties on grid
+  grid = always
+  number_density = always + species + no_sum
+end:output

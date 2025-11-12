@@ -1,0 +1,89 @@
+begin:constant
+  # Laser parameters
+  lambda_L = 1e-6
+  omega_L = 2 * pi * c / lambda_L
+  I_0 = 1e24 # Intensity (Wm^-2)
+
+  # Target parameters
+  n_e0 = 1 * critical(omega_L)
+  th = 1 * micron / 2.0
+end:constant
+
+begin:constant
+  r_inner = abs(x - 5*micron) - sqrt(2) * th # Cone inner radius
+  r_outer = abs(x - 5*micron) + sqrt(2) * th # Cone outer radius
+  xi = 3*micron - th
+  xo = 3*micron + th
+  r = sqrt(y^2 + z^2) # Radial co-ordinate
+end:constant
+
+begin:control
+  nx = 100
+  ny = 100
+  nz = 100
+  nparticles = nx * ny * nz * 1.123
+
+  # Final time of simulation
+  t_end = 100e-15
+
+  # Size of domain
+  x_min = -10 * micron
+  x_max = -x_min
+  y_min = x_min
+  y_max = x_max
+  z_min = x_min
+  z_max = x_max
+
+  stdout_frequency = 1 # Print ETA
+end:control
+
+begin:boundaries
+  bc_x_min = simple_laser
+  bc_x_max = simple_outflow
+  bc_y_min = periodic
+  bc_y_max = periodic
+  bc_z_min = periodic
+  bc_z_max = periodic
+end:boundaries
+
+begin:species
+  name = Electron
+  charge = -1
+  mass = 1
+  fraction = 0.5
+  number_density = if((r gt r_inner) and (r lt r_outer), n_e0, 0.0)
+  number_density = if((x gt xi) and (x lt xo) and (r lt r_inner), \
+                      n_e0, number_density(Electron))
+  number_density = if(x gt xo, 0.0, number_density(Electron))
+end:species
+
+begin:species
+  name = Proton
+  charge = 1.0
+  mass = 1836.2
+  fraction = 0.5
+  number_density = number_density(Electron)
+end:species
+
+begin:laser
+  boundary = x_min
+  intensity = I_0
+  lambda = lambda_L
+  profile = gauss(r, 0, 2.5e-6)
+end:laser
+
+begin:output_global
+  force_final_to_be_restartable = F
+end:output_global
+
+begin:output
+  name = normal
+
+  # Simulated time between output dumps
+  dt_snapshot = 20e-15
+
+  # Properties on grid
+  grid = always
+  ey = always
+  number_density = always
+end:output

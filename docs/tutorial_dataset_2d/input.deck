@@ -1,43 +1,77 @@
-begin:control
-  nx = 64
-  ny = 64
-
-  # Final time of simulation
-  t_end = 5 * femto
-
-  # Size of domain
-  x_min = 0
-  x_max = 6 * micron
-
-  y_min = 0
-  y_max = 6 * micron
-
-  stdout_frequency = 1
-  nparticles = nx * ny * 50
-end:control
-
+### USER DEFINED CONSTANTS ###
 begin:constant
-    n_elec = 1000
-    L_target_x = 2 * micron
-    L_target_y = 4 * micron
+  # Laser details
+  I_peak = 1e+24 # Peak intensity of the laser [Wm^-2]
+  lambda_L = 1e-6 # Wavelength of the laser
+  y_fwhm_L = 2.4e-6 # Intensity fwhm in y
+  t_fwhm_L = 16e-15 # Intensity fwhm in t
 
-    x_center = (x_min + x_max) / 2
-    y_center = (y_min + y_max) / 2
+  # Target details
+  n_elec = 1e+27 # Average electron number density [m^-3]
+  density_profile = if(x lt 0, 0, 1)
 
-    density_profile = if( (abs(x - x_center) lt L_target_x/2), if( (abs(y - y_center) lt L_target_y/2), 1, 0), 0)
+  # Simulation details
+  mppc = 50 # Macro particles per cell
+  min_den_fact = 1e-4 # Minumum density factor (must be much less than 1!)
 end:constant
 
-begin:boundaries
-  bc_x_min = periodic
-  bc_x_max = periodic
-  bc_y_min = periodic
-  bc_y_max = periodic
-end:boundaries
+begin:control
+  t_end = 200e-15
+  nx = 100
+  ny = 100
+  x_min = -5e-6
+  x_max =  15e-6
+  y_min = -10e-6
+  y_max = -y_min
+  nparticles = nint( x_max / (x_max - x_min) * nx * ny * mppc)
+  dt_multiplier = 0.8
+  smooth_currents = T
+  dlb_threshold = 0.8
+  stdout_frequency = 100 # Print ETA
+end:control
 
+### LASER FOCUSING CONSTANTS ###
+begin:constant
+  # Focusing distance
+  x_foc = -x_min # Boundary to focal point distance
+
+  # Phase
+  k_L = 2.0 * pi / lambda_L # Laser wave number
+  y_w_0 = y_fwhm_L / (sqrt(2*loge(2))) # Minimum field waist in y
+  x_Rr = pi * y_w_0^2 / lambda_L # Rayleigh range
+  r_c_bound = x_foc * (1 + (x_Rr/x_foc)^2) # Radius of curvature at the boundary
+  psi_Gouy = atan(-x_foc/r_c_bound) # Boundary phase Gouy shift
+
+  # Spatial profile
+  y_w_bound = y_w_0 * sqrt(1 + (x_foc/x_Rr)^2) # Field waist in y at the boundary
+  I_bound = I_peak * (y_w_0 / y_w_bound)^2 # Intensity at the boundary
+
+  # Temporal profile
+  t_w = t_fwhm_L / (sqrt(2*loge(2))) # Field waist in t
+  t_hw01m = t_w * sqrt(loge(10)) # Half width 0.1 maximum
+end:constant
+
+begin:laser
+  boundary = x_min
+  intensity = I_bound 
+  lambda = lambda_L
+  profile = gauss(y, 0, y_w_bound) # Spatial profile
+  t_profile = gauss(time, t_hw01m, t_w) # Temporal profile
+  phase = k_L * (y^2 / (2 * r_c_bound)) - psi_Gouy # Phase
+end:laser
+
+begin:boundaries
+  bc_x_min = simple_laser
+  bc_x_max = simple_outflow
+  bc_y_min = open
+  bc_y_max = open
+end:boundaries
 
 begin:species
   name = Electron
   frac = 0.5
+  temp = 1e3 * (qe/kb)
+  number_density_min = n_elec * min_den_fact
   number_density = n_elec * density_profile
   identify:electron
 end:species
@@ -45,21 +79,20 @@ end:species
 begin:species
   name = Ion
   frac = 0.5
+  temp = temp_x(Electron)
+  number_density_min = n_elec * min_den_fact
   number_density = n_elec * density_profile
   identify:proton
 end:species
 
 begin:output_global
-    force_last_to_be_restartable = F
+  force_final_to_be_restartable = F
 end:output_global
 
 begin:output
   name = normal
-
-  dt_snapshot = 1 * femto
-
   grid = always
-  number_density = always + species
-
+  dt_snapshot = 10e-15
+  ey = always + single
+  number_density = always + species + no_sum + single
 end:output
-

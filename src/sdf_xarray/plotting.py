@@ -15,33 +15,35 @@ def get_frame_title(
     frame: int,
     display_sdf_name: bool = False,
     title_custom: str | None = None,
+    t: str = "time",
 ) -> str:
     """Generate the title for a frame"""
     # Adds custom text to the start of the title, if specified
     title_custom = "" if title_custom is None else f"{title_custom}, "
-    # Adds the time and associated units to the title
-    time = data["time"][frame].to_numpy()
+    # Adds the time axis and associated units to the title
+    t_axis_value = data[t][frame].values
 
-    time_units = data["time"].attrs.get("units", False)
-    time_units_formatted = f" [{time_units}]" if time_units else ""
-    title_time = f"time = {time:.2e}{time_units_formatted}"
+    t_axis_units = data[t].attrs.get("units", False)
+    t_axis_units_formatted = f" [{t_axis_units}]" if t_axis_units else ""
+    title_t_axis = f"{data[t].long_name} = {t_axis_value:.2e}{t_axis_units_formatted}"
 
     # Adds sdf name to the title, if specifed
     title_sdf = f", {frame:04d}.sdf" if display_sdf_name else ""
-    return f"{title_custom}{title_time}{title_sdf}"
+    return f"{title_custom}{title_t_axis}{title_sdf}"
 
 
 def calculate_window_boundaries(
     data: xr.DataArray,
     xlim: tuple[float, float] | bool = False,
     x_axis_name: str = "X_Grid_mid",
+    t: str = "time",
 ) -> np.ndarray:
     """Calculate the bounderies a moving window frame. If the user specifies xlim, this will
     be used as the initial bounderies and the window will move along acordingly.
     """
     x_grid = data[x_axis_name].values
     x_half_cell = (x_grid[1] - x_grid[0]) / 2
-    N_frames = data["time"].size
+    N_frames = data[t].size
 
     # Find the window bounderies by finding the first and last non-NaN values in the 0th lineout
     # along the x-axis.
@@ -88,6 +90,7 @@ def animate(
     max_percentile: float = 100,
     title: str | None = None,
     display_sdf_name: bool = False,
+    t: str | None = None,
     ax: plt.Axes | None = None,
     **kwargs,
 ) -> FuncAnimation:
@@ -107,6 +110,8 @@ def animate(
         Custom title to add to the plot.
     display_sdf_name
         Display the sdf file name in the animation title
+    t
+        Coordinate for t axis (the coordinate which will be animated over). If `None`, use data.dims[0]
     ax
         Matplotlib axes on which to plot.
     kwargs
@@ -126,33 +131,44 @@ def animate(
         fig, ax = plt.subplots()
         plt.close(fig)
 
-    N_frames = data["time"].size
+    # Makes a list of coordinates in data.
+    coord_names = list(data.dims)
+    if t is None:
+        if "time" in coord_names:
+            t = "time"
+        else:
+            t = coord_names[-1]
+    coord_names.remove(t)
+
+    N_frames = data[t].size
     global_min, global_max = compute_global_limits(data, min_percentile, max_percentile)
 
     # Initialise plot and set y-limits for 1D data
     if data.ndim == 2:
         kwargs.setdefault("x", "X_Grid_mid")
-        plot = data.isel(time=0).plot(ax=ax, **kwargs)
-        ax.set_title(get_frame_title(data, 0, display_sdf_name, title))
+        plot = data.isel({t:0}).plot(ax=ax, **kwargs)
+        ax.set_title(get_frame_title(data, 0, display_sdf_name, title, t))
         ax.set_ylim(global_min, global_max)
 
     # Initilise plot and set colour bar for 2D data
     if data.ndim == 3:
         kwargs["norm"] = plt.Normalize(vmin=global_min, vmax=global_max)
         kwargs["add_colorbar"] = False
-        # Set default x and y coordinates for 2D data if not provided
-        kwargs.setdefault("x", "X_Grid_mid")
-        kwargs.setdefault("y", "Y_Grid_mid")
+        # Finds the time step with the minimum data value
+        # This is needed so that the animation can use the correct colour bar
+        argmin_time = np.unravel_index(data.argmin(), data.shape)[0]
 
-        # Initialize the plot with the first timestep
-        plot = data.isel(time=0).plot(ax=ax, **kwargs)
-        ax.set_title(get_frame_title(data, 0, display_sdf_name, title))
+        # Initialize the plot, the final output will still start at the first time step
+        plot = data.isel({t:argmin_time}).plot(ax = ax, **kwargs)
+        ax.set_title(get_frame_title(data, 0, display_sdf_name, title, t))
+        kwargs["cmap"] = plot.cmap
 
         # Add colorbar
         if kwargs_original.get("add_colorbar", True):
             long_name = data.attrs.get("long_name")
             units = data.attrs.get("units")
-            plt.colorbar(plot, ax=ax, label=f"{long_name} [${units}$]")
+            fig = plot.get_figure()
+            fig.colorbar(plot, ax=ax, label=f"{long_name} [{units}]")
 
     # check if there is a moving window by finding NaNs in the data
     move_window = np.isnan(np.sum(data.values))
@@ -167,8 +183,8 @@ def animate(
         # Update plot for the new frame
         ax.clear()
 
-        data.isel(time=frame).plot(ax=ax, **kwargs)
-        ax.set_title(get_frame_title(data, frame, display_sdf_name, title))
+        plot = data.isel({t:frame}).plot(ax = ax, **kwargs)
+        ax.set_title(get_frame_title(data, frame, display_sdf_name, title, t))
 
         # Update y-limits for 1D data
         if data.ndim == 2:

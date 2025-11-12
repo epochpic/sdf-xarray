@@ -15,7 +15,7 @@ with suppress(ImportError):
 
 project = "sdf-xarray"
 copyright = "2024-2025, Peter Hill, Joel Adams"
-author = "Peter Hill, Joel Adams"
+author = "Peter Hill, Joel Adams, Shaun Doherty"
 
 # The full version, including alpha/beta/rc tags
 release = get_version("sdf_xarray")
@@ -125,4 +125,5 @@ intersphinx_mapping = {
     "xarray": ("https://docs.xarray.dev/en/latest", None),
     "pint": ("https://pint.readthedocs.io/en/stable", None),
     "pint-xarray": ("https://pint-xarray.readthedocs.io/en/stable", None),
+    "matplotlib": ("https://matplotlib.org/stable", None),
 }

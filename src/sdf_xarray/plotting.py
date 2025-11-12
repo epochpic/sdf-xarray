@@ -175,16 +175,22 @@ def animate(
     coord_names.remove(t)
 
     N_frames = data[t].size
-    global_min, global_max = compute_global_limits(data, min_percentile, max_percentile)
 
     if data.ndim == 2:
         kwargs.setdefault("x", coord_names[0])
         plot = data.isel({t: 0}).plot(ax=ax, **kwargs)
         ax.set_title(get_frame_title(data, 0, display_sdf_name, title, t))
+        global_min, global_max = compute_global_limits(
+            data, min_percentile, max_percentile
+        )
         ax.set_ylim(global_min, global_max)
 
     if data.ndim == 3:
-        kwargs.setdefault("norm", plt.Normalize(vmin=global_min, vmax=global_max))
+        if "norm" not in kwargs:
+            global_min, global_max = compute_global_limits(
+                data, min_percentile, max_percentile
+            )
+            kwargs["norm"] = plt.Normalize(vmin=global_min, vmax=global_max)
         kwargs["add_colorbar"] = False
         # Set default x and y coordinates for 3D data if not provided
         kwargs.setdefault("x", coord_names[0])

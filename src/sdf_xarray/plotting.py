@@ -171,10 +171,7 @@ def animate(
     # Makes a list of coordinates in data.
     coord_names = list(data.dims)
     if t is None:
-        if "time" in coord_names:
-            t = "time"
-        else:
-            t = coord_names[-1]
+        t = "time" if "time" in coord_names else coord_names[-1]
     coord_names.remove(t)
 
     N_frames = data[t].size

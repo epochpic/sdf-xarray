@@ -152,7 +152,7 @@ def animate(
 
     # Initilise plot and set colour bar for 2D data
     if data.ndim == 3:
-        kwargs["norm"] = plt.Normalize(vmin=global_min, vmax=global_max)
+        kwargs.setdefault("norm", plt.Normalize(vmin = global_min, vmax = global_max))
         kwargs["add_colorbar"] = False
         # Set default x and y coordinates for 3D data if not provided
         kwargs.setdefault("x", coord_names[0])

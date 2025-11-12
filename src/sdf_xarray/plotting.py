@@ -189,6 +189,7 @@ def animate(
         # Update y-limits for 1D data
         if data.ndim == 2:
             ax.set_ylim(global_min, global_max)
+        return plot
 
     return FuncAnimation(
         ax.get_figure(),

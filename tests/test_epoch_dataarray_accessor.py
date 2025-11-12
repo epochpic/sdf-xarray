@@ -126,9 +126,7 @@ def test_get_frame_title_Z_Grid_mid():
     with xr.open_dataset(EXAMPLE_FILES_DIR_3D / "0001.sdf") as ds:
         data = ds["Derived_Number_Density_Electron"]
         expected_result = "Z = 3.91e-07 [m]"
-        result = sxp.get_frame_title(
-            data, 0, t = "Z_Grid_mid"
-        )
+        result = sxp.get_frame_title(data, 0, t="Z_Grid_mid")
         assert expected_result == result
 
 

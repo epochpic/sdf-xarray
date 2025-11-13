@@ -24,6 +24,17 @@ Install sdf-xarray from PyPI with:
 
 or download this code locally:
 
+.. tip::
+
+    If you wish to use the SDF files present in these code examples locally you need to
+    install the Git LFS package as the files are not stored on GitHub.
+    
+    1. Install Git LFS from the `official website <https://git-lfs.com>`_.
+    2. Run ``git lfs install`` anywhere in a terminal to enable it.
+     
+    If you first ``clone`` without Git LFS, the large files will be replaced by small text
+    pointers. In this case, run ``git lfs pull`` to retrieve the files after installation.
+
 .. code-block:: bash
 
     git clone --recursive https://github.com/epochpic/sdf-xarray.git
@@ -35,6 +46,9 @@ or download this code locally:
    When loading SDF files, variables related to ``boundaries``, ``cpu`` and ``output file`` are excluded as they are problematic. If you wish to load these in please use the
    :ref:`loading-raw-files-getting-started` approach.
 
+Usage
+-----
+
 .. tip::
 
     All code examples throughout this documentation are visualised using Jupyter notebooks
@@ -44,9 +58,6 @@ or download this code locally:
     .. code-block:: bash
 
         pip install "sdf-xarray[jupyter]"
-
-Usage
------
 
 ``sdf-xarray`` is a backend for xarray, and so is usable directly from
 `xarray`. There are several ways to load SDF files:

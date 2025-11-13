@@ -26,6 +26,16 @@ pip install sdf-xarray
 
 or download this code locally:
 
+> [!NOTE]
+> If you wish to use the SDF files present in this repository locally you need to
+> install the Git LFS package as the files are not stored on GitHub.
+>
+> 1. Install Git LFS from the [official website](https://git-lfs.com).
+> 2. Run `git lfs install` anywhere in a terminal to enable it.
+> 
+> If you first `clone` without Git LFS, the large files will be replaced by small text
+> pointers. In this case, run `git lfs pull` to retrieve the files after installation.
+
 ```bash
 git clone --recursive https://github.com/epochpic/sdf-xarray.git
 cd sdf-xarray

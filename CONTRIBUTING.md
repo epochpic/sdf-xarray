@@ -20,6 +20,15 @@ There are many ways to get involved:
 
 ## Code
 
+This repository uses Git LFS to manage the large SDF datasets. You must install it
+before cloning the repository to ensure the files are downloaded.
+
+1. Install Git LFS from the [official website](https://git-lfs.com).
+2. Run `git lfs install` anywhere in a terminal to enable it.
+
+If you `clone` without LFS, the large files will be replaced by small text
+pointers. In this case, run `git lfs pull` to retrieve the files after installation.
+
 ```bash
 git clone --recursive https://github.com/epochpic/sdf-xarray.git
 cd sdf-xarray

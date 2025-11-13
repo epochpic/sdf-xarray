@@ -14,6 +14,7 @@ plasma PIC code.
 
    Getting Started <getting_started>
    Key Functionality <key_functionality>
+   Animations <animation>
    Unit Conversion <unit_conversion>
    Known Issues <known_issues>
    Contributing <contributing>

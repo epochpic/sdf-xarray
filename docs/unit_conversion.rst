@@ -1,8 +1,8 @@
-.. _sec-unit-conversion:
-
 .. |rescale_coords_accessor| replace:: `xarray.Dataset.epoch.rescale_coords
     <sdf_xarray.dataset_accessor.EpochAccessor.rescale_coords>`
     
+.. _sec-unit-conversion:
+
 ===============
 Unit Conversion
 ===============

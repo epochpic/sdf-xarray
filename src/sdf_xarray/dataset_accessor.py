@@ -1,4 +1,14 @@
+from __future__ import annotations
+
+from types import MethodType
+from typing import TYPE_CHECKING
+
 import xarray as xr
+
+from .plotting import animate_multiple, show
+
+if TYPE_CHECKING:
+    from matplotlib.animation import FuncAnimation
 
 
 @xr.register_dataset_accessor("epoch")
@@ -69,3 +79,46 @@ class EpochAccessor:
             new_coords[coord_name] = coord_rescaled
 
         return ds.assign_coords(new_coords)
+
+    def animate_multiple(
+        self,
+        *variables: str | xr.DataArray,
+        datasets_kwargs: list[dict] | None = None,
+        **kwargs,
+    ) -> FuncAnimation:
+        """
+        Animate multiple Dataset variables on the same axes.
+
+        Parameters
+        ----------
+        variables
+            The variables to animate.
+        datasets_kwargs
+            Per-dataset keyword arguments passed to plotting.
+        kwargs
+            Common keyword arguments forwarded to animation.
+
+        Examples
+        --------
+        >>> anim = ds.epoch.animate_multiple(
+                ds["Derived_Number_Density_Electron"],
+                ds["Derived_Number_Density_Ion"],
+                datasets_kwargs=[{"label": "Electron"}, {"label": "Ion"}],
+                ylabel="Derived Number Density [1/m$^3$]"
+            )
+        >>> anim.save("animation.gif")
+        >>> # Or in a jupyter notebook:
+        >>> anim.show()
+        """
+
+        dataarrays = [
+            self._obj[var] if isinstance(var, str) else var for var in variables
+        ]
+        anim = animate_multiple(
+            *dataarrays,
+            datasets_kwargs=datasets_kwargs,
+            **kwargs,
+        )
+        anim.show = MethodType(show, anim)
+
+        return anim

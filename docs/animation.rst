@@ -3,6 +3,9 @@
 .. |animate_accessor| replace:: `xarray.DataArray.epoch.animate
    <sdf_xarray.plotting.animate>`
 
+.. |animate_multiple_accessor| replace:: `xarray.Dataset.epoch.animate_multiple
+   <sdf_xarray.plotting.animate_multiple>`
+
 ==========
 Animations
 ==========
@@ -131,10 +134,8 @@ Moving window
 -------------
 
 EPOCH allows for simulations that have a moving simulation window
-(changing x-axis over time). |animate_accessor| will
-automatically detect when a simulation has a moving window by searching 
-for NaNs in the `xarray.DataArray` and change the x-axis limits
-accordingly.
+(changing x-axis over time). |animate_accessor| can accept the boolean parameter
+``move_window`` and change the x-axis limits accordingly.
 
 .. warning::
    `sdf_xarray.open_mfdataset` does not currently function with moving window data.
@@ -152,7 +153,7 @@ accordingly.
       )
 
    da = ds["Derived_Number_Density_Beam_Electrons"]
-   anim = da.epoch.animate(fps = 5)
+   anim = da.epoch.animate(move_window=True, fps = 5)
    anim.show()
 
 .. warning::
@@ -191,73 +192,70 @@ before plotting as in :ref:`sec-unit-conversion`. Some functionality such as
       )
    anim.show()
 
-Advanced usage
---------------
+Combining multiple animations
+-----------------------------
 
-Multiple plots on the same axes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+|animate_multiple_accessor| creates a `matplotlib.animation.FuncAnimation`
+that contains multiple plots layered on top of each other.
+
+1D simulation
+~~~~~~~~~~~~~
 
 What follows is an example of how to combine multiple animations on the
-same axis. This may be implemented in a more user-friendly function in
-a future update.
+same axis.
 
 .. jupyter-execute::
 
-   # Open the SDF files
    ds = sdfxr.open_mfdataset("tutorial_dataset_1d/*.sdf")
 
-   # Create figure and axes
-   fig, ax = plt.subplots()
-   plt.close(fig)
+   anim = ds.epoch.animate_multiple(
+      ds["Derived_Number_Density_Electron"],
+      ds["Derived_Number_Density_Ion"],
+      datasets_kwargs=[{"label": "Electron"}, {"label": "Ion"}],
+      ylim=(0e27,4e27),
+      ylabel="Derived Number Density [1/m$^3$]"
+   )
 
-   # Generate the animations independently
-   anim_1 = ds["Derived_Number_Density_Electron"].epoch.animate()
-   anim_2 = ds["Derived_Number_Density_Ion"].epoch.animate()
+   anim.show()
 
-   # Extract the update functions from the animations
-   update_1 = anim_1._func
-   update_2 = anim_2._func
+2D simulation
+~~~~~~~~~~~~~
 
-   # Create axes details for new animation
-   x_min, x_max = update_1(0)[0].axes.get_xlim()
-   y_min_1, y_max_1 = update_1(0)[0].axes.get_ylim()
-   y_min_2, y_max_2 = update_2(0)[0].axes.get_ylim()
-   y_min = min(y_min_1, y_min_2)
-   y_max = max(y_max_1, y_max_2)
-   x_label = update_1(0)[0].axes.get_xlabel()
-   y_label = "Number Density [m$^{-3}$]"
-   label_1 = "Electron"
-   label_2 = "Ion"
+.. tip::
+   To correctly display 2D data on top of one another you need to specify
+   the ``alpha`` value which sets the opacity of the plot.
 
-   # Create new update function
-   def update_combined(frame):
-      anim_1_fig = update_1(frame)[0]
-      anim_2_fig = update_2(frame)[0]
+This also works with 2 dimensional data.
 
-      title = anim_1_fig.axes.title._text
+.. jupyter-execute::
+   
+   import numpy as np
+   from matplotlib.colors import LogNorm
 
-      ax.clear()
-      plot = ax.plot(anim_1_fig._x, anim_1_fig._y, label = label_1)
-      ax.plot(anim_2_fig._x, anim_2_fig._y, label = label_2)
-      ax.set_title(title)
-      ax.set_xlim(x_min, x_max)
-      ax.set_ylim(y_min, y_max)
-      ax.set_xlabel(x_label)
-      ax.set_ylabel(y_label)
-      ax.legend(loc = "upper left")
-      return plot
+   ds = sdfxr.open_mfdataset("tutorial_dataset_2d/*.sdf")
 
-   N_frames = anim_1._save_count
-   interval = anim_1._interval
+   flux_magnitude = np.sqrt(
+      ds["Derived_Poynting_Flux_x"]**2 +
+      ds["Derived_Poynting_Flux_y"]**2 +
+      ds["Derived_Poynting_Flux_z"]**2
+   )
+   flux_magnitude.attrs["long_name"] = "Poynting Flux Magnitude"
+   flux_magnitude.attrs["units"] = "W/m$^2$"
 
-   # Create combined animation
-   anim_combined = FuncAnimation(
-      fig,
-      update_combined,
-      frames=range(N_frames),
-      interval = interval,
-      repeat=True,
-      )
+   # Cut-off low energy values so that they will be rendered as transparent
+   # in the plot as they've been set to NaN
+   flux_masked = flux_magnitude.where(flux_magnitude > 0.2e23)
+   flux_norm = LogNorm(
+      vmin=float(flux_masked.min()),
+      vmax=float(flux_masked.max())
+   )
 
-   # Display animation as jshtml
-   HTML(anim_combined.to_jshtml())
+   anim = ds.epoch.animate_multiple(
+      ds["Derived_Number_Density_Electron"],
+      flux_masked,
+      datasets_kwargs=[
+         {"alpha": 1.0},
+         {"cmap": "hot", "norm": flux_norm, "alpha": 0.9},
+      ],
+   )
+   anim.show()

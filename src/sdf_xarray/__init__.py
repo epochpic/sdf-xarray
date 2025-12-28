@@ -337,7 +337,25 @@ def open_mfdatatree(
     probe_names: list[str] | None = None,
     data_vars: list[str] | None = None,
 ) -> xr.DataTree:
-    """
+    """Open a set of EPOCH SDF files as one `xarray.DataTree`
+
+    EPOCH can output variables at different periods, so each individal
+    SDF file from one EPOCH run may have different variables in it. In
+    order to combine all files into one `xarray.Dataset`, we need to
+    concatenate variables across their time dimension.
+
+    We have two choices:
+
+    1. One time dimension where some variables may not be defined at all time
+       points, and so will be filled with NaNs at missing points; or
+    2. Multiple time dimensions, one for each output frequency
+
+    The second option is better for memory consumption, as the missing data with
+    the first option still takes up space. However, proper lazy-loading may
+    mitigate this.
+
+    The ``separate_times`` argument can be used to switch between these choices.
+
     An `xarray.DataTree` is constructed utilising the original names in the SDF
     file. This is due to the fact that these names include slashes which `xarray`
     can use to automatically build up a datatree. We do additionally replace

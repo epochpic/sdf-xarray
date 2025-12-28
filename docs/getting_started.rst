@@ -64,6 +64,16 @@ Loading single files
 
     xr.open_dataset("tutorial_dataset_1d/0010.sdf")
 
+Alternatively, you can load the data in as a `xarray.DataTree`, which organises the data
+hierarchically into ``groups`` (for example grouping related quantities such as the individual
+components of the electric and magnetic fields) while keeping each item as a `xarray.Dataset`.
+
+.. jupyter-execute::
+
+    import sdf_xarray as sdfxr
+
+    sdfxr.open_datatree("tutorial_dataset_1d/0010.sdf")
+
 Loading multiple files
 ----------------------
 
@@ -72,6 +82,16 @@ Loading multiple files
     import sdf_xarray as sdfxr
 
     sdfxr.open_mfdataset("tutorial_dataset_1d/*.sdf")
+
+Alternatively, you can load the data in as a `xarray.DataTree`, which organises the data
+hierarchically into ``groups`` (for example grouping related quantities such as the individual
+components of the electric and magnetic fields) while keeping each item as a `xarray.Dataset`.
+
+.. jupyter-execute::
+
+    import sdf_xarray as sdfxr
+
+    sdfxr.open_mfdatatree("tutorial_dataset_1d/*.sdf")
 
 .. _loading-raw-files-getting-started:
 

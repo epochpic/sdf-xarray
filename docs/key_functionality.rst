@@ -15,8 +15,8 @@ Loading SDF files
 -----------------
 There are several ways to load SDF files:
 
-- To load a single file, use `xarray.open_dataset`.
-- To load multiple files, use `sdf_xarray.open_mfdataset` or `xarray.open_mfdataset`.
+- To load a single file, use `xarray.open_dataset` or `sdf_xarray.open_datatree`
+- To load multiple files, use `sdf_xarray.open_mfdataset`, `xarray.open_mfdataset` or `sdf_xarray.open_mfdatatree`.
 - To access the raw contents of a single SDF file, use `sdf_xarray.sdf_interface.SDFFile`.
 
 .. note::
@@ -41,6 +41,13 @@ Loading single files
 
    xr.open_dataset("tutorial_dataset_1d/0010.sdf")
 
+Alternatively, you can load the data in as a `xarray.DataTree`, which organises the data
+hierarchically into ``groups`` (for example grouping related quantities such as the individual
+components of the electric and magnetic fields) while keeping each item as a `xarray.Dataset`.
+
+.. jupyter-execute::
+
+   sdfxr.open_datatree("tutorial_dataset_1d/0010.sdf")
 
 .. _loading-raw-files:
 
@@ -71,6 +78,14 @@ is by using the `sdf_xarray.open_mfdataset`.
 .. jupyter-execute::
 
    sdfxr.open_mfdataset("tutorial_dataset_1d/*.sdf")
+
+Alternatively, you can load the data in as a `xarray.DataTree`, which organises the data
+hierarchically into ``groups`` (for example grouping related quantities such as the individual
+components of the electric and magnetic fields) while keeping each item as a `xarray.Dataset`.
+
+.. jupyter-execute::
+
+   sdfxr.open_mfdatatree("tutorial_dataset_1d/*.sdf")
 
 Alternatively files can be loaded using `xarray.open_mfdataset` however when loading in
 all the files we have do some processing of the data so that we can correctly align it along

@@ -1,7 +1,6 @@
 import numpy as np
 import numpy.testing as npt
 import pytest
-import xarray as xr
 
 from sdf_xarray import (
     download,
@@ -221,7 +220,7 @@ def test_datatree_open_mfdatatree_data_vars_single():
     # Variable should be present under Electric_Field/Ex structure
     assert "Ex" in dt["Electric_Field"].data_vars
     # A different variable should not be anywhere
-    assert not ("Ey" in dt["Electric_Field"].data_vars)
+    assert "Ey" not in dt["Electric_Field"].data_vars
 
 
 def test_datatree_open_mfdatatree_data_vars_multiple():

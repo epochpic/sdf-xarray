@@ -85,6 +85,57 @@ def _resolve_glob(path_glob: PathLike | Iterable[PathLike]):
     return paths
 
 
+def _build_datatree_from_dataset(
+    ds: xr.Dataset,
+) -> xr.DataTree:
+    """
+    An `xarray.DataTree` is constructed utilising the original names in the SDF
+    file. This is due to the fact that these names include slashes which `xarray`
+    can use to automatically build up a datatree. We do additionally replace
+    spaces with underscores to be more pythonic.
+
+    In some cases the user may output the ``always + species`` dumpmask which
+    means that SDF variable will have the above values plus a
+    ``Derived_Number_Density`` general one. Since `xarray.DataTree` can't have
+    data at a tree level we rename these to be ``Dervied/Number_Density/All``
+
+    Below are some examples of how variable names are translated from the
+    regular `xarray.open_dataset` result into their more traditional names.
+
+    ```
+    Derived_Number_Density -> Derived/Number_Density/All
+    Derived_Number_Density_Electron -> Derived/Number_Density/Electron
+    Derived_Number_Density_Ion -> Derived/Number_Density/Ion
+    Derived_Number_Density_Electron -> Derived/Number_Density/Electron
+    Derived_Average_Particle_Energy -> Derived/Average_Particle_Energy
+    ```
+
+    Parameters
+    ----------
+    ds
+        Incoming `xarray.Dataset` to convert to a `xarray.DataTree`
+    """
+    paths = {
+        name: var.attrs["full_name"].replace(" ", "_")
+        for name, var in ds.data_vars.items()
+    }
+
+    all_paths = paths.values()
+
+    final_renames = {
+        key: (
+            f"{path}/All"
+            if any(other.startswith(f"{path}/") for other in all_paths)
+            else path
+        )
+        for key, path in paths.items()
+    }
+
+    ds = ds.rename_vars(final_renames)
+
+    return xr.DataTree.from_dict(ds)
+
+
 def purge_unselected_data_vars(ds: xr.Dataset, data_vars: list[str]) -> xr.Dataset:
     """
     If the user has exclusively requested only certain variables be
@@ -224,6 +275,119 @@ def open_mfdataset(
         join="outer",
         compat="no_conflicts",
     )
+
+
+def open_datatree(
+    path: PathLike,
+    *,
+    keep_particles: bool = False,
+    probe_names: list[str] | None = None,
+) -> xr.DataTree:
+    """
+    An `xarray.DataTree` is constructed utilising the original names in the SDF
+    file. This is due to the fact that these names include slashes which `xarray`
+    can use to automatically build up a datatree. We do additionally replace
+    spaces with underscores to be more pythonic.
+
+    In some cases the user may output the ``always + species`` dumpmask which
+    means that SDF variable will have the above values plus a
+    ``Derived_Number_Density`` general one. Since `xarray.DataTree` can't have
+    data at a tree level we rename these to be ``Dervied/Number_Density/All``
+
+    Below are some examples of how variable names are translated from the
+    regular `xarray.open_dataset` result into their more traditional names.
+
+    ```
+    Derived_Number_Density -> Derived/Number_Density/All
+    Derived_Number_Density_Electron -> Derived/Number_Density/Electron
+    Derived_Number_Density_Ion -> Derived/Number_Density/Ion
+    Derived_Number_Density_Electron -> Derived/Number_Density/Electron
+    Derived_Average_Particle_Energy -> Derived/Average_Particle_Energy
+    ```
+
+    Parameters
+    ----------
+    path
+        The path to the SDF file
+    keep_particles
+        If ``True``, also load particle data (this may use a lot of memory!)
+    probe_names
+        List of EPOCH probe names
+
+    Examples
+    --------
+    >>> dt = open_datatree("0000.sdf")
+    >>> dt["Electric_Field"]["Ex"].values  # Access all Electric_Field_Ex data
+    """
+
+    ds = xr.open_dataset(path, keep_particles=keep_particles, probe_names=probe_names)
+
+    return _build_datatree_from_dataset(ds)
+
+
+def open_mfdatatree(
+    path_glob: Iterable | str | Path | Callable[..., Iterable[Path]],
+    *,
+    separate_times: bool = False,
+    keep_particles: bool = False,
+    probe_names: list[str] | None = None,
+    data_vars: list[str] | None = None,
+) -> xr.DataTree:
+    """
+    An `xarray.DataTree` is constructed utilising the original names in the SDF
+    file. This is due to the fact that these names include slashes which `xarray`
+    can use to automatically build up a datatree. We do additionally replace
+    spaces with underscores to be more pythonic.
+
+    This function combines multiple SDF files into a single `xarray.DataTree` with a
+    unified time dimension and hierarchical organization of variables.
+
+    In some cases the user may output the ``always + species`` dumpmask which
+    means that SDF variable will have the above values plus a
+    ``Derived_Number_Density`` general one. Since `xarray.DataTree` can't have
+    data at a tree level we rename these to be ``Dervied/Number_Density/All``
+
+    Below are some examples of how variable names are translated from the
+    regular `xarray.open_dataset` result into their more traditional names.
+
+    ```
+    Derived_Number_Density -> Derived/Number_Density/All
+    Derived_Number_Density_Electron -> Derived/Number_Density/Electron
+    Derived_Number_Density_Ion -> Derived/Number_Density/Ion
+    Derived_Number_Density_Electron -> Derived/Number_Density/Electron
+    Derived_Average_Particle_Energy -> Derived/Average_Particle_Energy
+    ```
+
+    Parameters
+    ----------
+    path_glob
+        List of filenames or string glob pattern
+    separate_times
+        If ``True``, create separate time dimensions for variables defined at
+        different output frequencies
+    keep_particles
+        If ``True``, also load particle data (this may use a lot of memory!)
+    probe_names
+        List of EPOCH probe names
+    data_vars
+        List of data vars to load in (If not specified loads in all variables)
+
+    Examples
+    --------
+    >>> dt = open_mfdatatree("*.sdf")
+    >>> dt["Electric_Field"]["Ex"].values  # Access all Electric_Field_Ex data
+    >>> dt.coords["time"].values  # Access combined time dimension
+    """
+    # First, combine the datasets as usual
+    combined_ds = open_mfdataset(
+        path_glob,
+        separate_times=separate_times,
+        keep_particles=keep_particles,
+        probe_names=probe_names,
+        data_vars=data_vars,
+    )
+
+    return _build_datatree_from_dataset(combined_ds)
 
 
 def make_time_dims(path_glob):

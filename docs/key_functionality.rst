@@ -15,7 +15,7 @@ Loading SDF files
 -----------------
 There are several ways to load SDF files:
 
-- To load a single file, use `xarray.open_dataset` or `sdf_xarray.open_datatree`
+- To load a single file, use `xarray.open_dataset`, `sdf_xarray.open_datatree` or `xarray.open_datatree`
 - To load multiple files, use `sdf_xarray.open_mfdataset`, `xarray.open_mfdataset` or `sdf_xarray.open_mfdatatree`.
 - To access the raw contents of a single SDF file, use `sdf_xarray.sdf_interface.SDFFile`.
 

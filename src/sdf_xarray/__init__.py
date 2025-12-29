@@ -324,9 +324,9 @@ def open_datatree(
     >>> dt["Electric_Field"]["Ex"].values  # Access all Electric_Field_Ex data
     """
 
-    ds = xr.open_dataset(path, keep_particles=keep_particles, probe_names=probe_names)
-
-    return _build_datatree_from_dataset(ds)
+    return xr.open_datatree(
+        path, keep_particles=keep_particles, probe_names=probe_names
+    )
 
 
 def open_mfdatatree(
@@ -722,6 +722,14 @@ class SDFDataStore(AbstractDataStore):
 
 
 class SDFEntrypoint(BackendEntrypoint):
+    supports_groups = True
+    open_dataset_parameters: ClassVar[list[str]] = [
+        "filename_or_obj",
+        "drop_variables",
+        "keep_particles",
+        "probe_names",
+    ]
+
     def open_dataset(
         self,
         filename_or_obj,
@@ -744,12 +752,28 @@ class SDFEntrypoint(BackendEntrypoint):
         with close_on_error(store):
             return store.load()
 
-    open_dataset_parameters: ClassVar[list[str]] = [
+    open_datatree_parameters: ClassVar[list[str]] = [
         "filename_or_obj",
         "drop_variables",
         "keep_particles",
         "probe_names",
     ]
+
+    def open_datatree(
+        self,
+        filename_or_obj,
+        *,
+        drop_variables=None,
+        keep_particles=False,
+        probe_names=None,
+    ):
+        ds = self.open_dataset(
+            filename_or_obj,
+            drop_variables=drop_variables,
+            keep_particles=keep_particles,
+            probe_names=probe_names,
+        )
+        return _build_datatree_from_dataset(ds)
 
     def guess_can_open(self, filename_or_obj):
         magic_number = try_read_magic_number_from_path(filename_or_obj)

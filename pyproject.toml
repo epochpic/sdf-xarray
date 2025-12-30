@@ -42,10 +42,10 @@ pint = ["pint", "pint-xarray"]
 
 [dependency-groups]
 dev = [
-    {include-group = "build"},
-    {include-group = "docs"},
-    {include-group = "lint"},
-    {include-group = "test"},
+  { include-group = "build" },
+  { include-group = "docs" },
+  { include-group = "lint" },
+  { include-group = "test" },
 ]
 docs = [
   "sphinx>=5.3",

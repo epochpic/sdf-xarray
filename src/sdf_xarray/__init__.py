@@ -120,20 +120,21 @@ def _build_datatree_from_dataset(
     ds
         Incoming `xarray.Dataset` to convert to a `xarray.DataTree`
     """
-    paths = {
-        name: var.attrs["full_name"].replace(" ", "_")
-        for name, var in ds.data_vars.items()
-    }
+    renames = {}
+    for name, var in ds.data_vars.items():
+        # Append the current variable name to the attributes
+        var.attrs["flat_structure_name"] = name
+        renames.update({name: var.attrs["full_name"].replace(" ", "_")})
 
-    all_paths = paths.values()
+    new_names = renames.values()
 
     final_renames = {
         key: (
             f"{path}/All"
-            if any(other.startswith(f"{path}/") for other in all_paths)
+            if any(other.startswith(f"{path}/") for other in new_names)
             else path
         )
-        for key, path in paths.items()
+        for key, path in renames.items()
     }
 
     ds = ds.rename_vars(final_renames)

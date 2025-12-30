@@ -92,12 +92,15 @@ def _build_datatree_from_dataset(
     An `xarray.DataTree` is constructed utilising the original names in the SDF
     file. This is due to the fact that these names include slashes which `xarray`
     can use to automatically build up a datatree. We do additionally replace
-    spaces with underscores to be more pythonic.
+    spaces with underscores to be more pythonic. You can find the
+    `xarray.Dataset` name under the ``attrs["flat_structure_name"]`` for referencing.
 
     In some cases the user may output the ``always + species`` dumpmask which
-    means that SDF variable will have the above values plus a
-    ``Derived_Number_Density`` general one. Since `xarray.DataTree` can't have
-    data at a tree level we rename these to be ``Dervied/Number_Density/All``
+    means that SDF variable will have species data plus a general one. When
+    defining a `xarray.DataTree` you cannot have a node of that tree contain both
+    variable information and have leaves with variables so we move the node
+    information to a leaf named ``node/All`` (see example of
+    ``Dervied/Number_Density/All`` in below table)
 
     Below are some examples of how variable names are translated from the
     regular `xarray.open_dataset` result into their more traditional names.
@@ -108,7 +111,7 @@ def _build_datatree_from_dataset(
     ``Derived_Number_Density``          ``Derived/Number_Density/All``
     ``Derived_Number_Density_Electron`` ``Derived/Number_Density/Electron``
     ``Derived_Number_Density_Ion``      ``Derived/Number_Density/Ion``
-    ``Derived_Number_Density_Electron`` ``Derived/Number_Density/Electron``
+    ``Derived_Number_Density_Photon``   ``Derived/Number_Density/Photon``
     ``Derived_Average_Particle_Energy`` ``Derived/Average_Particle_Energy``
     =================================== ===================================
 
@@ -289,12 +292,15 @@ def open_datatree(
     An `xarray.DataTree` is constructed utilising the original names in the SDF
     file. This is due to the fact that these names include slashes which `xarray`
     can use to automatically build up a datatree. We do additionally replace
-    spaces with underscores to be more pythonic.
+    spaces with underscores to be more pythonic. You can find the
+    `xarray.Dataset` name under the ``attrs["flat_structure_name"]`` for referencing.
 
     In some cases the user may output the ``always + species`` dumpmask which
-    means that SDF variable will have the above values plus a
-    ``Derived_Number_Density`` general one. Since `xarray.DataTree` can't have
-    data at a tree level we rename these to be ``Dervied/Number_Density/All``
+    means that SDF variable will have species data plus a general one. When
+    defining a `xarray.DataTree` you cannot have a node of that tree contain both
+    variable information and have leaves with variables so we move the node
+    information to a leaf named ``node/All`` (see example of
+    ``Dervied/Number_Density/All`` in below table)
 
     Below are some examples of how variable names are translated from the
     regular `xarray.open_dataset` result into their more traditional names.
@@ -305,7 +311,7 @@ def open_datatree(
     ``Derived_Number_Density``          ``Derived/Number_Density/All``
     ``Derived_Number_Density_Electron`` ``Derived/Number_Density/Electron``
     ``Derived_Number_Density_Ion``      ``Derived/Number_Density/Ion``
-    ``Derived_Number_Density_Electron`` ``Derived/Number_Density/Electron``
+    ``Derived_Number_Density_Photon``   ``Derived/Number_Density/Photon``
     ``Derived_Average_Particle_Energy`` ``Derived/Average_Particle_Energy``
     =================================== ===================================
 
@@ -359,15 +365,18 @@ def open_mfdatatree(
     An `xarray.DataTree` is constructed utilising the original names in the SDF
     file. This is due to the fact that these names include slashes which `xarray`
     can use to automatically build up a datatree. We do additionally replace
-    spaces with underscores to be more pythonic.
+    spaces with underscores to be more pythonic. You can find the
+    `xarray.Dataset` name under the ``attrs["flat_structure_name"]`` for referencing.
 
     This function combines multiple SDF files into a single `xarray.DataTree` with a
     unified time dimension and hierarchical organization of variables.
 
     In some cases the user may output the ``always + species`` dumpmask which
-    means that SDF variable will have the above values plus a
-    ``Derived_Number_Density`` general one. Since `xarray.DataTree` can't have
-    data at a tree level we rename these to be ``Dervied/Number_Density/All``
+    means that SDF variable will have species data plus a general one. When
+    defining a `xarray.DataTree` you cannot have a node of that tree contain both
+    variable information and have leaves with variables so we move the node
+    information to a leaf named ``node/All`` (see example of
+    ``Dervied/Number_Density/All`` in below table)
 
     Below are some examples of how variable names are translated from the
     regular `xarray.open_dataset` result into their more traditional names.
@@ -378,7 +387,7 @@ def open_mfdatatree(
     ``Derived_Number_Density``          ``Derived/Number_Density/All``
     ``Derived_Number_Density_Electron`` ``Derived/Number_Density/Electron``
     ``Derived_Number_Density_Ion``      ``Derived/Number_Density/Ion``
-    ``Derived_Number_Density_Electron`` ``Derived/Number_Density/Electron``
+    ``Derived_Number_Density_Photon``   ``Derived/Number_Density/Photon``
     ``Derived_Average_Particle_Energy`` ``Derived/Average_Particle_Energy``
     =================================== ===================================
 

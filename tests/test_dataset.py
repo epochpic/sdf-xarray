@@ -41,6 +41,12 @@ def test_constant_name_and_units():
         assert df[name].attrs["full_name"] == full_name
 
 
+def test_preferred_chunks_metadata():
+    with xr.open_dataset(TEST_FILES_DIR / "0000.sdf") as df:
+        for var in df.data_vars:
+            assert "preferred_chunks" in df[var].encoding
+
+
 def test_coords():
     with xr.open_dataset(TEST_FILES_DIR / "0010.sdf") as df:
         px_electron = "dist_fn_x_px_electron"

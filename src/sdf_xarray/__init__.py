@@ -16,6 +16,7 @@ from xarray.backends import AbstractDataStore, BackendArray, BackendEntrypoint
 from xarray.backends.file_manager import CachingFileManager
 from xarray.backends.locks import ensure_lock
 from xarray.core import indexing
+from xarray.core.types import T_Chunks
 from xarray.core.utils import close_on_error, try_read_magic_number_from_path
 from xarray.core.variable import Variable
 
@@ -200,6 +201,7 @@ def open_mfdataset(
     keep_particles: bool = False,
     probe_names: list[str] | None = None,
     data_vars: list[str] | None = None,
+    chunks: T_Chunks = "auto",
 ) -> xr.Dataset:
     """Open a set of EPOCH SDF files as one `xarray.Dataset`
 
@@ -233,6 +235,14 @@ def open_mfdataset(
         List of EPOCH probe names
     data_vars :
         List of data vars to load in (If not specified loads in all variables)
+    chunks :
+        Dictionary with keys given by dimension names and values given by chunk sizes.
+        In general, these should divide the dimensions of each dataset. By default
+        chunks are automatically set so that they are the same size as the dimensions
+        stored in each of the SDF files. See `Xarray chunking-and-performance
+        <https://docs.xarray.dev/en/stable/user-guide/dask.html#chunking-and-performance>`_
+        for details on why this is useful for large datasets. The default behaviour is
+        to do this automatically and can be disabled by ``chunks=None``.
     """
 
     path_glob = _resolve_glob(path_glob)
@@ -243,13 +253,16 @@ def open_mfdataset(
             data_vars=data_vars,
             keep_particles=keep_particles,
             probe_names=probe_names,
+            chunks=chunks,
         )
 
     _, var_times_map = make_time_dims(path_glob)
 
     all_dfs = []
     for f in path_glob:
-        ds = xr.open_dataset(f, keep_particles=keep_particles, probe_names=probe_names)
+        ds = xr.open_dataset(
+            f, keep_particles=keep_particles, probe_names=probe_names, chunks=chunks
+        )
 
         # If the data_vars are specified then only load them in and disregard the rest.
         # If there are no remaining data variables then skip adding the dataset to list
@@ -467,13 +480,11 @@ class SDFBackendArray(BackendArray):
 
     __slots__ = ("datastore", "dtype", "shape", "variable_name")
 
-    def __init__(self, variable_name, datastore):
+    def __init__(self, variable_name, datastore, shape, dtype):
         self.datastore = datastore
         self.variable_name = variable_name
-
-        array = self.get_array()
-        self.shape = array.shape
-        self.dtype = array.dtype
+        self.shape = shape
+        self.dtype = dtype
 
     def get_array(self, needs_lock=True):
         with self.datastore.acquire_context(needs_lock) as ds:
@@ -645,7 +656,12 @@ class SDFDataStore(AbstractDataStore):
                 if value.units is not None:
                     data_attrs["units"] = value.units
 
-                data_vars[base_name] = Variable(dims, value.data, attrs=data_attrs)
+                var = Variable(dims, value.data, attrs=data_attrs)
+
+                # Provide preferred_chunks for constants so dask aligns to natural shapes
+                var.encoding["preferred_chunks"] = dict(zip(dims, shape))
+
+                data_vars[base_name] = var
                 continue
 
             if value.is_point_data:
@@ -712,8 +728,24 @@ class SDFDataStore(AbstractDataStore):
                 "full_name": key,
                 "long_name": long_name,
             }
-            lazy_data = indexing.LazilyIndexedArray(SDFBackendArray(key, self))
-            data_vars[base_name] = Variable(var_coords, lazy_data, data_attrs)
+            lazy_data = indexing.LazilyIndexedArray(
+                SDFBackendArray(key, self, shape=value.shape, dtype=value.data.dtype)
+            )
+            var = Variable(var_coords, lazy_data, data_attrs)
+            # Set preferred chunks to match on-disk layout
+            # For point data (1D): full dimension
+            # For grid data (N-D): individual grid chunk sizes
+            if value.is_point_data:
+                var.encoding["preferred_chunks"] = {var_coords[0]: len(value.data)}
+            else:
+                # Align with on-disk grid structure
+                chunk_dict = {}
+                for dim_name, size in zip(var_coords, value.shape):
+                    # Use natural on-disk boundaries
+                    chunk_dict[dim_name] = size
+                var.encoding["preferred_chunks"] = chunk_dict
+
+            data_vars[base_name] = var
 
         # TODO: might need to decode if mult is set?
 

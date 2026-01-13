@@ -26,6 +26,7 @@ jobs:
         enableCrossOsArchive: true
         path: ${{ env.POOCH_CACHE_DIR }}
         key: sdf-datasets-17991042
+        restore-keys: sdf-datasets
 
     - name: Setup uv
       id: setup-uv

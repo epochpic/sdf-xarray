@@ -10,6 +10,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     name: Build wheels on ${{ matrix.os }}
     env:
+      POOCH_CACHE_DIR: ${{ github.workspace }}/.sdf_cache
       TMPDIR: ${{ matrix.os == 'windows-latest' && 'C:\\Windows\\Temp' || '/tmp' }}
 
     steps:
@@ -23,7 +24,7 @@ jobs:
       uses: actions/cache@v4
       with:
         enableCrossOsArchive: true
-        path: ~/.cache/sdf_datasets
+        path: ${{ env.POOCH_CACHE_DIR }}
         key: sdf-datasets-17991042
 
     - name: Setup uv
@@ -43,6 +44,7 @@ jobs:
       env:
         CIBW_ARCHS_LINUX: auto
         CIBW_ARCHS_MACOS: x86_64 arm64
+        CIBW_ENVIRONMENT: POOCH_CACHE_DIR='${{ env.POOCH_CACHE_DIR }}'
 
     - name: Upload Wheels
       uses: actions/upload-artifact@v4

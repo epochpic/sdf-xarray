@@ -10,7 +10,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     name: Build wheels on ${{ matrix.os }}
     env:
-      POOCH_CACHE_DIR: ${{ github.workspace }}/.sdf_cache
+      POOCH_CACHE_DIR: ~/.cache/sdf_datasets
       TMPDIR: ${{ matrix.os == 'windows-latest' && 'C:\\Windows\\Temp' || '/tmp' }}
 
     steps:

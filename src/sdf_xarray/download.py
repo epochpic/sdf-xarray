@@ -69,6 +69,7 @@ def fetch_dataset(
             "tutorial_dataset_3d.zip": "md5:d9254648867016292440fdb028f717f7",
         },
         retry_if_failed=10,
+        env="POOCH_CACHE_DIR",
     )
 
     datasets.fetch(

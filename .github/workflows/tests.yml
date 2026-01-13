@@ -30,5 +30,11 @@ jobs:
         uv python install ${{ matrix.python-version }}
         uv sync --python ${{ matrix.python-version }} --frozen
 
+    - name: Cache Zenodo datasets
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/sdf_datasets
+        key: sdf-datasets-17991042
+
     - name: Test with pytest
       run: uv run pytest

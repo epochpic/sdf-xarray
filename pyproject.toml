@@ -19,7 +19,7 @@ authors = [
   { name = "Chris Herdman", email = "chris.herdman@york.ac.uk" },
   { name = "Liam Pattinson", email = "liam.pattinson@york.ac.uk" },
 ]
-requires-python = ">=3.10,<3.15"
+requires-python = ">=3.11,<3.15"
 dependencies = ["numpy>=2.0.0", "xarray>=2024.1.0", "dask>=2024.7.1"]
 description = "Provides a backend for xarray to read SDF files as created by the EPOCH plasma PIC code."
 classifiers = [
@@ -29,7 +29,6 @@ classifiers = [
   "Operating System :: OS Independent",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
@@ -94,7 +93,6 @@ cache-keys = [{ file = "pyproject.toml" }, { git = true }]
 
 [tool.ruff]
 line-length = 88
-target-version = "py310"
 
 [tool.ruff.lint]
 extend-select = [

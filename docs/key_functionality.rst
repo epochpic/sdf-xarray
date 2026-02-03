@@ -20,8 +20,7 @@ There are several ways to load SDF files:
 - To access the raw contents of a single SDF file, use `sdf_xarray.sdf_interface.SDFFile`
 
 When loading SDF files, variables related to ``boundaries``, ``cpu`` and ``output file`` are 
-excluded as they are problematic. If you wish to load these in please use the
-:ref:`loading-raw-files` approach.
+excluded as they are problematic. If you wish to load these variables in see :ref:`loading-raw-files`.
 
 .. tip::
 

@@ -71,22 +71,14 @@ is by using the `sdf_xarray.open_mfdataset`.
 
    If your simulation includes multiple ``output`` blocks that specify different variables
    for output at various time steps, variables not present at a specific step will default
-   to a nan value. To clean your dataset by removing these nan values we suggest using the
-   `xarray.DataArray.dropna` function or :ref:`loading-sparse-data`.
+   to a nan value. To remove these nan values we suggest using the `xarray.DataArray.dropna`
+   function or following our implmentation in :ref:`loading-sparse-data`.
 
 .. jupyter-execute::
 
    sdfxr.open_mfdataset("tutorial_dataset_1d/*.sdf")
 
-Alternatively, you can load the data in as a `xarray.DataTree`, which organises the data
-hierarchically into ``groups`` (for example grouping related quantities such as the individual
-components of the electric and magnetic fields) while keeping each item as a `xarray.Dataset`.
-
-.. jupyter-execute::
-
-   sdfxr.open_mfdatatree("tutorial_dataset_1d/*.sdf")
-
-Alternatively files can be loaded using `xarray.open_mfdataset` however when loading in
+Alternatively, files can be loaded using `xarray.open_mfdataset` however when loading in
 all the files we have do some processing of the data so that we can correctly align it along
 the time dimension; This is done via the ``preprocess`` parameter utilising the
 `sdf_xarray.SDFPreprocess` function.
@@ -99,6 +91,14 @@ the time dimension; This is done via the ``preprocess`` parameter utilising the
       compat="no_conflicts",
       preprocess=sdfxr.SDFPreprocess()
    )
+
+You can also load the data in as a `xarray.DataTree`, which organises the data
+hierarchically into ``groups`` (for example grouping related quantities such as the individual
+components of the electric and magnetic fields) while keeping each item as a `xarray.Dataset`.
+
+.. jupyter-execute::
+
+   sdfxr.open_mfdatatree("tutorial_dataset_1d/*.sdf")
 
 .. _loading-sparse-data:
 
@@ -141,7 +141,7 @@ multiple files).
 
 .. jupyter-execute::
 
-   xr.open_dataset("tutorial_dataset_1d/0010.sdf", keep_particles=True)
+   sdfxr.open_dataset("tutorial_dataset_1d/0010.sdf", keep_particles=True)
 
 Loading specific variables
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -202,7 +202,9 @@ def open_dataset(
     keep_particles: bool = False,
     probe_names: list[str] | None = None,
 ) -> xr.Dataset:
-    """Open an EPOCH SDF file as a `xarray.Dataset`.
+    """Open an SDF file as a `xarray.Dataset`. Variables related to ``boundaries``,
+    ``cpu`` and ``output`` file are excluded as they are problematic. If you wish
+    to load these variables in see :ref:`loading-raw-files`.
 
     Parameters
     ----------
@@ -238,7 +240,10 @@ def open_mfdataset(
     data_vars: list[str] | None = None,
     chunks: T_Chunks = "auto",
 ) -> xr.Dataset:
-    """Open a set of EPOCH SDF files as one `xarray.Dataset`.
+    """Open a set of EPOCH SDF files as one `xarray.Dataset`. Variables
+    related to ``boundaries``, ``cpu`` and ``output`` file are excluded
+    as they are problematic. If you wish to load these variables in see
+    :ref:`loading-raw-files`.
 
     EPOCH can output variables at different periods, so each individal
     SDF file from one EPOCH run may have different variables in it. In
@@ -339,6 +344,10 @@ def open_datatree(
     probe_names: list[str] | None = None,
 ) -> xr.DataTree:
     """
+    Open an SDF file as a `xarray.DataTree`. Variables related to ``boundaries``,
+    ``cpu`` and ``output`` file are excluded as they are problematic. If you wish
+    to load these variables in see :ref:`loading-raw-files`.
+
     An `xarray.DataTree` is constructed utilising the original names in the SDF
     file. This is due to the fact that these names include slashes which `xarray`
     can use to automatically build up a datatree. We do additionally replace
@@ -398,7 +407,10 @@ def open_mfdatatree(
     probe_names: list[str] | None = None,
     data_vars: list[str] | None = None,
 ) -> xr.DataTree:
-    """Open a set of EPOCH SDF files as one `xarray.DataTree`
+    """Open a set of EPOCH SDF files as one `xarray.DataTree`. Variables
+    related to ``boundaries``, ``cpu`` and ``output`` file are excluded
+    as they are problematic. If you wish to load these variables in see
+    :ref:`loading-raw-files`.
 
     EPOCH can output variables at different periods, so each individal
     SDF file from one EPOCH run may have different variables in it. In

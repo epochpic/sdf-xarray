@@ -15,14 +15,13 @@ Loading SDF files
 -----------------
 There are several ways to load SDF files:
 
-- To load a single file, use `xarray.open_dataset`, `sdf_xarray.open_datatree` or `xarray.open_datatree`
-- To load multiple files, use `sdf_xarray.open_mfdataset`, `xarray.open_mfdataset` or `sdf_xarray.open_mfdatatree`.
-- To access the raw contents of a single SDF file, use `sdf_xarray.sdf_interface.SDFFile`.
+- To load a single file, use `sdf_xarray.open_dataset` or `sdf_xarray.open_datatree`
+- To load multiple files, use `sdf_xarray.open_mfdataset` or `sdf_xarray.open_mfdatatree`
+- To access the raw contents of a single SDF file, use `sdf_xarray.sdf_interface.SDFFile`
 
-.. note::
-
-   When loading SDF files, variables related to ``boundaries``, ``cpu`` and ``output file`` are excluded as they are problematic. If you wish to load these in please use the
-   :ref:`loading-raw-files` approach.
+When loading SDF files, variables related to ``boundaries``, ``cpu`` and ``output file`` are 
+excluded as they are problematic. If you wish to load these in please use the
+:ref:`loading-raw-files` approach.
 
 .. tip::
 
@@ -39,9 +38,9 @@ Loading single files
 
 .. jupyter-execute::
 
-   xr.open_dataset("tutorial_dataset_1d/0010.sdf")
+   sdfxr.open_dataset("tutorial_dataset_1d/0010.sdf")
 
-Alternatively, you can load the data in as a `xarray.DataTree`, which organises the data
+You can also load the data in as a `xarray.DataTree`, which organises the data
 hierarchically into ``groups`` (for example grouping related quantities such as the individual
 components of the electric and magnetic fields) while keeping each item as a `xarray.Dataset`.
 

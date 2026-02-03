@@ -60,9 +60,9 @@ Loading single files
 
 .. jupyter-execute::
 
-    import xarray as xr
+    import sdf_xarray as sdfxr
 
-    xr.open_dataset("tutorial_dataset_1d/0010.sdf")
+    sdfxr.open_dataset("tutorial_dataset_1d/0010.sdf")
 
 Alternatively, you can load the data in as a `xarray.DataTree`, which organises the data
 hierarchically into ``groups`` (for example grouping related quantities such as the individual

@@ -8,6 +8,7 @@ from sdf_xarray import (
     _process_latex_name,
     _resolve_glob,
     download,
+    open_dataset,
     open_mfdataset,
 )
 
@@ -19,6 +20,20 @@ TEST_2D_PARTICLE_DATA = download.fetch_dataset("test_two_probes_2D")
 
 
 def test_basic():
+    with open_dataset(TEST_FILES_DIR / "0000.sdf") as df:
+        ex_field = "Electric_Field_Ex"
+        assert ex_field in df
+        x_coord = "X_Grid_mid"
+        assert x_coord in df[ex_field].coords
+        assert df[x_coord].attrs["long_name"] == "X"
+
+        px_protons = "Particles_Px_proton"
+        assert px_protons not in df
+        x_coord = "X_Particles_proton"
+        assert x_coord not in df.coords
+
+
+def test_xr_basic():
     with xr.open_dataset(TEST_FILES_DIR / "0000.sdf") as df:
         ex_field = "Electric_Field_Ex"
         assert ex_field in df
@@ -33,6 +48,15 @@ def test_basic():
 
 
 def test_constant_name_and_units():
+    with open_dataset(TEST_FILES_DIR / "0000.sdf") as df:
+        name = "Absorption_Total_Laser_Energy_Injected"
+        full_name = "Absorption/Total Laser Energy Injected"
+        assert name in df
+        assert df[name].units == "J"
+        assert df[name].attrs["full_name"] == full_name
+
+
+def test_xr_constant_name_and_units():
     with xr.open_dataset(TEST_FILES_DIR / "0000.sdf") as df:
         name = "Absorption_Total_Laser_Energy_Injected"
         full_name = "Absorption/Total Laser Energy Injected"
@@ -42,12 +66,28 @@ def test_constant_name_and_units():
 
 
 def test_preferred_chunks_metadata():
+    with open_dataset(TEST_FILES_DIR / "0000.sdf") as df:
+        for var in df.data_vars:
+            assert "preferred_chunks" in df[var].encoding
+
+
+def test_xr_preferred_chunks_metadata():
     with xr.open_dataset(TEST_FILES_DIR / "0000.sdf") as df:
         for var in df.data_vars:
             assert "preferred_chunks" in df[var].encoding
 
 
 def test_coords():
+    with open_dataset(TEST_FILES_DIR / "0010.sdf") as df:
+        px_electron = "dist_fn_x_px_electron"
+        assert px_electron in df
+        print(df[px_electron].coords)
+        x_coord = "Px_x_px_electron"
+        assert x_coord in df[px_electron].coords
+        assert df[x_coord].attrs["full_name"] == "Grid/x_px/electron"
+
+
+def test_xr_coords():
     with xr.open_dataset(TEST_FILES_DIR / "0010.sdf") as df:
         px_electron = "dist_fn_x_px_electron"
         assert px_electron in df
@@ -58,6 +98,15 @@ def test_coords():
 
 
 def test_particles():
+    with open_dataset(TEST_FILES_DIR / "0010.sdf", keep_particles=True) as df:
+        px_protons = "Particles_Px_proton"
+        assert px_protons in df
+        x_coord = "X_Particles_proton"
+        assert x_coord in df[px_protons].coords
+        assert df[x_coord].attrs["long_name"] == "X"
+
+
+def test_xr_particles():
     with xr.open_dataset(TEST_FILES_DIR / "0010.sdf", keep_particles=True) as df:
         px_protons = "Particles_Px_proton"
         assert px_protons in df
@@ -67,6 +116,12 @@ def test_particles():
 
 
 def test_no_particles():
+    with open_dataset(TEST_FILES_DIR / "0010.sdf", keep_particles=False) as df:
+        px_protons = "Particles_Px_proton"
+        assert px_protons not in df
+
+
+def test_xr_no_particles():
     with xr.open_dataset(TEST_FILES_DIR / "0010.sdf", keep_particles=False) as df:
         px_protons = "Particles_Px_proton"
         assert px_protons not in df
@@ -394,6 +449,13 @@ def test_xr_3d_distribution_function():
         assert df[distribution_function].shape == (16, 20, 20)
 
 
+def test_drop_variables():
+    with open_dataset(
+        TEST_FILES_DIR / "0000.sdf", drop_variables=["Electric_Field_Ex"]
+    ) as df:
+        assert "Electric_Field_Ex" not in df
+
+
 def test_xr_drop_variables():
     with xr.open_dataset(
         TEST_FILES_DIR / "0000.sdf", drop_variables=["Electric_Field_Ex"]
@@ -401,10 +463,28 @@ def test_xr_drop_variables():
         assert "Electric_Field_Ex" not in df
 
 
+def test_drop_variables_multiple():
+    with open_dataset(
+        TEST_FILES_DIR / "0000.sdf",
+        drop_variables=["Electric_Field_Ex", "Electric_Field_Ey"],
+    ) as df:
+        assert "Electric_Field_Ex" not in df
+        assert "Electric_Field_Ey" not in df
+
+
 def test_xr_drop_variables_multiple():
     with xr.open_dataset(
         TEST_FILES_DIR / "0000.sdf",
         drop_variables=["Electric_Field_Ex", "Electric_Field_Ey"],
+    ) as df:
+        assert "Electric_Field_Ex" not in df
+        assert "Electric_Field_Ey" not in df
+
+
+def test_drop_variables_original():
+    with open_dataset(
+        TEST_FILES_DIR / "0000.sdf",
+        drop_variables=["Electric_Field/Ex", "Electric_Field/Ey"],
     ) as df:
         assert "Electric_Field_Ex" not in df
         assert "Electric_Field_Ey" not in df
@@ -419,6 +499,15 @@ def test_xr_drop_variables_original():
         assert "Electric_Field_Ey" not in df
 
 
+def test_drop_variables_mixed():
+    with open_dataset(
+        TEST_FILES_DIR / "0000.sdf",
+        drop_variables=["Electric_Field/Ex", "Electric_Field_Ey"],
+    ) as df:
+        assert "Electric_Field_Ex" not in df
+        assert "Electric_Field_Ey" not in df
+
+
 def test_xr_drop_variables_mixed():
     with xr.open_dataset(
         TEST_FILES_DIR / "0000.sdf",
@@ -428,11 +517,28 @@ def test_xr_drop_variables_mixed():
         assert "Electric_Field_Ey" not in df
 
 
+def test_erroring_drop_variables():
+    with pytest.raises(KeyError):
+        open_dataset(TEST_FILES_DIR / "0000.sdf", drop_variables=["Electric_Field/E"])
+
+
 def test_xr_erroring_drop_variables():
     with pytest.raises(KeyError):
         xr.open_dataset(
             TEST_FILES_DIR / "0000.sdf", drop_variables=["Electric_Field/E"]
         )
+
+
+def test_loading_multiple_probes():
+    with open_dataset(
+        TEST_2D_PARTICLE_DATA / "0002.sdf",
+        keep_particles=True,
+        probe_names=["Electron_Front_Probe", "Electron_Back_Probe"],
+    ) as df:
+        assert "X_Probe_Electron_Front_Probe" in df.coords
+        assert "X_Probe_Electron_Back_Probe" in df.coords
+        assert "ID_Electron_Front_Probe_Px" in df.dims
+        assert "ID_Electron_Back_Probe_Px" in df.dims
 
 
 def test_xr_loading_multiple_probes():
@@ -447,7 +553,24 @@ def test_xr_loading_multiple_probes():
         assert "ID_Electron_Back_Probe_Px" in df.dims
 
 
-def test_xr_oading_one_probe_drop_second_probe():
+def test_loading_one_probe_drop_second_probe():
+    with open_dataset(
+        TEST_2D_PARTICLE_DATA / "0002.sdf",
+        keep_particles=True,
+        drop_variables=[
+            "Electron_Back_Probe_Px",
+            "Electron_Back_Probe_Py",
+            "Electron_Back_Probe_Pz",
+            "Electron_Back_Probe_weight",
+        ],
+        probe_names=["Electron_Front_Probe"],
+    ) as df:
+        assert "X_Probe_Electron_Front_Probe" in df.coords
+        assert "ID_Electron_Front_Probe_Px" in df.dims
+        assert "ID_Electron_Back_Probe_Px" not in df.dims
+
+
+def test_xr_loading_one_probe_drop_second_probe():
     with xr.open_dataset(
         TEST_2D_PARTICLE_DATA / "0002.sdf",
         keep_particles=True,

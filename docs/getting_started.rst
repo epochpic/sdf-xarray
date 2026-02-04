@@ -30,77 +30,46 @@ or download this code locally:
     cd sdf-xarray
     pip install .
 
-.. note::
 
-   When loading SDF files, variables related to ``boundaries``, ``cpu`` and ``output file`` are excluded as they are problematic. If you wish to load these in please use the
-   :ref:`loading-raw-files-getting-started` approach.
+Interaction
+-----------
 
-.. tip::
+There are two main ways to load EPOCH SDF files into xarray objects: using the dedicated
+`sdf_xarray` functions or using the standard `xarray` interface with our custom engine.
+For examples of how to use these functions see :ref:`loading-sdf-files`.
 
-    All code examples throughout this documentation are visualised using Jupyter notebooks
-    so that you can interactively explore `xarray.Dataset` objects. To do this on your machine
-    make sure that you have the necessary dependencies installed: 
+All code examples throughout this documentation are visualised using Jupyter notebooks
+so that you can interactively explore the datasets. To do this on your machine make
+sure that you have the necessary dependencies installed: 
 
-    .. code-block:: bash
+.. code-block:: bash
 
-        pip install "sdf-xarray[jupyter]"
+    pip install "sdf-xarray[jupyter]"
 
-Usage
------
+.. important::
+   
+   When loading SDF files, variables related to ``boundaries``, ``cpu`` and ``output file``
+   are excluded as they are problematic. If you wish to load these variables in see
+   :ref:`loading-raw-files`.
 
-``sdf-xarray`` is a backend for xarray, and so is usable directly from
-`xarray`. There are several ways to load SDF files:
 
-- To load a single file, use `xarray.open_dataset`.
-- To load multiple files, use `sdf_xarray.open_mfdataset` or `xarray.open_mfdataset`. 
-- To access the raw contents of a single SDF file, use `sdf_xarray.sdf_interface.SDFFile`.
+Using sdf_xarray (Recommended)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Loading single files
---------------------
+These functions are wrappers designed specifically for SDF data, providing the most
+straightforward experience:
 
-.. jupyter-execute::
+- **Single files**: Use `sdf_xarray.open_dataset` or `sdf_xarray.open_datatree`
+- **Multiple files**: Use `sdf_xarray.open_mfdataset` or `sdf_xarray.open_mfdatatree`
+- **Raw files**: use `sdf_xarray.sdf_interface.SDFFile`
 
-    import sdf_xarray as sdfxr
+Using xarray
+~~~~~~~~~~~~
 
-    sdfxr.open_dataset("tutorial_dataset_1d/0010.sdf")
+If you prefer using the native `xarray` functions, you can use the `xarray.open_dataset`,
+`xarray.open_datatree` and `xarray.open_mfdataset`. Strangely there is no function in
+`xarray` for ``xarray.open_mfdatatree``.
 
-Alternatively, you can load the data in as a `xarray.DataTree`, which organises the data
-hierarchically into ``groups`` (for example grouping related quantities such as the individual
-components of the electric and magnetic fields) while keeping each item as a `xarray.Dataset`.
-
-.. jupyter-execute::
-
-    import sdf_xarray as sdfxr
-
-    sdfxr.open_datatree("tutorial_dataset_1d/0010.sdf")
-
-Loading multiple files
-----------------------
-
-.. jupyter-execute::
-    
-    import sdf_xarray as sdfxr
-
-    sdfxr.open_mfdataset("tutorial_dataset_1d/*.sdf")
-
-Alternatively, you can load the data in as a `xarray.DataTree`, which organises the data
-hierarchically into ``groups`` (for example grouping related quantities such as the individual
-components of the electric and magnetic fields) while keeping each item as a `xarray.Dataset`.
-
-.. jupyter-execute::
-
-    import sdf_xarray as sdfxr
-
-    sdfxr.open_mfdatatree("tutorial_dataset_1d/*.sdf")
-
-.. _loading-raw-files-getting-started:
-
-Loading raw files
------------------
-
-.. jupyter-execute::
-
-    import sdf_xarray as sdfxr
-
-    raw_ds = sdfxr.SDFFile("tutorial_dataset_1d/0010.sdf")
-    raw_ds.variables.keys()
+These functions should all work out of the box as long as `sdf_xarray` is installed on your
+system, if you are having issues with it reading files, you might need to pass the parameter
+``engine=sdf_engine`` when calling any of the above xarray functions.

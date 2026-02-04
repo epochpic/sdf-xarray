@@ -11,26 +11,10 @@ Key Functionality
    import matplotlib.pyplot as plt
    %matplotlib inline
 
+.. _loading-sdf-files:
+
 Loading SDF files
 -----------------
-There are several ways to load SDF files:
-
-- To load a single file, use `sdf_xarray.open_dataset` or `sdf_xarray.open_datatree`
-- To load multiple files, use `sdf_xarray.open_mfdataset` or `sdf_xarray.open_mfdatatree`
-- To access the raw contents of a single SDF file, use `sdf_xarray.sdf_interface.SDFFile`
-
-When loading SDF files, variables related to ``boundaries``, ``cpu`` and ``output file`` are 
-excluded as they are problematic. If you wish to load these variables in see :ref:`loading-raw-files`.
-
-.. tip::
-
-    All code examples throughout this documentation are visualised using Jupyter notebooks
-    so that you can interactively explore `xarray.Dataset` objects. To do this on your machine
-    make sure that you have the necessary dependencies installed: 
-
-    .. code-block:: bash
-
-        pip install "sdf-xarray[jupyter]"
 
 Loading single files
 ~~~~~~~~~~~~~~~~~~~~

@@ -884,6 +884,7 @@ class SDFEntrypoint(BackendEntrypoint):
 
 class XrTUIEntrpoint:
     def open_mfdatatree(self, paths: list[Path]) -> xr.DataTree:
+        """Backend open_mfdatatree method used by `xr-tui <https://github.com/samueljackson92/xr-tui>`_"""
         return open_mfdatatree(paths)
 
 

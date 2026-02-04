@@ -646,7 +646,7 @@ class SDFDataStore(AbstractDataStore):
             return grid_name.split("/", maxsplit=1)[-1]
 
         def _grid_species_name(grid_name: str) -> str:
-            return grid_name.split("/")[-1]
+            return grid_name.rsplit("/", maxsplit=1)[-1]
 
         def _process_grid_name(grid_name: str, transform_func) -> str:
             """Apply the given transformation function and then rename with underscores."""

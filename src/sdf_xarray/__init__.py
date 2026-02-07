@@ -235,6 +235,7 @@ def open_dataset(
     drop_variables: list[str] | None = None,
     keep_particles: bool = False,
     probe_names: list[str] | None = None,
+    deck_path: PathLike | None = None,
 ) -> xr.Dataset:
     """Open an SDF file as a `xarray.Dataset`. Variables related to ``boundaries``,
     ``cpu`` and ``output`` file are excluded as they are problematic. If you wish
@@ -262,6 +263,7 @@ def open_dataset(
         drop_variables=drop_variables,
         keep_particles=keep_particles,
         probe_names=probe_names,
+        deck_path=deck_path,
     )
 
 

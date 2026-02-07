@@ -11,37 +11,19 @@ Key Functionality
    import matplotlib.pyplot as plt
    %matplotlib inline
 
+.. _loading-sdf-files:
+
 Loading SDF files
 -----------------
-There are several ways to load SDF files:
-
-- To load a single file, use `xarray.open_dataset`, `sdf_xarray.open_datatree` or `xarray.open_datatree`
-- To load multiple files, use `sdf_xarray.open_mfdataset`, `xarray.open_mfdataset` or `sdf_xarray.open_mfdatatree`.
-- To access the raw contents of a single SDF file, use `sdf_xarray.sdf_interface.SDFFile`.
-
-.. note::
-
-   When loading SDF files, variables related to ``boundaries``, ``cpu`` and ``output file`` are excluded as they are problematic. If you wish to load these in please use the
-   :ref:`loading-raw-files` approach.
-
-.. tip::
-
-    All code examples throughout this documentation are visualised using Jupyter notebooks
-    so that you can interactively explore `xarray.Dataset` objects. To do this on your machine
-    make sure that you have the necessary dependencies installed: 
-
-    .. code-block:: bash
-
-        pip install "sdf-xarray[jupyter]"
 
 Loading single files
 ~~~~~~~~~~~~~~~~~~~~
 
 .. jupyter-execute::
 
-   xr.open_dataset("tutorial_dataset_1d/0010.sdf")
+   sdfxr.open_dataset("tutorial_dataset_1d/0010.sdf")
 
-Alternatively, you can load the data in as a `xarray.DataTree`, which organises the data
+You can also load the data in as a `xarray.DataTree`, which organises the data
 hierarchically into ``groups`` (for example grouping related quantities such as the individual
 components of the electric and magnetic fields) while keeping each item as a `xarray.Dataset`.
 
@@ -72,22 +54,14 @@ is by using the `sdf_xarray.open_mfdataset`.
 
    If your simulation includes multiple ``output`` blocks that specify different variables
    for output at various time steps, variables not present at a specific step will default
-   to a nan value. To clean your dataset by removing these nan values we suggest using the
-   `xarray.DataArray.dropna` function or :ref:`loading-sparse-data`.
+   to a nan value. To remove these nan values we suggest using the `xarray.DataArray.dropna`
+   function or following our implmentation in :ref:`loading-sparse-data`.
 
 .. jupyter-execute::
 
    sdfxr.open_mfdataset("tutorial_dataset_1d/*.sdf")
 
-Alternatively, you can load the data in as a `xarray.DataTree`, which organises the data
-hierarchically into ``groups`` (for example grouping related quantities such as the individual
-components of the electric and magnetic fields) while keeping each item as a `xarray.Dataset`.
-
-.. jupyter-execute::
-
-   sdfxr.open_mfdatatree("tutorial_dataset_1d/*.sdf")
-
-Alternatively files can be loaded using `xarray.open_mfdataset` however when loading in
+Alternatively, files can be loaded using `xarray.open_mfdataset` however when loading in
 all the files we have do some processing of the data so that we can correctly align it along
 the time dimension; This is done via the ``preprocess`` parameter utilising the
 `sdf_xarray.SDFPreprocess` function.
@@ -100,6 +74,14 @@ the time dimension; This is done via the ``preprocess`` parameter utilising the
       compat="no_conflicts",
       preprocess=sdfxr.SDFPreprocess()
    )
+
+You can also load the data in as a `xarray.DataTree`, which organises the data
+hierarchically into ``groups`` (for example grouping related quantities such as the individual
+components of the electric and magnetic fields) while keeping each item as a `xarray.Dataset`.
+
+.. jupyter-execute::
+
+   sdfxr.open_mfdatatree("tutorial_dataset_1d/*.sdf")
 
 .. _loading-sparse-data:
 
@@ -142,7 +124,7 @@ multiple files).
 
 .. jupyter-execute::
 
-   xr.open_dataset("tutorial_dataset_1d/0010.sdf", keep_particles=True)
+   sdfxr.open_dataset("tutorial_dataset_1d/0010.sdf", keep_particles=True)
 
 Loading specific variables
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

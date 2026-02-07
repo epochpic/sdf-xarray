@@ -15,9 +15,10 @@ to femto-seconds or particle energy from Joules to electron-volts.
 
 .. jupyter-execute::
 
-    from sdf_xarray import open_mfdataset
+    import sdf_xarray as sdfxr
     import matplotlib.pyplot as plt
     %matplotlib inline
+
     plt.rcParams.update({
         "axes.labelsize": 16,
         "xtick.labelsize": 14,
@@ -45,7 +46,7 @@ We can use the |rescale_coords_accessor| method to convert X, Y, and Z coordinat
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
 
-    ds = open_mfdataset("tutorial_dataset_2d/*.sdf")
+    ds = sdfxr.open_mfdataset("tutorial_dataset_2d/*.sdf")
     ds_in_microns = ds.epoch.rescale_coords(1e6, "µm", ["X_Grid_mid", "Y_Grid_mid"])
 
     ds["Derived_Number_Density_Electron"].isel(time=0).plot(ax=ax1, x="X_Grid_mid", y="Y_Grid_mid")
@@ -65,7 +66,7 @@ seconds (``s``) to femto-seconds (``fs``) by applying a multiplier of ``1e15``.
 
 .. jupyter-execute::
     
-    ds = open_mfdataset("tutorial_dataset_2d/*.sdf")
+    ds = sdfxr.open_mfdataset("tutorial_dataset_2d/*.sdf")
     ds["time"]
 
 .. jupyter-execute::
@@ -97,15 +98,13 @@ Installation
 
 To install the pint libraries you can simply run the following optional
 dependency pip command which will install both the ``pint`` and ``pint-xarray``
-libraries. You can install these optional dependencies via pip:
+libraries. Once installed the ``xarray.Dataset.pint`` accessor should become
+accessible. You can install these optional dependencies via pip:
 
 .. code:: console
 
     $ pip install "sdf_xarray[pint]"
 
-.. note::
-    Once you install ``pint-xarray`` it is automatically picked up and loaded
-    by the code so you should have access to the ``xarray.Dataset.pint`` accessor.
 
 Quantifying DataArrays
 ~~~~~~~~~~~~~~~~~~~~~~
@@ -117,7 +116,7 @@ Joules and convert it to electron volts.
 
 .. jupyter-execute::
 
-    ds = open_mfdataset("tutorial_dataset_1d/*.sdf")
+    ds = sdfxr.open_mfdataset("tutorial_dataset_1d/*.sdf")
     ds["Total_Particle_Energy_Electron"]
 
 Once you call `xarray.DataArray.pint.quantify` the type is inferred the original

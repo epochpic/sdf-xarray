@@ -125,7 +125,7 @@ the animation.
 
 .. jupyter-execute::
    
-   ds = xr.open_dataset("tutorial_dataset_3d/0005.sdf")
+   ds = sdfxr.open_dataset("tutorial_dataset_3d/0005.sdf")
    da = ds["Derived_Number_Density"]
    anim = da.epoch.animate(t = "X_Grid_mid")
    anim.show()

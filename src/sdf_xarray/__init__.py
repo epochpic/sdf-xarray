@@ -229,6 +229,44 @@ def combine_datasets(
     return ds
 
 
+def open_dataset(
+    path: PathLike,
+    *,
+    drop_variables: list[str] | None = None,
+    keep_particles: bool = False,
+    probe_names: list[str] | None = None,
+    deck_path: PathLike | None = None,
+) -> xr.Dataset:
+    """Open an SDF file as a `xarray.Dataset`. Variables related to ``boundaries``,
+    ``cpu`` and ``output`` file are excluded as they are problematic. If you wish
+    to load these variables in see :ref:`loading-raw-files`.
+
+    Parameters
+    ----------
+    path
+        The path to the SDF file
+    drop_variables
+        A list of variables to drop from the dataset
+    keep_particles
+        If ``True``, also load particle data (this may use a lot of memory!)
+    probe_names
+        List of EPOCH probe names
+
+    Examples
+    --------
+    >>> ds = open_dataset("0000.sdf")
+    >>> ds["Electric_Field"]["Ex"].values  # Access Electric_Field_Ex data
+    """
+
+    return xr.open_dataset(
+        path,
+        drop_variables=drop_variables,
+        keep_particles=keep_particles,
+        probe_names=probe_names,
+        deck_path=deck_path,
+    )
+
+
 def open_mfdataset(
     path_glob: Iterable | str | Path | Callable[..., Iterable[Path]],
     *,
@@ -239,7 +277,10 @@ def open_mfdataset(
     chunks: T_Chunks = "auto",
     deck_path: PathLike | None = None,
 ) -> xr.Dataset:
-    """Open a set of EPOCH SDF files as one `xarray.Dataset`
+    """Open a set of EPOCH SDF files as one `xarray.Dataset`. Variables
+    related to ``boundaries``, ``cpu`` and ``output`` file are excluded
+    as they are problematic. If you wish to load these variables in see
+    :ref:`loading-raw-files`.
 
     EPOCH can output variables at different periods, so each individal
     SDF file from one EPOCH run may have different variables in it. In
@@ -260,18 +301,18 @@ def open_mfdataset(
 
     Parameters
     ----------
-    path_glob :
+    path_glob
         List of filenames or string glob pattern
-    separate_times :
+    separate_times
         If ``True``, create separate time dimensions for variables defined at
         different output frequencies
-    keep_particles :
+    keep_particles
         If ``True``, also load particle data (this may use a lot of memory!)
-    probe_names :
+    probe_names
         List of EPOCH probe names
-    data_vars :
+    data_vars
         List of data vars to load in (If not specified loads in all variables)
-    chunks :
+    chunks
         Dictionary with keys given by dimension names and values given by chunk sizes.
         In general, these should divide the dimensions of each dataset. By default
         chunks are automatically set so that they are the same size as the dimensions
@@ -344,11 +385,16 @@ def open_mfdataset(
 def open_datatree(
     path: PathLike,
     *,
+    drop_variables: list[str] | None = None,
     keep_particles: bool = False,
     probe_names: list[str] | None = None,
     deck_path: PathLike | None = None,
 ) -> xr.DataTree:
     """
+    Open an SDF file as a `xarray.DataTree`. Variables related to ``boundaries``,
+    ``cpu`` and ``output`` file are excluded as they are problematic. If you wish
+    to load these variables in see :ref:`loading-raw-files`.
+
     An `xarray.DataTree` is constructed utilising the original names in the SDF
     file. This is due to the fact that these names include slashes which `xarray`
     can use to automatically build up a datatree. We do additionally replace
@@ -379,6 +425,8 @@ def open_datatree(
     ----------
     path
         The path to the SDF file
+    drop_variables
+        A list of variables to drop from the dataset
     keep_particles
         If ``True``, also load particle data (this may use a lot of memory!)
     probe_names
@@ -390,11 +438,12 @@ def open_datatree(
     Examples
     --------
     >>> dt = open_datatree("0000.sdf")
-    >>> dt["Electric_Field"]["Ex"].values  # Access all Electric_Field_Ex data
+    >>> dt["Electric_Field"]["Ex"].values  # Access Electric_Field_Ex data
     """
 
     return xr.open_datatree(
         path,
+        drop_variables=drop_variables,
         keep_particles=keep_particles,
         probe_names=probe_names,
         deck_path=deck_path,
@@ -410,7 +459,10 @@ def open_mfdatatree(
     data_vars: list[str] | None = None,
     deck_path: PathLike | None = None,
 ) -> xr.DataTree:
-    """Open a set of EPOCH SDF files as one `xarray.DataTree`
+    """Open a set of EPOCH SDF files as one `xarray.DataTree`. Variables
+    related to ``boundaries``, ``cpu`` and ``output`` file are excluded
+    as they are problematic. If you wish to load these variables in see
+    :ref:`loading-raw-files`.
 
     EPOCH can output variables at different periods, so each individal
     SDF file from one EPOCH run may have different variables in it. In
@@ -901,6 +953,7 @@ class SDFEntrypoint(BackendEntrypoint):
 
 class XrTUIEntrpoint:
     def open_mfdatatree(self, paths: list[Path]) -> xr.DataTree:
+        """Backend open_mfdatatree method used by `xr-tui <https://github.com/samueljackson92/xr-tui>`_"""
         return open_mfdatatree(paths)
 
 

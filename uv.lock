@@ -581,6 +581,15 @@ wheels = [
 ]
 
 [[package]]
+name = "epydeck"
+version = "1.0.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/78/d2/033641854d70c5d2c57a9706b2307b8d7fe41050ae9d8cc76a4bd52d3c5b/epydeck-1.0.1.tar.gz", hash = "sha256:fa2f72624078c3d0809cf63f126ff8a68351790c36403424c41e4c2672521ea0", size = 177096, upload-time = "2025-06-03T15:55:23.714Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/35/41/2e8df3252b5f51c3d9dc8d12ab964376d37db089a5e74299acc3bf8b458e/epydeck-1.0.1-py3-none-any.whl", hash = "sha256:6e379bf3a024708adbcc0d6c0436225d5724e8ad65e0c254aaece42701b397a9", size = 30246, upload-time = "2025-06-03T15:55:21.772Z" },
+]
+
+[[package]]
 name = "executing"
 version = "2.2.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2248,6 +2257,7 @@ name = "sdf-xarray"
 source = { editable = "." }
 dependencies = [
     { name = "dask" },
+    { name = "epydeck" },
     { name = "numpy" },
     { name = "xarray" },
 ]
@@ -2284,6 +2294,7 @@ dev = [
     { name = "sphinx-book-theme" },
     { name = "sphinx-copybutton" },
     { name = "sphinx-inline-tabs" },
+    { name = "sphinx-togglebutton" },
     { name = "tqdm" },
 ]
 docs = [
@@ -2300,6 +2311,7 @@ docs = [
     { name = "sphinx-book-theme" },
     { name = "sphinx-copybutton" },
     { name = "sphinx-inline-tabs" },
+    { name = "sphinx-togglebutton" },
     { name = "tqdm" },
 ]
 lint = [
@@ -2317,6 +2329,7 @@ test = [
 requires-dist = [
     { name = "dask", specifier = ">=2024.7.1" },
     { name = "dask", extras = ["diagnostics"], marker = "extra == 'jupyter'" },
+    { name = "epydeck", specifier = "~=1.0" },
     { name = "ipykernel", marker = "extra == 'jupyter'", specifier = ">=6.29.5" },
     { name = "numpy", specifier = ">=2.0.0" },
     { name = "pint", marker = "extra == 'pint'" },
@@ -2345,6 +2358,7 @@ dev = [
     { name = "sphinx-book-theme", specifier = ">=0.4.0rc1" },
     { name = "sphinx-copybutton" },
     { name = "sphinx-inline-tabs" },
+    { name = "sphinx-togglebutton" },
     { name = "tqdm" },
 ]
 docs = [
@@ -2361,6 +2375,7 @@ docs = [
     { name = "sphinx-book-theme", specifier = ">=0.4.0rc1" },
     { name = "sphinx-copybutton" },
     { name = "sphinx-inline-tabs" },
+    { name = "sphinx-togglebutton" },
     { name = "tqdm" },
 ]
 lint = [{ name = "ruff" }]
@@ -2370,6 +2385,15 @@ test = [
     { name = "pooch", specifier = ">=1.8.2" },
     { name = "pytest", specifier = ">=3.3.0" },
     { name = "tqdm" },
+]
+
+[[package]]
+name = "setuptools"
+version = "80.9.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/18/5d/3bf57dcd21979b887f014ea83c24ae194cfcd12b9e0fda66b957c69d1fca/setuptools-80.9.0.tar.gz", hash = "sha256:f36b47402ecde768dbfafc46e8e4207b4360c654f1f3bb84475f0a28628fb19c", size = 1319958, upload-time = "2025-05-27T00:56:51.443Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a3/dc/17031897dae0efacfea57dfd3a82fdd2a2aeb58e0ff71b77b87e44edc772/setuptools-80.9.0-py3-none-any.whl", hash = "sha256:062d34222ad13e0cc312a4c02d73f059e86a4acbfbdea8f8f76b28c99f306922", size = 1201486, upload-time = "2025-05-27T00:56:49.664Z" },
 ]
 
 [[package]]
@@ -2495,6 +2519,21 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/48/f5/f8a2be63ed7be9f91a4c2bea0e25bcb56aa4c5cc37ec4d8ead8065f926b1/sphinx_inline_tabs-2023.4.21.tar.gz", hash = "sha256:5df2f13f602c158f3f5f6c509e008aeada199a8c76d97ba3aa2822206683bebc", size = 42664, upload-time = "2023-04-21T20:25:30.578Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/9d/60/1e4c9017d722b9c7731abc11f39ac8b083b479fbcefe12015b57e457a296/sphinx_inline_tabs-2023.4.21-py3-none-any.whl", hash = "sha256:06809ac613f7c48ddd6e2fa588413e3fe92cff2397b56e2ccf0b0218f9ef6a78", size = 6850, upload-time = "2023-04-21T20:25:28.778Z" },
+]
+
+[[package]]
+name = "sphinx-togglebutton"
+version = "0.4.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "docutils" },
+    { name = "setuptools" },
+    { name = "sphinx" },
+    { name = "wheel" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/89/6b/19def5241b45a7ae90fd91052bb91fa7b8fbcc0606a0cf65ac4ea70fb93b/sphinx_togglebutton-0.4.4.tar.gz", hash = "sha256:04c332692fd5f5363ad02a001e693369767d6c1f0e58279770a2aeb571b472a1", size = 17883, upload-time = "2026-01-14T14:33:11.599Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fa/cb/9f6ceb4308ebfe5f393a271ee6206e17883edee0662a9b5c1a371878064b/sphinx_togglebutton-0.4.4-py3-none-any.whl", hash = "sha256:820658cd4c4c34c2ee7a21105e638b2f65a9e1d43ee991090715eb7fd9683cdf", size = 44892, upload-time = "2026-01-14T14:33:10.674Z" },
 ]
 
 [[package]]

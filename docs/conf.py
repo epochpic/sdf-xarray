@@ -50,6 +50,7 @@ extensions = [
     "myst_parser",
     "jupyter_sphinx",
     "sphinx_copybutton",
+    "sphinx_togglebutton",
 ]
 
 autosummary_generate = True

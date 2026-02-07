@@ -311,3 +311,79 @@ def test_datatree_erroring_on_mismatched_jobid_files():
     with pytest.raises(ValueError):  # noqa: PT011
         # open_mfdatatree uses open_mfdataset under the hood with SDFPreprocess
         open_mfdatatree(TEST_MISMATCHED_FILES_DIR.glob("*.sdf"))
+
+
+def test_open_datatree_deck_path_default():
+    with open_datatree(TEST_FILES_DIR / "0000.sdf") as dt:
+        assert "deck" in dt.attrs
+
+
+def test_open_datatree_deck_path_failed():
+    with (
+        pytest.raises(FileNotFoundError),
+        open_datatree(TEST_FILES_DIR / "0000.sdf", deck_path="non_existent.deck"),
+    ):
+        pass
+
+
+def test_open_datatree_deck_path_relative():
+    with open_datatree(TEST_FILES_DIR / "0000.sdf", deck_path="input.deck") as dt:
+        assert "deck" in dt.attrs
+        assert "constant" in dt.attrs["deck"]
+
+
+def test_open_datatree_deck_path_absolute():
+    with open_datatree(
+        TEST_FILES_DIR / "0000.sdf", deck_path=TEST_FILES_DIR / "input.deck"
+    ) as dt:
+        assert "deck" in dt.attrs
+        assert "constant" in dt.attrs["deck"]
+
+
+def test_open_datatree_deck_path_absolute_other_path():
+    with open_datatree(
+        TEST_FILES_DIR / "0000.sdf", deck_path=TEST_3D_DIST_FN / "input.deck"
+    ) as dt:
+        assert "deck" in dt.attrs
+        assert "constant" not in dt.attrs["deck"]
+
+
+def test_open_mfdatatree_deck_path_default():
+    with open_mfdatatree(TEST_FILES_DIR.glob("*.sdf")) as dt:
+        assert "deck" in dt.attrs
+
+
+def test_open_mfdatatree_deck_path_failed():
+    with (
+        pytest.raises(FileNotFoundError),
+        open_mfdatatree(
+            TEST_FILES_DIR.glob("*.sdf"),
+            deck_path="non_existent.deck",
+        ),
+    ):
+        pass
+
+
+def test_open_mfdatatree_deck_path_relative():
+    with open_mfdatatree(
+        TEST_FILES_DIR.glob("*.sdf"),
+        deck_path="input.deck",
+    ) as dt:
+        assert "deck" in dt.attrs
+        assert "constant" in dt.attrs["deck"]
+
+
+def test_open_mfdatatree_deck_path_absolute():
+    with open_mfdatatree(
+        TEST_FILES_DIR.glob("*.sdf"), deck_path=TEST_FILES_DIR / "input.deck"
+    ) as dt:
+        assert "deck" in dt.attrs
+        assert "constant" in dt.attrs["deck"]
+
+
+def test_open_mfdatatree_deck_path_absolute_other_path():
+    with open_mfdatatree(
+        TEST_FILES_DIR.glob("*.sdf"), deck_path=TEST_3D_DIST_FN / "input.deck"
+    ) as dt:
+        assert "deck" in dt.attrs
+        assert "constant" not in dt.attrs["deck"]

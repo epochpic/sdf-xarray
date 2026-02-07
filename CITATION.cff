@@ -24,5 +24,9 @@ authors:
     given-names: Liam
     orcid: 'https://orcid.org/0000-0001-8604-6904'
     affiliation: University of York
+  - family-names: Shekhanov
+    given-names: Sviatoslav
+    orcid: 'https://orcid.org/0000-0002-2125-8962'
+    affiliation: University of York
 doi: 10.5281/zenodo.15351323
 date-released: '2024-07-25'

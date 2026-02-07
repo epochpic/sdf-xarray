@@ -18,9 +18,15 @@ authors = [
   { name = "Shaun Doherty", email = "shaun.doherty@york.ac.uk" },
   { name = "Chris Herdman", email = "chris.herdman@york.ac.uk" },
   { name = "Liam Pattinson", email = "liam.pattinson@york.ac.uk" },
+  { name = "Sviatoslav Shekhanov", email = "sviatoslav.shekhanov@york.ac.uk" },
 ]
 requires-python = ">=3.11,<3.15"
-dependencies = ["numpy>=2.0.0", "xarray>=2024.1.0", "dask>=2024.7.1"]
+dependencies = [
+  "numpy>=2.0.0",
+  "xarray>=2024.1.0",
+  "dask>=2024.7.1",
+  "epydeck~=1.0"
+]
 description = "Provides a backend for xarray to read SDF files as created by the EPOCH plasma PIC code."
 classifiers = [
   "Development Status :: 5 - Production/Stable",
@@ -49,6 +55,7 @@ dev = [
 docs = [
   "sphinx>=5.3",
   "sphinx_autodoc_typehints>=1.19",
+  "sphinx-togglebutton",
   "sphinx-book-theme>=0.4.0rc1",
   "sphinx-argparse-cli>=1.10.0",
   "sphinx-inline-tabs",

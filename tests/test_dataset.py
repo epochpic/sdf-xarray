@@ -1,15 +1,16 @@
+from typing import Protocol
+
 import numpy as np
 import numpy.testing as npt
 import pytest
 import xarray as xr
 
+import sdf_xarray as sdfxr
 from sdf_xarray import (
     SDFPreprocess,
     _process_latex_name,
     _resolve_glob,
     download,
-    open_dataset,
-    open_mfdataset,
 )
 
 TEST_FILES_DIR = download.fetch_dataset("test_files_1D")
@@ -19,8 +20,16 @@ TEST_3D_DIST_FN = download.fetch_dataset("test_dist_fn")
 TEST_2D_PARTICLE_DATA = download.fetch_dataset("test_two_probes_2D")
 
 
-def test_basic():
-    with open_dataset(TEST_FILES_DIR / "0000.sdf") as df:
+# Type hinting support
+class XRLibrary(Protocol):
+    def open_dataset(self, *args, **kwargs) -> xr.Dataset: ...
+
+    def open_mfdataset(self, *args, **kwargs) -> xr.Dataset: ...
+
+
+@pytest.mark.parametrize("xrlib", [xr, sdfxr])
+def test_basic(xrlib: XRLibrary):
+    with xrlib.open_dataset(TEST_FILES_DIR / "0000.sdf") as df:
         ex_field = "Electric_Field_Ex"
         assert ex_field in df
         x_coord = "X_Grid_mid"
@@ -33,22 +42,9 @@ def test_basic():
         assert x_coord not in df.coords
 
 
-def test_xr_basic():
-    with xr.open_dataset(TEST_FILES_DIR / "0000.sdf") as df:
-        ex_field = "Electric_Field_Ex"
-        assert ex_field in df
-        x_coord = "X_Grid_mid"
-        assert x_coord in df[ex_field].coords
-        assert df[x_coord].attrs["long_name"] == "X"
-
-        px_protons = "Particles_Px_proton"
-        assert px_protons not in df
-        x_coord = "X_Particles_proton"
-        assert x_coord not in df.coords
-
-
-def test_constant_name_and_units():
-    with open_dataset(TEST_FILES_DIR / "0000.sdf") as df:
+@pytest.mark.parametrize("xrlib", [xr, sdfxr])
+def test_constant_name_and_units(xrlib: XRLibrary):
+    with xrlib.open_dataset(TEST_FILES_DIR / "0000.sdf") as df:
         name = "Absorption_Total_Laser_Energy_Injected"
         full_name = "Absorption/Total Laser Energy Injected"
         assert name in df
@@ -56,49 +52,26 @@ def test_constant_name_and_units():
         assert df[name].attrs["full_name"] == full_name
 
 
-def test_xr_constant_name_and_units():
-    with xr.open_dataset(TEST_FILES_DIR / "0000.sdf") as df:
-        name = "Absorption_Total_Laser_Energy_Injected"
-        full_name = "Absorption/Total Laser Energy Injected"
-        assert name in df
-        assert df[name].units == "J"
-        assert df[name].attrs["full_name"] == full_name
-
-
-def test_preferred_chunks_metadata():
-    with open_dataset(TEST_FILES_DIR / "0000.sdf") as df:
+@pytest.mark.parametrize("xrlib", [xr, sdfxr])
+def test_preferred_chunks_metadata(xrlib: XRLibrary):
+    with xrlib.open_dataset(TEST_FILES_DIR / "0000.sdf") as df:
         for var in df.data_vars:
             assert "preferred_chunks" in df[var].encoding
 
 
-def test_xr_preferred_chunks_metadata():
-    with xr.open_dataset(TEST_FILES_DIR / "0000.sdf") as df:
-        for var in df.data_vars:
-            assert "preferred_chunks" in df[var].encoding
-
-
-def test_coords():
-    with open_dataset(TEST_FILES_DIR / "0010.sdf") as df:
+@pytest.mark.parametrize("xrlib", [xr, sdfxr])
+def test_coords(xrlib: XRLibrary):
+    with xrlib.open_dataset(TEST_FILES_DIR / "0010.sdf") as df:
         px_electron = "dist_fn_x_px_electron"
         assert px_electron in df
-        print(df[px_electron].coords)
         x_coord = "Px_x_px_electron"
         assert x_coord in df[px_electron].coords
         assert df[x_coord].attrs["full_name"] == "Grid/x_px/electron"
 
 
-def test_xr_coords():
-    with xr.open_dataset(TEST_FILES_DIR / "0010.sdf") as df:
-        px_electron = "dist_fn_x_px_electron"
-        assert px_electron in df
-        print(df[px_electron].coords)
-        x_coord = "Px_x_px_electron"
-        assert x_coord in df[px_electron].coords
-        assert df[x_coord].attrs["full_name"] == "Grid/x_px/electron"
-
-
-def test_particles():
-    with open_dataset(TEST_FILES_DIR / "0010.sdf", keep_particles=True) as df:
+@pytest.mark.parametrize("xrlib", [xr, sdfxr])
+def test_particles(xrlib: XRLibrary):
+    with xrlib.open_dataset(TEST_FILES_DIR / "0010.sdf", keep_particles=True) as df:
         px_protons = "Particles_Px_proton"
         assert px_protons in df
         x_coord = "X_Particles_proton"
@@ -106,29 +79,33 @@ def test_particles():
         assert df[x_coord].attrs["long_name"] == "X"
 
 
-def test_xr_particles():
-    with xr.open_dataset(TEST_FILES_DIR / "0010.sdf", keep_particles=True) as df:
-        px_protons = "Particles_Px_proton"
-        assert px_protons in df
-        x_coord = "X_Particles_proton"
-        assert x_coord in df[px_protons].coords
-        assert df[x_coord].attrs["long_name"] == "X"
-
-
-def test_no_particles():
-    with open_dataset(TEST_FILES_DIR / "0010.sdf", keep_particles=False) as df:
+@pytest.mark.parametrize("xrlib", [xr, sdfxr])
+def test_no_particles(xrlib: XRLibrary):
+    with xrlib.open_dataset(TEST_FILES_DIR / "0010.sdf", keep_particles=False) as df:
         px_protons = "Particles_Px_proton"
         assert px_protons not in df
 
 
-def test_xr_no_particles():
-    with xr.open_dataset(TEST_FILES_DIR / "0010.sdf", keep_particles=False) as df:
-        px_protons = "Particles_Px_proton"
-        assert px_protons not in df
-
-
-def test_multiple_files_one_time_dim():
-    with open_mfdataset(TEST_FILES_DIR.glob("*.sdf"), keep_particles=True) as df:
+@pytest.mark.parametrize(
+    ("xrlib", "params"),
+    [
+        (
+            xr,
+            {
+                "compat": "no_conflicts",
+                "join": "outer",
+                "preprocess": SDFPreprocess(),
+            },
+        ),
+        (sdfxr, {}),
+    ],
+)
+def test_multiple_files_one_time_dim(xrlib: XRLibrary, params):
+    with xrlib.open_mfdataset(
+        paths=TEST_FILES_DIR.glob("*.sdf"),
+        keep_particles=True,
+        **params,
+    ) as df:
         ex_field = df["Electric_Field_Ex"]
         assert sorted(ex_field.coords) == sorted(("X_Grid_mid", "time"))
         assert ex_field.shape == (11, 16)
@@ -215,7 +192,7 @@ def test_multiple_files_one_time_dim():
 
 
 def test_multiple_files_multiple_time_dims():
-    with open_mfdataset(
+    with sdfxr.open_mfdataset(
         TEST_FILES_DIR.glob("*.sdf"), separate_times=True, keep_particles=True
     ) as df:
         assert list(df["Electric_Field_Ex"].coords) != list(
@@ -280,111 +257,28 @@ def test_resolve_glob_from_path_list_multiple_duplicates():
     assert result == expected
 
 
-def test_xr_erroring_on_mismatched_jobid_files():
+@pytest.mark.parametrize(
+    ("xrlib", "params"),
+    [
+        (
+            xr,
+            {
+                "compat": "no_conflicts",
+                "join": "outer",
+                "preprocess": SDFPreprocess(),
+            },
+        ),
+        (sdfxr, {}),
+    ],
+)
+def test_erroring_on_mismatched_jobid_files(xrlib, params):
     with pytest.raises(ValueError):  # noqa: PT011
-        xr.open_mfdataset(
-            TEST_MISMATCHED_FILES_DIR.glob("*.sdf"),
-            combine="nested",
-            data_vars="minimal",
-            coords="minimal",
-            compat="override",
-            join="outer",
-            preprocess=SDFPreprocess(),
-        )
+        xrlib.open_mfdataset(paths=TEST_MISMATCHED_FILES_DIR.glob("*.sdf"), **params)
 
 
-def test_xr_multiple_files_data():
-    with xr.open_mfdataset(
-        TEST_FILES_DIR.glob("*.sdf"),
-        compat="no_conflicts",
-        join="outer",
-        preprocess=SDFPreprocess(),
-    ) as df:
-        ex = df.isel(time=10)["Electric_Field_Ex"]
-        ex_values = ex.values
-        ex_x_coords = ex.coords["X_Grid_mid"].values
-
-        expected_ex = np.array(
-            [
-                -3126528.47057157754898071289062500000000,
-                -3249643.37612255383282899856567382812500,
-                -6827013.11566223856061697006225585937500,
-                -9350267.99022011645138263702392578125000,
-                -1643592.58487333403900265693664550781250,
-                -2044751.41207189299166202545166015625000,
-                -4342811.34666103497147560119628906250000,
-                -10420841.38402196019887924194335937500000,
-                -7038801.83154528774321079254150390625000,
-                781649.31791684380732476711273193359375,
-                4476555.84853181242942810058593750000000,
-                5873312.79385650344192981719970703125000,
-                -95930.60501570138148963451385498046875,
-                -8977898.96547995693981647491455078125000,
-                -7951712.64987809769809246063232421875000,
-                -5655667.11171338520944118499755859375000,
-            ]
-        )
-        expected_ex_coords = np.array(
-            [
-                1.72522447e-05,
-                5.17567340e-05,
-                8.62612233e-05,
-                1.20765713e-04,
-                1.55270202e-04,
-                1.89774691e-04,
-                2.24279181e-04,
-                2.58783670e-04,
-                2.93288159e-04,
-                3.27792649e-04,
-                3.62297138e-04,
-                3.96801627e-04,
-                4.31306117e-04,
-                4.65810606e-04,
-                5.00315095e-04,
-                5.34819585e-04,
-            ]
-        )
-        npt.assert_allclose(ex_values, expected_ex)
-        npt.assert_allclose(ex_x_coords, expected_ex_coords)
-
-
-def test_xr_time_dim():
-    with xr.open_mfdataset(
-        TEST_FILES_DIR.glob("*.sdf"),
-        join="outer",
-        preprocess=SDFPreprocess(),
-    ) as df:
-        time = df["time"]
-        assert time.units == "s"
-        assert time.long_name == "Time"
-        assert time.full_name == "time"
-
-        time_values = np.array(
-            [
-                5.466993e-14,
-                2.417504e-10,
-                4.833915e-10,
-                7.251419e-10,
-                9.667830e-10,
-                1.208533e-09,
-                1.450175e-09,
-                1.691925e-09,
-                1.933566e-09,
-                2.175316e-09,
-                2.416958e-09,
-            ]
-        )
-
-        npt.assert_allclose(time_values, time.values, rtol=1e-6)
-
-
-def test_xr_latex_rename_variables():
-    with xr.open_mfdataset(
-        TEST_ARRAYS_DIR.glob("*.sdf"),
-        join="outer",
-        preprocess=SDFPreprocess(),
-        keep_particles=True,
-    ) as df:
+@pytest.mark.parametrize("xrlib", [xr, sdfxr])
+def test_latex_rename_variables(xrlib: XRLibrary):
+    with xrlib.open_dataset(TEST_ARRAYS_DIR / "0001.sdf", keep_particles=True) as df:
         assert df["Electric_Field_Ex"].attrs["long_name"] == "Electric Field $E_x$"
         assert df["Electric_Field_Ey"].attrs["long_name"] == "Electric Field $E_y$"
         assert df["Electric_Field_Ez"].attrs["long_name"] == "Electric Field $E_z$"
@@ -417,7 +311,7 @@ def test_xr_latex_rename_variables():
         )
 
 
-def test_xr_arrays_with_no_grids():
+def test_arrays_with_no_grids():
     with xr.open_dataset(TEST_ARRAYS_DIR / "0001.sdf") as df:
         laser_phase = "laser_x_min_phase"
         assert laser_phase in df
@@ -428,7 +322,7 @@ def test_xr_arrays_with_no_grids():
         assert df[random_states].shape == (8,)
 
 
-def test_xr_arrays_with_no_grids_multifile():
+def test_arrays_with_no_grids_multifile():
     with xr.open_mfdataset(
         TEST_ARRAYS_DIR.glob("*.sdf"),
         join="outer",
@@ -443,28 +337,23 @@ def test_xr_arrays_with_no_grids_multifile():
         assert df[random_states].shape == (1, 8)
 
 
-def test_xr_3d_distribution_function():
+def test_3d_distribution_function():
     with xr.open_dataset(TEST_3D_DIST_FN / "0000.sdf") as df:
         distribution_function = "dist_fn_x_px_py_Electron"
         assert df[distribution_function].shape == (16, 20, 20)
 
 
-def test_drop_variables():
-    with open_dataset(
+@pytest.mark.parametrize("xrlib", [xr, sdfxr])
+def test_drop_variables(xrlib: XRLibrary):
+    with xrlib.open_dataset(
         TEST_FILES_DIR / "0000.sdf", drop_variables=["Electric_Field_Ex"]
     ) as df:
         assert "Electric_Field_Ex" not in df
 
 
-def test_xr_drop_variables():
-    with xr.open_dataset(
-        TEST_FILES_DIR / "0000.sdf", drop_variables=["Electric_Field_Ex"]
-    ) as df:
-        assert "Electric_Field_Ex" not in df
-
-
-def test_drop_variables_multiple():
-    with open_dataset(
+@pytest.mark.parametrize("xrlib", [xr, sdfxr])
+def test_drop_variables_multiple(xrlib: XRLibrary):
+    with xrlib.open_dataset(
         TEST_FILES_DIR / "0000.sdf",
         drop_variables=["Electric_Field_Ex", "Electric_Field_Ey"],
     ) as df:
@@ -472,17 +361,9 @@ def test_drop_variables_multiple():
         assert "Electric_Field_Ey" not in df
 
 
-def test_xr_drop_variables_multiple():
-    with xr.open_dataset(
-        TEST_FILES_DIR / "0000.sdf",
-        drop_variables=["Electric_Field_Ex", "Electric_Field_Ey"],
-    ) as df:
-        assert "Electric_Field_Ex" not in df
-        assert "Electric_Field_Ey" not in df
-
-
-def test_drop_variables_original():
-    with open_dataset(
+@pytest.mark.parametrize("xrlib", [xr, sdfxr])
+def test_drop_variables_original(xrlib: XRLibrary):
+    with xrlib.open_dataset(
         TEST_FILES_DIR / "0000.sdf",
         drop_variables=["Electric_Field/Ex", "Electric_Field/Ey"],
     ) as df:
@@ -490,17 +371,9 @@ def test_drop_variables_original():
         assert "Electric_Field_Ey" not in df
 
 
-def test_xr_drop_variables_original():
-    with xr.open_dataset(
-        TEST_FILES_DIR / "0000.sdf",
-        drop_variables=["Electric_Field/Ex", "Electric_Field/Ey"],
-    ) as df:
-        assert "Electric_Field_Ex" not in df
-        assert "Electric_Field_Ey" not in df
-
-
-def test_drop_variables_mixed():
-    with open_dataset(
+@pytest.mark.parametrize("xrlib", [xr, sdfxr])
+def test_drop_variables_mixed(xrlib: XRLibrary):
+    with xrlib.open_dataset(
         TEST_FILES_DIR / "0000.sdf",
         drop_variables=["Electric_Field/Ex", "Electric_Field_Ey"],
     ) as df:
@@ -508,29 +381,17 @@ def test_drop_variables_mixed():
         assert "Electric_Field_Ey" not in df
 
 
-def test_xr_drop_variables_mixed():
-    with xr.open_dataset(
-        TEST_FILES_DIR / "0000.sdf",
-        drop_variables=["Electric_Field/Ex", "Electric_Field_Ey"],
-    ) as df:
-        assert "Electric_Field_Ex" not in df
-        assert "Electric_Field_Ey" not in df
-
-
-def test_erroring_drop_variables():
+@pytest.mark.parametrize("xrlib", [xr, sdfxr])
+def test_erroring_drop_variables(xrlib: XRLibrary):
     with pytest.raises(KeyError):
-        open_dataset(TEST_FILES_DIR / "0000.sdf", drop_variables=["Electric_Field/E"])
-
-
-def test_xr_erroring_drop_variables():
-    with pytest.raises(KeyError):
-        xr.open_dataset(
+        xrlib.open_dataset(
             TEST_FILES_DIR / "0000.sdf", drop_variables=["Electric_Field/E"]
         )
 
 
-def test_loading_multiple_probes():
-    with open_dataset(
+@pytest.mark.parametrize("xrlib", [xr, sdfxr])
+def test_loading_multiple_probes(xrlib: XRLibrary):
+    with xrlib.open_dataset(
         TEST_2D_PARTICLE_DATA / "0002.sdf",
         keep_particles=True,
         probe_names=["Electron_Front_Probe", "Electron_Back_Probe"],
@@ -541,37 +402,9 @@ def test_loading_multiple_probes():
         assert "ID_Electron_Back_Probe_Px" in df.dims
 
 
-def test_xr_loading_multiple_probes():
-    with xr.open_dataset(
-        TEST_2D_PARTICLE_DATA / "0002.sdf",
-        keep_particles=True,
-        probe_names=["Electron_Front_Probe", "Electron_Back_Probe"],
-    ) as df:
-        assert "X_Probe_Electron_Front_Probe" in df.coords
-        assert "X_Probe_Electron_Back_Probe" in df.coords
-        assert "ID_Electron_Front_Probe_Px" in df.dims
-        assert "ID_Electron_Back_Probe_Px" in df.dims
-
-
-def test_loading_one_probe_drop_second_probe():
-    with open_dataset(
-        TEST_2D_PARTICLE_DATA / "0002.sdf",
-        keep_particles=True,
-        drop_variables=[
-            "Electron_Back_Probe_Px",
-            "Electron_Back_Probe_Py",
-            "Electron_Back_Probe_Pz",
-            "Electron_Back_Probe_weight",
-        ],
-        probe_names=["Electron_Front_Probe"],
-    ) as df:
-        assert "X_Probe_Electron_Front_Probe" in df.coords
-        assert "ID_Electron_Front_Probe_Px" in df.dims
-        assert "ID_Electron_Back_Probe_Px" not in df.dims
-
-
-def test_xr_loading_one_probe_drop_second_probe():
-    with xr.open_dataset(
+@pytest.mark.parametrize("xrlib", [xr, sdfxr])
+def test_loading_one_probe_drop_second_probe(xrlib: XRLibrary):
+    with xrlib.open_dataset(
         TEST_2D_PARTICLE_DATA / "0002.sdf",
         keep_particles=True,
         drop_variables=[
@@ -588,7 +421,7 @@ def test_xr_loading_one_probe_drop_second_probe():
 
 
 def test_open_mfdataset_data_vars_single():
-    with open_mfdataset(
+    with sdfxr.open_mfdataset(
         TEST_FILES_DIR.glob("*.sdf"),
         data_vars=["Electric_Field_Ex"],
     ) as df:
@@ -603,7 +436,7 @@ def test_open_mfdataset_data_vars_single():
 
 
 def test_open_mfdataset_data_vars_multiple():
-    with open_mfdataset(
+    with sdfxr.open_mfdataset(
         TEST_FILES_DIR.glob("*.sdf"),
         data_vars=["Electric_Field_Ex", "Electric_Field_Ey"],
     ) as df:
@@ -623,7 +456,7 @@ def test_open_mfdataset_data_vars_multiple():
 
 
 def test_open_mfdataset_data_vars_sparse_multiple():
-    with open_mfdataset(
+    with sdfxr.open_mfdataset(
         TEST_FILES_DIR.glob("*.sdf"),
         keep_particles=True,
         data_vars=[
@@ -657,7 +490,7 @@ def test_open_mfdataset_data_vars_sparse_multiple():
 
 
 def test_open_mfdataset_data_vars_invalid_var():
-    with open_mfdataset(
+    with sdfxr.open_mfdataset(
         TEST_FILES_DIR.glob("*.sdf"),
         data_vars=["Electric_Field"],
     ) as df:
@@ -666,7 +499,7 @@ def test_open_mfdataset_data_vars_invalid_var():
 
 
 def test_open_mfdataset_data_vars_time():
-    with open_mfdataset(
+    with sdfxr.open_mfdataset(
         TEST_FILES_DIR.glob("*.sdf"),
         data_vars=["Electric_Field_Ex"],
     ) as df:
@@ -695,7 +528,7 @@ def test_open_mfdataset_data_vars_time():
 
 
 def test_open_mfdataset_data_vars_sparse_time():
-    with open_mfdataset(
+    with sdfxr.open_mfdataset(
         TEST_FILES_DIR.glob("*.sdf"),
         data_vars=["Particles_Particles_Per_Cell_proton"],
     ) as df:
@@ -724,7 +557,7 @@ def test_open_mfdataset_data_vars_sparse_time():
 
 
 def test_open_mfdataset_data_vars_separate_times_single():
-    with open_mfdataset(
+    with sdfxr.open_mfdataset(
         TEST_FILES_DIR.glob("*.sdf"),
         data_vars=["Electric_Field_Ex"],
         separate_times=True,
@@ -746,7 +579,7 @@ def test_open_mfdataset_data_vars_separate_times_single():
 
 
 def test_open_mfdataset_data_vars_separate_times_multiple():
-    with open_mfdataset(
+    with sdfxr.open_mfdataset(
         TEST_FILES_DIR.glob("*.sdf"),
         data_vars=["Electric_Field_Ex", "Electric_Field_Ey"],
         separate_times=True,
@@ -778,7 +611,7 @@ def test_open_mfdataset_data_vars_separate_times_multiple():
 
 
 def test_open_mfdataset_data_vars_separate_times_multiple_times_keep_particles():
-    with open_mfdataset(
+    with sdfxr.open_mfdataset(
         TEST_FILES_DIR.glob("*.sdf"),
         data_vars=["Electric_Field_Ex", "Particles_Px_electron_beam"],
         separate_times=True,
@@ -813,35 +646,37 @@ def test_open_mfdataset_data_vars_separate_times_multiple_times_keep_particles()
         assert particle_px_coords["ID_electron_beam"] == 1440
 
 
-def test_open_dataset_deck_path_default():
-    with open_dataset(TEST_FILES_DIR / "0000.sdf") as df:
+@pytest.mark.parametrize("xrlib", [xr, sdfxr])
+def test_open_dataset_deck_path_default(xrlib: XRLibrary):
+    with xrlib.open_dataset(TEST_FILES_DIR / "0000.sdf") as df:
         assert "deck" in df.attrs
 
 
-def test_open_dataset_deck_path_failed():
-    with (
-        pytest.raises(FileNotFoundError),
-        open_dataset(TEST_FILES_DIR / "0000.sdf", deck_path="non_existent.deck"),
-    ):
-        pass
+@pytest.mark.parametrize("xrlib", [xr, sdfxr])
+def test_open_dataset_deck_path_failed(xrlib: XRLibrary):
+    with pytest.raises(FileNotFoundError):
+        xrlib.open_dataset(TEST_FILES_DIR / "0000.sdf", deck_path="non_existent.deck")
 
 
-def test_open_dataset_deck_path_relative():
-    with open_dataset(TEST_FILES_DIR / "0000.sdf", deck_path="input.deck") as df:
+@pytest.mark.parametrize("xrlib", [xr, sdfxr])
+def test_open_dataset_deck_path_relative(xrlib: XRLibrary):
+    with xrlib.open_dataset(TEST_FILES_DIR / "0000.sdf", deck_path="input.deck") as df:
         assert "deck" in df.attrs
         assert "constant" in df.attrs["deck"]
 
 
-def test_open_dataset_deck_path_absolute():
-    with open_dataset(
+@pytest.mark.parametrize("xrlib", [xr, sdfxr])
+def test_open_dataset_deck_path_absolute(xrlib: XRLibrary):
+    with xrlib.open_dataset(
         TEST_FILES_DIR / "0000.sdf", deck_path=TEST_FILES_DIR / "input.deck"
     ) as df:
         assert "deck" in df.attrs
         assert "constant" in df.attrs["deck"]
 
 
-def test_open_dataset_deck_path_absolute_other_path():
-    with open_dataset(
+@pytest.mark.parametrize("xrlib", [xr, sdfxr])
+def test_open_dataset_deck_path_absolute_other_path(xrlib: XRLibrary):
+    with xrlib.open_dataset(
         TEST_FILES_DIR / "0000.sdf", deck_path=TEST_3D_DIST_FN / "input.deck"
     ) as df:
         assert "deck" in df.attrs
@@ -849,25 +684,19 @@ def test_open_dataset_deck_path_absolute_other_path():
 
 
 def test_open_mfdataset_deck_path_default():
-    with open_mfdataset(
-        TEST_FILES_DIR.glob("*.sdf"),
-    ) as df:
+    with sdfxr.open_mfdataset(TEST_FILES_DIR.glob("*.sdf")) as df:
         assert "deck" in df.attrs
 
 
 def test_open_mfdataset_deck_path_failed():
-    with (
-        pytest.raises(FileNotFoundError),
-        open_mfdataset(
-            TEST_FILES_DIR.glob("*.sdf"),
-            deck_path="non_existent.deck",
-        ),
-    ):
-        pass
+    with pytest.raises(FileNotFoundError):
+        sdfxr.open_mfdataset(
+            TEST_FILES_DIR.glob("*.sdf"), deck_path="non_existent.deck"
+        )
 
 
 def test_open_mfdataset_deck_path_relative():
-    with open_mfdataset(
+    with sdfxr.open_mfdataset(
         TEST_FILES_DIR.glob("*.sdf"),
         deck_path="input.deck",
     ) as df:
@@ -876,7 +705,7 @@ def test_open_mfdataset_deck_path_relative():
 
 
 def test_open_mfdataset_deck_path_absolute():
-    with open_mfdataset(
+    with sdfxr.open_mfdataset(
         TEST_FILES_DIR.glob("*.sdf"), deck_path=TEST_FILES_DIR / "input.deck"
     ) as df:
         assert "deck" in df.attrs
@@ -884,7 +713,7 @@ def test_open_mfdataset_deck_path_absolute():
 
 
 def test_open_mfdataset_deck_path_absolute_other_path():
-    with open_mfdataset(
+    with sdfxr.open_mfdataset(
         TEST_FILES_DIR.glob("*.sdf"), deck_path=TEST_3D_DIST_FN / "input.deck"
     ) as df:
         assert "deck" in df.attrs

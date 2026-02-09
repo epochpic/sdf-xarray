@@ -155,8 +155,8 @@ and continue loading the SDF file as normal. This file contains the initial
 simulation setup information which is not present in SDF outputs. By loading
 this file, you can access these parameters as part of your dataset's metadata.
 To do this, use the ``deck_path`` parameter when loading an SDF file with
-`xarray.open_dataset`, `sdf_xarray.open_datatree`, `sdf_xarray.open_mfdataset`
-or `sdf_xarray.open_mfdatatree`.
+`sdf_xarray.open_dataset`, `xarray.open_dataset`, `sdf_xarray.open_datatree`,
+`xarray.open_datatree`, `sdf_xarray.open_mfdataset` or `sdf_xarray.open_mfdatatree`.
 
 There are a few ways you can load an input deck:
 

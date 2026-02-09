@@ -34,9 +34,22 @@ def test_animation_accessor():
     assert hasattr(array.epoch, "animate")
 
 
-@pytest.mark.parametrize("xrlib", [xr, sdfxr])
-def test_animate_headless(xrlib):
-    with xrlib.open_mfdataset(TEST_FILES_DIR_1D.glob("*.sdf")) as ds:
+@pytest.mark.parametrize(
+    ("xrlib", "params"),
+    [
+        (
+            xr,
+            {
+                "compat": "no_conflicts",
+                "join": "outer",
+                "preprocess": SDFPreprocess(),
+            },
+        ),
+        (sdfxr, {}),
+    ],
+)
+def test_animate_headless(xrlib, params):
+    with xrlib.open_mfdataset(TEST_FILES_DIR_1D.glob("*.sdf"), **params) as ds:
         anim = ds["Derived_Number_Density_electron"].epoch.animate()
 
         # Specify a custom writable temporary directory

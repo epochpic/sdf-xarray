@@ -268,7 +268,7 @@ def open_dataset(
 
 
 def open_mfdataset(
-    path_glob: Iterable | str | Path | Callable[..., Iterable[Path]],
+    paths: Iterable | str | Path | Callable[..., Iterable[Path]],
     *,
     separate_times: bool = False,
     keep_particles: bool = False,
@@ -301,7 +301,7 @@ def open_mfdataset(
 
     Parameters
     ----------
-    path_glob
+    paths
         List of filenames or string glob pattern
     separate_times
         If ``True``, create separate time dimensions for variables defined at
@@ -326,11 +326,11 @@ def open_mfdataset(
         from a relative or absolute file path. See :ref:`loading-input-deck` for details.
     """
 
-    path_glob = _resolve_glob(path_glob)
+    paths = _resolve_glob(paths)
 
     if not separate_times:
         return combine_datasets(
-            path_glob,
+            paths,
             data_vars=data_vars,
             keep_particles=keep_particles,
             probe_names=probe_names,
@@ -338,10 +338,10 @@ def open_mfdataset(
             deck_path=deck_path,
         )
 
-    _, var_times_map = make_time_dims(path_glob)
+    _, var_times_map = make_time_dims(paths)
 
     all_dfs = []
-    for f in path_glob:
+    for f in paths:
         ds = xr.open_dataset(
             f,
             keep_particles=keep_particles,
@@ -451,7 +451,7 @@ def open_datatree(
 
 
 def open_mfdatatree(
-    path_glob: Iterable | str | Path | Callable[..., Iterable[Path]],
+    paths: Iterable | str | Path | Callable[..., Iterable[Path]],
     *,
     separate_times: bool = False,
     keep_particles: bool = False,
@@ -512,7 +512,7 @@ def open_mfdatatree(
 
     Parameters
     ----------
-    path_glob
+    paths
         List of filenames or string glob pattern
     separate_times
         If ``True``, create separate time dimensions for variables defined at
@@ -536,7 +536,7 @@ def open_mfdatatree(
     """
     # First, combine the datasets as usual
     combined_ds = open_mfdataset(
-        path_glob,
+        paths,
         separate_times=separate_times,
         keep_particles=keep_particles,
         probe_names=probe_names,

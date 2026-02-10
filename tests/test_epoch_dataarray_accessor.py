@@ -8,8 +8,9 @@ import xarray as xr
 from matplotlib.animation import PillowWriter
 from packaging.version import Version
 
+import sdf_xarray as sdfxr
 import sdf_xarray.plotting as sxp
-from sdf_xarray import SDFPreprocess, download, open_mfdataset
+from sdf_xarray import SDFPreprocess, download
 
 mpl.use("Agg")
 
@@ -33,8 +34,22 @@ def test_animation_accessor():
     assert hasattr(array.epoch, "animate")
 
 
-def test_animate_headless():
-    with open_mfdataset(TEST_FILES_DIR_1D.glob("*.sdf")) as ds:
+@pytest.mark.parametrize(
+    ("xrlib", "params"),
+    [
+        (
+            xr,
+            {
+                "compat": "no_conflicts",
+                "join": "outer",
+                "preprocess": SDFPreprocess(),
+            },
+        ),
+        (sdfxr, {}),
+    ],
+)
+def test_animate_headless(xrlib, params):
+    with xrlib.open_mfdataset(TEST_FILES_DIR_1D.glob("*.sdf"), **params) as ds:
         anim = ds["Derived_Number_Density_electron"].epoch.animate()
 
         # Specify a custom writable temporary directory
@@ -46,25 +61,7 @@ def test_animate_headless():
                 pytest.fail(f"animate().save() failed in headless mode: {e}")
 
 
-def test_xr_animate_headless():
-    with xr.open_mfdataset(
-        TEST_FILES_DIR_1D.glob("*.sdf"),
-        compat="no_conflicts",
-        join="outer",
-        preprocess=SDFPreprocess(),
-    ) as ds:
-        anim = ds["Derived_Number_Density_electron"].epoch.animate()
-
-        # Specify a custom writable temporary directory
-        with tempfile.TemporaryDirectory() as temp_dir:
-            temp_file_path = f"{temp_dir}/output.gif"
-            try:
-                anim.save(temp_file_path, writer=PillowWriter(fps=2))
-            except Exception as e:
-                pytest.fail(f"animate().save() failed in headless mode: {e}")
-
-
-def test_xr_get_frame_title_no_optional_params():
+def test_get_frame_title_no_optional_params():
     with xr.open_mfdataset(
         TEST_FILES_DIR_1D.glob("*.sdf"),
         compat="no_conflicts",
@@ -77,7 +74,7 @@ def test_xr_get_frame_title_no_optional_params():
         assert expected_result == result
 
 
-def test_xr_get_frame_title_sdf_name():
+def test_get_frame_title_sdf_name():
     with xr.open_mfdataset(
         TEST_FILES_DIR_1D.glob("*.sdf"),
         compat="no_conflicts",
@@ -90,7 +87,7 @@ def test_xr_get_frame_title_sdf_name():
         assert expected_result == result
 
 
-def test_xr_get_frame_title_custom_title():
+def test_get_frame_title_custom_title():
     with xr.open_mfdataset(
         TEST_FILES_DIR_1D.glob("*.sdf"),
         compat="no_conflicts",
@@ -103,7 +100,7 @@ def test_xr_get_frame_title_custom_title():
         assert expected_result == result
 
 
-def test_xr_get_frame_title_custom_title_and_sdf_name():
+def test_get_frame_title_custom_title_and_sdf_name():
     with xr.open_mfdataset(
         TEST_FILES_DIR_1D.glob("*.sdf"),
         compat="no_conflicts",
@@ -126,7 +123,7 @@ def test_get_frame_title_Z_Grid_mid():
         assert expected_result == result
 
 
-def test_xr_calculate_window_boundaries_1D():
+def test_calculate_window_boundaries_1D():
     with xr.open_mfdataset(
         TEST_FILES_DIR_2D_MW.glob("*.sdf"),
         preprocess=SDFPreprocess(),
@@ -142,7 +139,7 @@ def test_xr_calculate_window_boundaries_1D():
         assert result == pytest.approx(expected_result, abs=0.1)
 
 
-def test_xr_calculate_window_boundaries_2D():
+def test_calculate_window_boundaries_2D():
     with xr.open_mfdataset(
         TEST_FILES_DIR_2D_MW.glob("*.sdf"),
         preprocess=SDFPreprocess(),
@@ -158,7 +155,7 @@ def test_xr_calculate_window_boundaries_2D():
         assert result == pytest.approx(expected_result, abs=0.1)
 
 
-def test_xr_calculate_window_boundaries_1D_xlim():
+def test_calculate_window_boundaries_1D_xlim():
     with xr.open_mfdataset(
         TEST_FILES_DIR_2D_MW.glob("*.sdf"),
         preprocess=SDFPreprocess(),
@@ -174,7 +171,7 @@ def test_xr_calculate_window_boundaries_1D_xlim():
         assert result == pytest.approx(expected_result, abs=0.1)
 
 
-def test_xr_calculate_window_boundaries_2D_xlim():
+def test_calculate_window_boundaries_2D_xlim():
     with xr.open_mfdataset(
         TEST_FILES_DIR_2D_MW.glob("*.sdf"),
         preprocess=SDFPreprocess(),
@@ -190,7 +187,7 @@ def test_xr_calculate_window_boundaries_2D_xlim():
         assert result == pytest.approx(expected_result, abs=0.1)
 
 
-def test_xr_compute_global_limits():
+def test_compute_global_limits():
     with xr.open_mfdataset(
         TEST_FILES_DIR_1D.glob("*.sdf"),
         compat="no_conflicts",
@@ -206,7 +203,7 @@ def test_xr_compute_global_limits():
         assert result_max == pytest.approx(expected_result_max, abs=1e19)
 
 
-def test_xr_compute_global_limits_percentile():
+def test_compute_global_limits_percentile():
     with xr.open_mfdataset(
         TEST_FILES_DIR_1D.glob("*.sdf"),
         compat="no_conflicts",
@@ -222,7 +219,7 @@ def test_xr_compute_global_limits_percentile():
         assert result_max == pytest.approx(expected_result_max, abs=1e18)
 
 
-def test_xr_compute_global_limits_NaNs():
+def test_compute_global_limits_NaNs():
     with xr.open_mfdataset(
         TEST_FILES_DIR_2D_MW.glob("*.sdf"),
         preprocess=SDFPreprocess(),

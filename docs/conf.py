@@ -53,6 +53,9 @@ extensions = [
     "sphinx_togglebutton",
 ]
 
+source_suffix = {".rst": "restructuredtext", ".md": "markdown"}
+myst_heading_anchors = 3
+
 autosummary_generate = True
 
 # Add any paths that contain templates here, relative to this directory.
@@ -126,7 +129,7 @@ intersphinx_mapping = {
     "scipy": ("https://docs.scipy.org/doc/scipy", None),
     "xarray": ("https://docs.xarray.dev/en/latest", None),
     "pint": ("https://pint.readthedocs.io/en/stable", None),
-    "pint-xarray": ("https://pint-xarray.readthedocs.io/en/stable", None),
+    "pint_xarray": ("https://pint-xarray.readthedocs.io/en/stable", None),
     "pooch": ("https://www.fatiando.org/pooch/latest", None),
     "matplotlib": ("https://matplotlib.org/stable", None),
 }

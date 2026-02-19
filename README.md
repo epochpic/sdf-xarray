@@ -8,10 +8,10 @@
 [![Read the Docs](https://img.shields.io/readthedocs/sdf-xarray?logo=readthedocs&link=https%3A%2F%2Fsdf-xarray.readthedocs.io%2F)](https://sdf-xarray.readthedocs.io)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-
-sdf-xarray provides a backend for [xarray](https://xarray.dev) to read SDF files as created by
-[EPOCH](https://epochpic.github.io) using the [SDF-C](https://github.com/epochpic/SDF_C) library.
-Part of [BEAM](#broad-epoch-analysis-modules-beam) (Broad EPOCH Analysis Modules).
+sdf-xarray provides a backend for [xarray](https://xarray.dev) to read SDF files
+as created by [EPOCH](https://epochpic.github.io) using the
+[SDF-C](https://github.com/epochpic/SDF_C) library. Part of
+[BEAM](#broad-epoch-analysis-modules-beam) (Broad EPOCH Analysis Modules).
 
 ## Installation
 
@@ -59,9 +59,9 @@ print(df["Electric_Field_Ex"])
 
 ### Multi-file loading
 
-You can open all the SDF files for a given simulation by calling the `open_mfdataset`
-function from `sdf_xarray`. This will additionally add a time dimension using the `"time"`
-value stored in each files attributes.
+You can open all the SDF files for a given simulation by calling the
+`open_mfdataset` function from `sdf_xarray`. This will additionally add
+a time dimension using the `"time"` value stored in each files attributes.
 
 > [!IMPORTANT]
 > If your simulation has multiple `output` blocks so that not all variables are
@@ -86,34 +86,52 @@ print(ds)
 
 ## Citing
 
-If sdf-xarray contributes to a project that leads to publication, please acknowledge this by citing sdf-xarray. This can be done by clicking the "cite this repository" button located near the top right of this page.
+If sdf-xarray contributes to a project that leads to publication, please acknowledge
+this by citing sdf-xarray. This can be done by clicking the "cite this repository"
+button located near the top right of this page.
 
 ## Contributing
 
-We welcome contributions to the BEAM ecosystem! Whether it's reporting issues, suggesting features, or submitting pull requests, your input helps improve these tools for the community.
+We welcome contributions to the BEAM ecosystem! Whether it's reporting issues,
+suggesting features, or submitting pull requests, your input helps improve these
+tools for the community.
 
 ### How to Contribute
 
 There are many ways to get involved:
-- **Report bugs**: Found something not working as expected? Open an issue with as much detail as possible.
-- **Request a feature**: Got an idea for a new feature or enhancement? Open a feature request on [GitHub Issues](https://github.com/epochpic/sdf-xarray/issues)!
-- **Improve the documentation**: We aim to keep our docs clear and helpful—if something's missing or unclear, feel free to suggest edits.
-- **Submit code changes**: Bug fixes, refactoring, or new features are welcome.
 
+- **Report bugs**: Found something not working as expected? Open an issue with as
+much detail as possible.
+- **Request a feature**: Got an idea for a new feature or enhancement? Open a feature
+request on [GitHub Issues](https://github.com/epochpic/sdf-xarray/issues)!
+- **Improve the documentation**: We aim to keep our docs clear and helpful—if
+something's missing or unclear, feel free to suggest edits.
+- **Submit code changes**: Bug fixes, refactoring, or new features are welcome.
 
 All code is automatically linted, formatted, and tested via GitHub Actions.
 
-To run checks locally before opening a pull request, see [CONTRIBUTING.md](CONTRIBUTING.md) or [readthedocs documentation](https://sdf-xarray.readthedocs.io/en/latest/contributing.html)
+To run checks locally before opening a pull request, see
+[CONTRIBUTING.md](CONTRIBUTING.md) or [readthedocs documentation](https://sdf-xarray.readthedocs.io/en/latest/contributing.html)
 
 ## Broad EPOCH Analysis Modules (BEAM)
 
 ![BEAM logo](./BEAM.png)
 
-**BEAM** is a collection of independent yet complementary open-source tools for analysing EPOCH simulations, designed to be modular so researchers can adopt only the components they require without being constrained by a rigid framework. In line with the **FAIR principles — Findable**, **Accessible**, **Interoperable**, and **Reusable** — each package is openly published with clear documentation and versioning (Findable), distributed via public repositories (Accessible), designed to follow common standards for data structures and interfaces (Interoperable), and includes licensing and metadata to support long-term use and adaptation (Reusable). The packages are as follows:
+**BEAM** is a collection of independent yet complementary open-source tools for
+analysing EPOCH simulations, designed to be modular so researchers can adopt only
+the components they require without being constrained by a rigid framework. In
+line with the **FAIR principles — Findable**, **Accessible**, **Interoperable**,
+and **Reusable** — each package is openly published with clear documentation and
+versioning (Findable), distributed via public repositories (Accessible), designed
+to follow common standards for data structures and interfaces (Interoperable), and
+includes licensing and metadata to support long-term use and adaptation (Reusable).
+The packages are as follows:
 
-- [sdf-xarray](https://github.com/epochpic/sdf-xarray): Reading and processing SDF files and converting them to [xarray](https://docs.xarray.dev/en/stable/).
+- [sdf-xarray](https://github.com/epochpic/sdf-xarray): Reading and processing SDF
+files and converting them to [xarray](https://docs.xarray.dev/en/stable/).
 - [epydeck](https://github.com/epochpic/epydeck): Input deck reader and writer.
-- [epyscan](https://github.com/epochpic/epyscan): Create campaigns over a given parameter space using various sampling methods.
+- [epyscan](https://github.com/epochpic/epyscan): Create campaigns over a given
+parameter space using various sampling methods.
 
 ## PlasmaFAIR
 

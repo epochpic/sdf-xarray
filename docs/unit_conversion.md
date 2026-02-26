@@ -1,3 +1,9 @@
+---
+file_format: mystnb
+kernelspec:
+  name: python3
+---
+
 # Unit Conversion
 
 The <project:#sdf_xarray> package automatically extracts the units for each
@@ -6,10 +12,9 @@ attribute called `"units"`. Sometimes we want to convert our data from one forma
 another, e.g. converting the grid coordinates from meters to microns, time from seconds
 to femto-seconds or particle energy from Joules to electron-volts.
 
-```{jupyter-execute}
+```{code-cell} ipython3
 import sdf_xarray as sdfxr
 import matplotlib.pyplot as plt
-%matplotlib inline
 
 plt.rcParams.update({
     "axes.labelsize": 16,
@@ -32,7 +37,7 @@ This function scales the coordinate values by a given multiplier and updates the
 We can use the [`xarray.Dataset.epoch.rescale_coords`](project:#sdf_xarray.dataset_accessor.EpochAccessor.rescale_coords) method to convert X, Y, and Z coordinates from meters
 (`m`) to microns (`µm`) by applying a multiplier of `1e6`.
 
-```{jupyter-execute}
+```{code-cell} ipython3
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
 
 ds = sdfxr.open_mfdataset("tutorial_dataset_2d/*.sdf")
@@ -52,12 +57,12 @@ fig.tight_layout()
 We can also use the [`xarray.Dataset.epoch.rescale_coords`](project:#sdf_xarray.dataset_accessor.EpochAccessor.rescale_coords) method to convert the time coordinate from
 seconds (`s`) to femto-seconds (`fs`) by applying a multiplier of `1e15`.
 
-```{jupyter-execute}
+```{code-cell} ipython3
 ds = sdfxr.open_mfdataset("tutorial_dataset_2d/*.sdf")
 ds["time"]
 ```
 
-```{jupyter-execute}
+```{code-cell} ipython3
 ds = ds.epoch.rescale_coords(1e15, "fs", "time")
 ds["time"]
 ```
@@ -100,7 +105,7 @@ When using `pint_xarray`, the library attempts to infer units from the
 extract the time-resolved total particle energy of electrons which is measured in
 Joules and convert it to electron volts.
 
-```{jupyter-execute}
+```{code-cell} ipython3
 ds = sdfxr.open_mfdataset("tutorial_dataset_1d/*.sdf")
 ds["Total_Particle_Energy_Electron"]
 ```
@@ -114,7 +119,7 @@ You can also specify the units yourself by passing it as a string
 (e.g. `"J"`) into the <inv:#xarray.DataArray.pint.quantify> function call.
 ```
 
-```{jupyter-execute}
+```{code-cell} ipython3
 total_particle_energy = ds["Total_Particle_Energy_Electron"].pint.quantify()
 total_particle_energy
 ```
@@ -122,7 +127,7 @@ total_particle_energy
 Now that this dataset has been converted a <inv:#pint.Quantity>, we can check
 it's units and dimensionality
 
-```{jupyter-execute}
+```{code-cell} ipython3
 print(total_particle_energy.pint.units)
 print(total_particle_energy.pint.dimensionality)
 ```
@@ -132,7 +137,7 @@ print(total_particle_energy.pint.dimensionality)
 We can now convert it to electron volts utilising the <inv:#xarray.DataArray.pint.to>
 function
 
-```{jupyter-execute}
+```{code-cell} ipython3
 total_particle_energy_ev = total_particle_energy.pint.to("eV")
 total_particle_energy_ev
 ```
@@ -155,7 +160,7 @@ these units are the same it will not change the underlying data, only the
 units. This is only a small formatting choice and is not required.
 ```
 
-```{jupyter-execute}
+```{code-cell} ipython3
 import pint
 
 time_values = total_particle_energy.coords["time"].data
@@ -181,7 +186,7 @@ have used the `format="~P"` option as it shortens the unit to its
 "short pretty" format (`"eV"`). For more options, see the
 [Pint formatting documentation](https://pint.readthedocs.io/en/stable/user/formatting.html).
 
-```{jupyter-execute}
+```{code-cell} ipython3
 total_particle_energy_ev = total_particle_energy_ev.pint.dequantify(format="~P")
 total_particle_energy_w = total_particle_energy_w.pint.dequantify(format="~P")
 total_particle_energy_ev
@@ -190,7 +195,7 @@ total_particle_energy_ev
 To confirm the conversion has worked correctly, we can plot the original and
 converted <inv:#xarray.Dataset> side by side:
 
-```{jupyter-execute}
+```{code-cell} ipython3
 fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16,8))
 ds["Total_Particle_Energy_Electron"].plot(ax=ax1)
 total_particle_energy_ev.plot(ax=ax2)

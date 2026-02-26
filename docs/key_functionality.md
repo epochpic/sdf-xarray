@@ -1,6 +1,12 @@
+---
+file_format: mystnb
+kernelspec:
+  name: python3
+---
+
 # Key Functionality
 
-```{jupyter-execute}
+```{code-cell} ipython3
 import xarray as xr
 import sdf_xarray as sdfxr
 import matplotlib.pyplot as plt
@@ -10,7 +16,7 @@ import matplotlib.pyplot as plt
 
 ### Loading single files
 
-```{jupyter-execute}
+```{code-cell} ipython3
 sdfxr.open_dataset("tutorial_dataset_1d/0010.sdf")
 ```
 
@@ -18,7 +24,7 @@ You can also load the data in as a <inv:#xarray.DataTree>, which organises the d
 hierarchically into `groups` (for example grouping related quantities such as the individual
 components of the electric and magnetic fields) while keeping each item as a <inv:#xarray.Dataset>.
 
-```{jupyter-execute}
+```{code-cell} ipython3
 sdfxr.open_datatree("tutorial_dataset_1d/0010.sdf")
 ```
 
@@ -29,7 +35,7 @@ sdfxr.open_datatree("tutorial_dataset_1d/0010.sdf")
 If you wish to load data directly from the `SDF.C` library and ignore
 the <inv:#xarray> interface layer.
 
-```{jupyter-execute}
+```{code-cell} ipython3
 raw_ds = sdfxr.SDFFile("tutorial_dataset_1d/0010.sdf")
 raw_ds.variables.keys()
 ```
@@ -46,7 +52,7 @@ to a nan value. To remove these nan values we suggest using the <inv:#xarray.Dat
 function or following our implmentation in [](#loading-sparse-data).
 ```
 
-```{jupyter-execute}
+```{code-cell} ipython3
 sdfxr.open_mfdataset("tutorial_dataset_1d/*.sdf")
 ```
 
@@ -55,7 +61,7 @@ all the files we have do some processing of the data so that we can correctly al
 the time dimension; This is done via the `preprocess` parameter utilising the
 <project:#sdf_xarray.SDFPreprocess> function.
 
-```{jupyter-execute}
+```{code-cell} ipython3
 xr.open_mfdataset(
    "tutorial_dataset_1d/*.sdf",
    join="outer",
@@ -68,7 +74,7 @@ You can also load the data in as a <inv:#xarray.DataTree>, which organises the d
 hierarchically into `groups` (for example grouping related quantities such as the individual
 components of the electric and magnetic fields) while keeping each item as a <inv:#xarray.Dataset>.
 
-```{jupyter-execute}
+```{code-cell} ipython3
 sdfxr.open_mfdatatree("tutorial_dataset_1d/*.sdf")
 ```
 
@@ -82,7 +88,7 @@ need for a single, large time dimension that would be filled with nan values. Th
 significantly reduces memory consumption, though it requires more deliberate handling
 if you need to compare variables that exist on these different time coordinates.
 
-```{jupyter-execute}
+```{code-cell} ipython3
 sdfxr.open_mfdataset("tutorial_dataset_1d/*.sdf", separate_times=True)
 ```
 
@@ -109,7 +115,7 @@ Pass `keep_particles=True` as a keyword argument to
 <inv:#xarray.open_dataset> (for single files) or <inv:#xarray.open_mfdataset> (for
 multiple files).
 
-```{jupyter-execute}
+```{code-cell} ipython3
 sdfxr.open_dataset("tutorial_dataset_1d/0010.sdf", keep_particles=True)
 ```
 
@@ -125,7 +131,7 @@ variables. This creates a dataset consisting only of the given variable(s)
 and the relevant coordinates/dimensions, significantly reducing memory
 consumption.
 
-```{jupyter-execute}
+```{code-cell} ipython3
 sdfxr.open_mfdataset("tutorial_dataset_1d/*.sdf", data_vars=["Electric_Field_Ex"])
 ```
 
@@ -154,8 +160,9 @@ There are a few ways you can load an input deck:
 
 An example of loading a deck can be seen below
 
-````{toggle}
-```{jupyter-execute}
+```{code-cell} ipython3
+:tags: [hide-output]
+
 import json
 from IPython.display import Code
 
@@ -167,7 +174,6 @@ deck = ds.attrs["deck"]
 json_str = json.dumps(deck, indent=4)
 Code(json_str, language='json')
 ```
-````
 
 ## Data interaction examples
 
@@ -185,7 +191,7 @@ It is important to note here that <inv:#xarray> lazily loads the data
 meaning that it only explicitly loads the results your currently
 looking at when you call `.values`
 
-```{jupyter-execute}
+```{code-cell} ipython3
 ds = sdfxr.open_mfdataset("tutorial_dataset_1d/*.sdf")
 
 ds["Electric_Field_Ex"]
@@ -197,7 +203,7 @@ using the built-in <inv:#xarray.DataArray.plot> function (see
 a simple call to `matplotlib`. This also means that you can access
 all the methods from `matplotlib` to manipulate your plot.
 
-```{jupyter-execute}
+```{code-cell} ipython3
 # This is discretized in both space and time
 ds["Electric_Field_Ex"].plot()
 plt.title("Electric field along the x-axis")
@@ -210,7 +216,7 @@ This dimension represents all the recorded simulation steps and allows
 for easy indexing. To quickly determine the number of time steps available,
 you can check the size of the time dimension.
 
-```{jupyter-execute}
+```{code-cell} ipython3
 # This corresponds to the number of individual SDF files loaded
 print(f"There are a total of {ds['time'].size} time steps")
 
@@ -224,7 +230,7 @@ index of the time step with the <inv:#xarray.Dataset.isel> function. This can be
 done by passsing the index to the `time` parameter (e.g., `time=0` for
 the first snapshot).
 
-```{jupyter-execute}
+```{code-cell} ipython3
 # We can plot the variable at a given time index
 ds["Electric_Field_Ex"].isel(time=20)
 ```
@@ -237,7 +243,7 @@ If you know roughly what time you wish to select but not the exact value
 you can use the parameter `method="nearest"`.
 ```
 
-```{jupyter-execute}
+```{code-cell} ipython3
 ds["Electric_Field_Ex"].sel(time=sim_time)
 ```
 
@@ -280,7 +286,7 @@ Below is an example gif of how this interfacing looks as seen on
 These datasets can also be easily manipulated the same way as you
 would with `numpy` arrays.
 
-```{jupyter-execute}
+```{code-cell} ipython3
 ds["Laser_Absorption_Fraction_in_Simulation"] = (
    (ds["Total_Particle_Energy_in_Simulation"] - ds["Total_Particle_Energy_in_Simulation"][0])
    / ds["Absorption_Total_Laser_Energy_Injected"]
@@ -298,7 +304,7 @@ plt.show()
 You can also call the `plot()` function on several variables with
 labels by delaying the call to `plt.show()`.
 
-```{jupyter-execute}
+```{code-cell} ipython3
 ds["Total_Particle_Energy_Electron"].plot(label="Electron")
 ds["Total_Particle_Energy_Ion"].plot(label="Ion")
 plt.title("Particle Energy in Simulation per Species")
@@ -306,7 +312,7 @@ plt.legend()
 plt.show()
 ```
 
-```{jupyter-execute}
+```{code-cell} ipython3
 print(f"Total laser energy injected: {ds["Absorption_Total_Laser_Energy_Injected"][-1].values:.1e} J")
 print(f"Total particle energy absorbed: {ds["Total_Particle_Energy_in_Simulation"][-1].values:.1e} J")
 print(f"The laser absorption fraction: {ds["Laser_Absorption_Fraction_in_Simulation"][-1].values:.1f} %")

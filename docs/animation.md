@@ -1,10 +1,16 @@
+---
+file_format: mystnb
+kernelspec:
+  name: python3
+---
+
 # Animations
 
 [`xarray.DataArray.epoch.animate`](project:#sdf_xarray.plotting.animate)
 creates a <inv:#matplotlib.animation.FuncAnimation>; it is designed to
 mimic <inv:#xarray.DataArray.plot>.
 
-```{jupyter-execute}
+```{code-cell} ipython3
 import sdf_xarray as sdfxr
 import xarray as xr
 import matplotlib.pyplot as plt
@@ -22,15 +28,12 @@ The type of plot that is animated is determined by the dimensionality of the
 resolved data has 2 dimensions.
 ```
 
-```{csv-table}
-:header: >
-:    "Dimensions", "Plotting function", "Notes"
-:widths: "auto"
+| Dimensions |      Plotting function        |        Notes          |
+| ---------- | ----------------------------- | --------------------- |
+|    `2`     | <inv:#xarray.plot.line>       |                       |
+|    `3`     | <inv:#xarray.plot.pcolormesh> |                       |
+|    `>3`    | <inv:#xarray.plot.hist>       | Not fully implemented |
 
-`2`, <inv:#xarray.plot.line>, ""
-`3`, <inv:#xarray.plot.pcolormesh>, ""
-`>3`, <inv:#xarray.plot.hist>, "Not fully implemented"
-```
 
 ### 1D simulation
 
@@ -42,7 +45,7 @@ It is important to note that since the dataset is time resolved, it has
 `anim.show()` will only show the animation in a Jupyter notebook.
 ```
 
-```{jupyter-execute}
+```{code-cell} ipython3
 # Open the SDF files
 ds = sdfxr.open_mfdataset("tutorial_dataset_1d/*.sdf")
 
@@ -76,7 +79,7 @@ plt.show()
 
 Plotting a 2D simulation can be done in exactly the same way.
 
-```{jupyter-execute}
+```{code-cell} ipython3
 ds = sdfxr.open_mfdataset("tutorial_dataset_2d/*.sdf")
 da = ds["Derived_Number_Density_Electron"]
 anim = da.epoch.animate()
@@ -86,7 +89,7 @@ anim.show()
 We can also take a lineout of a 2D simulation to create 2D data and
 plot it as a <inv:#xarray.plot.line>.
 
-```{jupyter-execute}
+```{code-cell} ipython3
 da = ds["Derived_Number_Density_Electron"]
 da_lineout = da.sel(Y_Grid_mid = 1e-6, method = "nearest")
 anim = da_lineout.epoch.animate(title = "Y = 1e-6 [m]")
@@ -100,7 +103,7 @@ return a <inv:#xarray.plot.hist>. However, this may not be
 desirable. We can plot a 3D simulation along a certain plane in the
 same way a 2D simulation can be plotted along a line.
 
-```{jupyter-execute}
+```{code-cell} ipython3
 ds = sdfxr.open_mfdataset("tutorial_dataset_3d/*.sdf")
 
 da = ds["Derived_Number_Density"]
@@ -112,7 +115,7 @@ anim.show()
 A single SDF file can be animated by changing the time coordinate of
 the animation.
 
-```{jupyter-execute}
+```{code-cell} ipython3
 ds = sdfxr.open_dataset("tutorial_dataset_3d/0005.sdf")
 da = ds["Derived_Number_Density"]
 anim = da.epoch.animate(t = "X_Grid_mid")
@@ -130,7 +133,7 @@ EPOCH allows for simulations that have a moving simulation window
 You must use <inv:#xarray.open_mfdataset> and specify arguments in the following way.
 ```
 
-```{jupyter-execute}
+```{code-cell} ipython3
 ds = xr.open_mfdataset(
    "tutorial_dataset_2d_moving_window/*.sdf",
    preprocess = sdfxr.SDFPreprocess(),
@@ -158,7 +161,7 @@ see [`xarray.DataArray.epoch.animate`](project:#sdf_xarray.plotting.animate) for
 The coordinate units can be converted before plotting as in [](./unit_conversion.md#unit-conversion).
 Some functionality such as `aspect` and `size` are not fully implemented yet.
 
-```{jupyter-execute}
+```{code-cell} ipython3
 ds = sdfxr.open_mfdataset("tutorial_dataset_2d/*.sdf")
 
 # Change the units of the coordinates
@@ -191,7 +194,7 @@ that contains multiple plots layered on top of each other.
 What follows is an example of how to combine multiple animations on the
 same axis.
 
-```{jupyter-execute}
+```{code-cell} ipython3
 ds = sdfxr.open_mfdataset("tutorial_dataset_1d/*.sdf")
 
 anim = ds.epoch.animate_multiple(
@@ -214,7 +217,7 @@ the `alpha` value which sets the opacity of the plot.
 
 This also works with 2 dimensional data.
 
-```{jupyter-execute}
+```{code-cell} ipython3
 import numpy as np
 from matplotlib.colors import LogNorm
 

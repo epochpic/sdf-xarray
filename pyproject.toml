@@ -25,7 +25,7 @@ dependencies = [
   "numpy>=2.0.0",
   "xarray>=2024.1.0",
   "dask>=2024.7.1",
-  "epydeck~=1.0"
+  "epydeck~=1.0",
 ]
 description = "Provides a backend for xarray to read SDF files as created by the EPOCH plasma PIC code."
 classifiers = [
@@ -63,8 +63,7 @@ docs = [
   "matplotlib",
   "pint",
   "pint-xarray",
-  "myst-parser",
-  "jupyter-sphinx",
+  "myst-nb",
   "sphinx-copybutton",
   "pooch>=1.8.2",
   "tqdm",

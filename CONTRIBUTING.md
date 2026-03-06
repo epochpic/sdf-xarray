@@ -148,6 +148,15 @@ VS Code extension. Navigate to the `docs/_build/html` folder, right-click the
 `index.html`, and select **"Open with Live Server"**. This
 will open a live preview of the documentation in your web browser.
 
+Alternatively if you do not wish to install a VS Code extension run the following
+command from the `docs` folder:
+
+```bash
+python -m http.server -d _build/html
+```
+
+Then open the link it gives you in the browser to view the documentation.
+
 ## Continuous integration
 
 All pull requests are automatically checked using GitHub Actions for:

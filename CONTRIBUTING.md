@@ -98,8 +98,6 @@ To build the documentation locally, first install the required packages:
 
 ```bash
 pip install --group docs
-cd docs
-make html
 ```
 
 The documentation can be updated by changing any of the `*.md` files located
@@ -108,6 +106,9 @@ of the snippets you'd need to write or update it, however if you are stuck
 please don't hesitate to reach out.
 
 ### Building the documentation
+
+You can build the documentation using either auto-building (recommended for
+active development) or manual building.
 
 #### Auto-building
 
@@ -135,7 +136,7 @@ browser. Example output including what changing a file should produce in the ter
 
 #### Manual building
 
-Alternatively if you wish to rebuild the documentation manually run the following
+If you prefer to rebuild the documentation manually, run the following
 command from the `docs` folder:
 
 ```bash

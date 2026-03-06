@@ -54,6 +54,7 @@ dev = [
 ]
 docs = [
   "sphinx>=5.3",
+  "sphinx-autobuild>=2025.8.25",
   "sphinx_autodoc_typehints>=1.19",
   "sphinx-togglebutton",
   "sphinx-book-theme>=0.4.0rc1",

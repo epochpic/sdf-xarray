@@ -85,18 +85,14 @@ uv run pytest
 
 ## Documentation
 
-### Style
-
-When contributing to the documentation:
-
-- Wrap lines at 80 characters.
-- Follow the format of existing `.rst` files.
-- Link to external functions or tools when possible.
-
-### Compiling and adding documentation
-
+```{note}
 When compiling the documentation for the first time you will need an internet
 connection in order to download the datasets.
+```
+
+The documentation is stored under the `/docs` folder and is written in Markdown
+files following the [MyST-NB](https://myst-nb.readthedocs.io/en/latest/index.html)
+format.
 
 To build the documentation locally, first install the required packages:
 
@@ -106,33 +102,51 @@ cd docs
 make html
 ```
 
-The documentation can be updated by changing any of the `*.rst` files located
+The documentation can be updated by changing any of the `*.md` files located
 in the main `docs` directory. The existing documentation hopefully includes most
 of the snippets you'd need to write or update it, however if you are stuck
 please don't hesitate to reach out.
 
-Every time you make changes to the documentation or add a new page, you must
-re-run the `make html` command to regenerate the HTML files.
+### Building the documentation
 
-### Previewing documentation
+#### Auto-building
 
-#### Using VS Code extensions
-
-Once the html web pages have been made you can review them installing the
-[Live Server](https://marketplace.visualstudio.com/items/?itemName=ritwickdey.LiveServer)
-VS Code extension. Navigate to the `_build/html` folder, right-click the
-`index.html`, and select **"Open with Live Server"**. This
-will open a live preview of the documentation in your web browser.
-
-#### Using a simple python server
-
-Alternatively, if you're not using VS Code, you can start a simple local server with Python:
+Run the following command from the `docs` folder in order to auto-rebuild the
+documentation when you save changes in any of the `docs/*.md`, `src/sdf_xarray/*.py`
+or update the `CONTRIBUTING.md` file:
 
 ```bash
-python -m http.server -d _build/html
+make livehtml
 ```
 
-Then open http://localhost:8000 in your browser to view the documentation.
+This should spin up a local server for the documentation which you can open in your
+browser. Example output including what changing a file should produce in the terminal:
+
+```bash
+[sphinx-autobuild] Starting initial build
+[sphinx-autobuild] > python -m sphinx build . _build/html --builder html --quiet
+[sphinx-autobuild] Serving on http://127.0.0.1:8000
+[sphinx-autobuild] Waiting to detect changes...
+[sphinx-autobuild] Detected changes (key_functionality.md)
+[sphinx-autobuild] Rebuilding...
+[sphinx-autobuild] > python -m sphinx build . _build/html --builder html --quiet
+[sphinx-autobuild] Serving on http://127.0.0.1:8000
+```
+
+#### Manual building
+
+Alternatively if you wish to rebuild the documentation manually run the following
+command from the `docs` folder:
+
+```bash
+make html
+```
+
+Once the html web pages have been made you can review them by installing the
+[Live Server](https://marketplace.visualstudio.com/items/?itemName=ritwickdey.LiveServer)
+VS Code extension. Navigate to the `docs/_build/html` folder, right-click the
+`index.html`, and select **"Open with Live Server"**. This
+will open a live preview of the documentation in your web browser.
 
 ## Continuous integration
 

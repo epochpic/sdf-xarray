@@ -21,7 +21,7 @@ livehtml:
 		--watch "$(SOURCECODEDIR)" \
 		--watch "../CONTRIBUTING.md" \
 		--quiet \
-		--ignore "generated" \
+		--ignore "$(SOURCEDIR)/generated" \
 		--ignore "$(BUILDDIR)/jupyter_execute" \
 		--ignore "$(SOURCECODEDIR)/__pycache__"
 

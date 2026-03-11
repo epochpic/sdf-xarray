@@ -116,6 +116,10 @@ html_theme_options = {
     "use_repository_button": True,
     "use_issues_button": True,
     "home_page_in_toc": False,
+    "logo": {
+        "image_light": "_static/sdf-xarray-logo-light.svg",
+        "image_dark": "_static/sdf-xarray-logo-dark.svg",
+    },
 }
 
 pygments_style = "sphinx"

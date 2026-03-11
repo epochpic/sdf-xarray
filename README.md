@@ -1,4 +1,6 @@
-# sdf-xarray
+<h1 align="center">
+<img src="docs/_static/sdf-xarray-logo-dark.svg" width="400">
+</h1><br>
 
 ![Dynamic TOML Badge](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fepochpic%2Fsdf-xarray%2Frefs%2Fheads%2Fmain%2Fpyproject.toml&query=%24.project.requires-python&label=python&logo=python)
 [![Available on PyPI](https://img.shields.io/pypi/v/sdf-xarray?color=blue&logo=pypi)](https://pypi.org/project/sdf-xarray/)
@@ -115,7 +117,9 @@ To run checks locally before opening a pull request, see
 
 ## Broad EPOCH Analysis Modules (BEAM)
 
-![BEAM logo](./BEAM.png)
+<h1 align="center">
+<img src="docs/_static/BEAM.png" width="400">
+</h1>
 
 **BEAM** is a collection of independent yet complementary open-source tools for
 analysing EPOCH simulations, designed to be modular so researchers can adopt only
@@ -135,6 +139,8 @@ parameter space using various sampling methods.
 
 ## PlasmaFAIR
 
-![PlasmaFAIR logo](PlasmaFAIR.svg)
+<h1 align="left">
+<img src="docs/_static/PlasmaFAIR.svg" width="400">
+</h1>
 
 Originally developed by [PlasmaFAIR](https://plasmafair.github.io), EPSRC Grant EP/V051822/1

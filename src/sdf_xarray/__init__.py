@@ -96,21 +96,35 @@ def _process_latex_name(variable_name: str) -> str:
     return variable_name
 
 
-def _resolve_glob(path_glob: PathLike | Iterable[PathLike]):
-    """
-    Normalise input path_glob into a sorted list of absolute, resolved Path objects.
+def _resolve_glob(path_glob: PathLike | Iterable[PathLike]) -> list[Path]:
+    """Resolve an input path/glob to sorted absolute SDF file paths.
+
+    Accepts either a single path-like glob pattern (e.g. ``"*.sdf"``) or a
+    list of path-like file names.
     """
 
-    try:
+    if isinstance(path_glob, PathLike):
         p = Path(path_glob)
-        paths = list(p.parent.glob(p.name)) if p.name.endswith("*.sdf") else list(p)
-    except TypeError:
+        if p.is_dir():
+            raise TypeError(
+                "Directory paths are not supported; pass a glob pattern"
+                f"(e.g. {(p / '*.sdf').as_posix()}) or a list of file paths"
+                f"(e.g. {[(p / '0000.sdf').as_posix(), (p / '0001.sdf').as_posix()]})."
+            )
+        paths = list(p.parent.glob(p.name))
+    else:
         paths = list({Path(p) for p in path_glob})
 
-    paths = sorted(p.resolve() for p in paths)
-    if not paths:
+    resolved_paths = sorted(p.resolve() for p in paths)
+    if not resolved_paths:
         raise FileNotFoundError(f"No files matched pattern or input: {path_glob!r}")
-    return paths
+
+    for p in resolved_paths:
+        if not p.is_file():
+            raise FileNotFoundError(f"{p.as_posix()} does not exist or is not a file.")
+        if p.suffix.lower() != ".sdf":
+            raise FileNotFoundError(f"{p.as_posix()} is not an SDF file.")
+    return resolved_paths
 
 
 def _build_datatree_from_dataset(

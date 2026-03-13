@@ -103,7 +103,7 @@ def _resolve_glob(path_glob: PathLike | Iterable[PathLike]):
 
     try:
         p = Path(path_glob)
-        paths = list(p.parent.glob(p.name)) if p.name == "*.sdf" else list(p)
+        paths = list(p.parent.glob(p.name)) if p.name.endswith("*.sdf") else list(p)
     except TypeError:
         paths = list({Path(p) for p in path_glob})
 

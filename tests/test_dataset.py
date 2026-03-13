@@ -212,6 +212,18 @@ def test_resolve_glob_from_string_pattern():
     assert result == expected
 
 
+def test_resolve_glob_from_multiple_names_string_pattern(tmp_path):
+    mock_test_files_dir = tmp_path
+    (mock_test_files_dir / "normal_0000.sdf").touch()
+    (mock_test_files_dir / "normal_0001.sdf").touch()
+    (mock_test_files_dir / "other_0000.sdf").touch()
+
+    pattern = str(mock_test_files_dir / "normal_*.sdf")
+    result = _resolve_glob(pattern)
+    expected = sorted(mock_test_files_dir.glob("normal_*.sdf"))
+    assert result == expected
+
+
 def test_resolve_glob_from_path_glob():
     pattern = TEST_FILES_DIR.glob("*.sdf")
     result = _resolve_glob(pattern)

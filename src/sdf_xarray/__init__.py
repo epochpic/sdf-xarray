@@ -20,6 +20,7 @@ from xarray.core import indexing
 from xarray.core.types import T_Chunks
 from xarray.core.utils import close_on_error, try_read_magic_number_from_path
 from xarray.core.variable import Variable
+from xarray.plot.accessor import DataArrayPlotAccessor
 
 # NOTE: Do not delete these lines, otherwise the "epoch" dataset and dataarray
 # accessors will not be imported when the user imports sdf_xarray
@@ -39,6 +40,39 @@ if Version(version("xarray")) >= Version("2025.8.0"):
     xr.set_options(use_new_combine_kwarg_defaults=True)
 
 PathLike = str | os_PathLike
+
+
+def _patch_xarray_plot_axes() -> None:
+    """
+    Changes the default axes order for 2D plots so that x and y are on the correct axes.
+
+    This exists because plotting of 2D data in xarray uses the `xarray.plot.pcolormesh`
+    function which takes assumes that ``x = dim[1]`` and ``y = dim[0]``.
+    """
+    original_call = DataArrayPlotAccessor.__call__
+
+    def _sdf_plot_call(
+        self,
+        **kwargs,
+    ):
+        dims = self._da.dims
+        is_not_2d_data = len(dims) != 2
+        is_time_dim_present = "time" in dims
+        is_x_or_y_specified_in_kwargs = "x" in kwargs or "y" in kwargs
+
+        if is_not_2d_data or is_time_dim_present or is_x_or_y_specified_in_kwargs:
+            return original_call(self, **kwargs)
+
+        updated_kwargs = dict(kwargs)
+        updated_kwargs.setdefault("x", dims[0])
+        updated_kwargs.setdefault("y", dims[1])
+
+        return original_call(
+            self,
+            **updated_kwargs,
+        )
+
+    DataArrayPlotAccessor.__call__ = _sdf_plot_call
 
 
 def _rename_with_underscore(name: str) -> str:
@@ -768,6 +802,7 @@ class SDFDataStore(AbstractDataStore):
                 data_attrs = {}
                 data_attrs["full_name"] = key
                 data_attrs["long_name"] = base_name.replace("_", " ")
+
                 if value.units is not None:
                     data_attrs["units"] = value.units
 
@@ -871,6 +906,7 @@ class SDFDataStore(AbstractDataStore):
 
         ds = xr.Dataset(data_vars, attrs=attrs, coords=coords)
         ds.attrs["deck"] = _load_deck(ds.attrs["filename"], self.deck_path)
+        _patch_xarray_plot_axes()
         ds.set_close(self.ds.close)
 
         return ds

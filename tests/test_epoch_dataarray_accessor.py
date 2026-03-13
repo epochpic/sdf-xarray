@@ -2,10 +2,12 @@ import tempfile
 from importlib.metadata import version
 
 import matplotlib as mpl
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 import xarray as xr
 from matplotlib.animation import PillowWriter
+from matplotlib.container import BarContainer
 from packaging.version import Version
 
 import sdf_xarray as sdfxr
@@ -234,3 +236,56 @@ def test_compute_global_limits_NaNs():
         expected_result_max = 2.70
         assert result_min == pytest.approx(expected_result_min, abs=1e-2)
         assert result_max == pytest.approx(expected_result_max, abs=1e-1)
+
+
+def test_default_plot_flips_axis_order_for_2d_data():
+    with xr.open_mfdataset(
+        TEST_FILES_DIR_2D_MW.glob("*.sdf"),
+        preprocess=SDFPreprocess(),
+        combine="nested",
+        compat="no_conflicts",
+        join="outer",
+    ) as ds:
+        plot = ds["Derived_Number_Density_electron"].isel(time=0).plot()
+        ax = plot.axes
+
+        assert ax.get_xlabel() == "X [m]"
+        assert ax.get_ylabel() == "Y [m]"
+        plt.close(ax.figure)
+
+
+def test_default_plot_flips_axis_order_for_2d_data_with_additional_params():
+    with xr.open_mfdataset(
+        TEST_FILES_DIR_2D_MW.glob("*.sdf"),
+        preprocess=SDFPreprocess(),
+        combine="nested",
+        compat="no_conflicts",
+        join="outer",
+    ) as ds:
+        fig, ax = plt.subplots()
+        ds["Derived_Number_Density_electron"].isel(time=0).plot(
+            ax=ax,
+            xlim=(0.5, 1.0),
+            ylim=(0.0, 0.5),
+        )
+
+        assert ax.get_xlabel() == "X [m]"
+        assert ax.get_ylabel() == "Y [m]"
+        assert ax.get_xlim() == pytest.approx((0.5, 1.0), abs=1e-2)
+        assert ax.get_ylim() == pytest.approx((0.0, 0.5), abs=1e-2)
+        plt.close(fig)
+
+
+def test_default_plot_flips_axis_order_for_2d_data_but_not_when_time_dim_present():
+    with xr.open_mfdataset(
+        TEST_FILES_DIR_2D_MW.glob("*.sdf"),
+        preprocess=SDFPreprocess(),
+        combine="nested",
+        compat="no_conflicts",
+        join="outer",
+    ) as ds:
+        fig, ax = plt.subplots()
+        plot = ds["Derived_Number_Density_electron"].plot(ax=ax)
+
+        assert type(plot[2]) is BarContainer
+        plt.close(fig)

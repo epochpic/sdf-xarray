@@ -238,23 +238,22 @@ def test_compute_global_limits_NaNs():
         assert result_max == pytest.approx(expected_result_max, abs=1e-1)
 
 
-def test_default_plot_flips_axis_order_for_2d_data():
+def test_epoch_plot_simple_1d_dataset():
     with xr.open_mfdataset(
-        TEST_FILES_DIR_2D_MW.glob("*.sdf"),
-        preprocess=SDFPreprocess(),
-        combine="nested",
+        TEST_FILES_DIR_1D.glob("*.sdf"),
         compat="no_conflicts",
         join="outer",
+        preprocess=SDFPreprocess(),
     ) as ds:
-        plot = ds["Derived_Number_Density_electron"].isel(time=0).plot()
-        ax = plot.axes
+        fig, ax = plt.subplots()
+        ds["Derived_Number_Density_electron"].isel(time=0).epoch.plot(ax=ax)
 
+        assert len(ax.lines) == 1
         assert ax.get_xlabel() == "X [m]"
-        assert ax.get_ylabel() == "Y [m]"
-        plt.close(ax.figure)
+        plt.close(fig)
 
 
-def test_default_plot_flips_axis_order_for_2d_data_with_additional_params():
+def test_epoch_plot_simple_2d_dataset():
     with xr.open_mfdataset(
         TEST_FILES_DIR_2D_MW.glob("*.sdf"),
         preprocess=SDFPreprocess(),
@@ -263,7 +262,51 @@ def test_default_plot_flips_axis_order_for_2d_data_with_additional_params():
         join="outer",
     ) as ds:
         fig, ax = plt.subplots()
-        ds["Derived_Number_Density_electron"].isel(time=0).plot(
+        ds["Derived_Number_Density_electron"].isel(time=0).epoch.plot(ax=ax)
+
+        assert len(ax.collections) > 0
+        assert ax.get_xlabel() == "X [m]"
+        assert ax.get_ylabel() == "Y [m]"
+        plt.close(fig)
+
+
+def test_epoch_plot_simple_3d_dataset_slice():
+    with xr.open_dataset(TEST_FILES_DIR_3D / "0001.sdf") as ds:
+        fig, ax = plt.subplots()
+        ds["Derived_Number_Density_Electron"].isel(Z_Grid_mid=0).epoch.plot(ax=ax)
+
+        assert len(ax.collections) > 0
+        assert ax.get_xlabel() == "X [m]"
+        assert ax.get_ylabel() == "Y [m]"
+        plt.close(fig)
+
+
+def test_epoch_plot_flips_axis_order_for_2d_data():
+    with xr.open_mfdataset(
+        TEST_FILES_DIR_2D_MW.glob("*.sdf"),
+        preprocess=SDFPreprocess(),
+        combine="nested",
+        compat="no_conflicts",
+        join="outer",
+    ) as ds:
+        fig, ax = plt.subplots()
+        ds["Derived_Number_Density_electron"].isel(time=0).epoch.plot(ax=ax)
+
+        assert ax.get_xlabel() == "X [m]"
+        assert ax.get_ylabel() == "Y [m]"
+        plt.close(fig)
+
+
+def test_epoch_plot_flips_axis_order_for_2d_data_with_additional_params():
+    with xr.open_mfdataset(
+        TEST_FILES_DIR_2D_MW.glob("*.sdf"),
+        preprocess=SDFPreprocess(),
+        combine="nested",
+        compat="no_conflicts",
+        join="outer",
+    ) as ds:
+        fig, ax = plt.subplots()
+        ds["Derived_Number_Density_electron"].isel(time=0).epoch.plot(
             ax=ax,
             xlim=(0.5, 1.0),
             ylim=(0.0, 0.5),
@@ -276,7 +319,7 @@ def test_default_plot_flips_axis_order_for_2d_data_with_additional_params():
         plt.close(fig)
 
 
-def test_default_plot_flips_axis_order_for_2d_data_but_not_when_time_dim_present():
+def test_epoch_plot_flips_axis_order_for_2d_data_but_not_when_time_dim_present():
     with xr.open_mfdataset(
         TEST_FILES_DIR_2D_MW.glob("*.sdf"),
         preprocess=SDFPreprocess(),
@@ -285,7 +328,7 @@ def test_default_plot_flips_axis_order_for_2d_data_but_not_when_time_dim_present
         join="outer",
     ) as ds:
         fig, ax = plt.subplots()
-        plot = ds["Derived_Number_Density_electron"].plot(ax=ax)
+        plot = ds["Derived_Number_Density_electron"].epoch.plot(ax=ax)
 
         assert type(plot[2]) is BarContainer
         plt.close(fig)

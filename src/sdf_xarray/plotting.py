@@ -3,7 +3,6 @@ from __future__ import annotations
 import warnings
 from collections.abc import Callable
 from dataclasses import dataclass
-from types import MethodType
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
@@ -534,34 +533,3 @@ def show(anim):
     from IPython.display import HTML  # noqa: PLC0415
 
     return HTML(anim.to_jshtml())
-
-
-@xr.register_dataarray_accessor("epoch")
-class EpochAccessor:
-    def __init__(self, xarray_obj):
-        self._obj = xarray_obj
-
-    def animate(self, *args, **kwargs) -> FuncAnimation:
-        """Generate animations of Epoch data.
-
-        Parameters
-        ----------
-        args
-            Positional arguments passed to :func:`animation`.
-        kwargs
-            Keyword arguments passed to :func:`animation`.
-
-        Examples
-        --------
-        >>> anim = ds["Electric_Field_Ey"].epoch.animate()
-        >>> anim.save("animation.gif")
-        >>> # Or in a jupyter notebook:
-        >>> anim.show()
-        """
-
-        # Add anim.show() functionality
-        # anim.show() will display the animation in a jupyter notebook
-        anim = animate(self._obj, *args, **kwargs)
-        anim.show = MethodType(show, anim)
-
-        return anim

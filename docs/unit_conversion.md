@@ -43,10 +43,10 @@ fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
 ds = sdfxr.open_mfdataset("tutorial_dataset_2d/*.sdf")
 ds_in_microns = ds.epoch.rescale_coords(1e6, "µm", ["X_Grid_mid", "Y_Grid_mid"])
 
-ds["Derived_Number_Density_Electron"].isel(time=0).plot(ax=ax1, x="X_Grid_mid", y="Y_Grid_mid")
+ds["Derived_Number_Density_Electron"].isel(time=0).epoch.plot(ax=ax1)
 ax1.set_title("Original X Coordinate (m)")
 
-ds_in_microns["Derived_Number_Density_Electron"].isel(time=0).plot(ax=ax2, x="X_Grid_mid", y="Y_Grid_mid")
+ds_in_microns["Derived_Number_Density_Electron"].isel(time=0).epoch.plot(ax=ax2)
 ax2.set_title("Rescaled X Coordinate (µm)")
 
 fig.tight_layout()
@@ -197,9 +197,9 @@ converted <inv:#xarray.Dataset> side by side:
 
 ```{code-cell} ipython3
 fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16,8))
-ds["Total_Particle_Energy_Electron"].plot(ax=ax1)
-total_particle_energy_ev.plot(ax=ax2)
-total_particle_energy_w.plot(ax=ax3)
+ds["Total_Particle_Energy_Electron"].epoch.plot(ax=ax1)
+total_particle_energy_ev.epoch.plot(ax=ax2)
+total_particle_energy_w.epoch.plot(ax=ax3)
 ax4.set_visible(False)
 fig.suptitle("Comparison of conversion from Joules to electron volts and watts")
 fig.tight_layout()

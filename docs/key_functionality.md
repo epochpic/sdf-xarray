@@ -197,15 +197,18 @@ ds = sdfxr.open_mfdataset("tutorial_dataset_1d/*.sdf")
 ds["Electric_Field_Ex"]
 ```
 
-On top of accessing variables you can plot these <inv:#xarray.Dataset>
-using the built-in <inv:#xarray.DataArray.plot> function (see
-<https://docs.xarray.dev/en/stable/user-guide/plotting.html>) which is
-a simple call to `matplotlib`. This also means that you can access
-all the methods from `matplotlib` to manipulate your plot.
+On top of accessing variables, you can plot these datasets using
+[`xarray.DataArray.epoch.plot`](project:#sdf_xarray.dataarray_accessor.EpochAccessor.plot).
+This is a custom <project:#sdf-xarray> plotting routine that builds on top of
+<inv:#xarray.DataArray.plot>, so you keep the familiar <inv:#xarray> plotting
+behaviour while using <project:#sdf-xarray> conveniences (see 
+[here](project:#sdf_xarray.dataarray_accessor.EpochAccessor.plot) for details).
+Under the hood, plotting is still handled by <inv:#matplotlib>, which means you
+can use the full <inv:#matplotlib> API to customise your figure.
 
 ```{code-cell} ipython3
 # This is discretized in both space and time
-ds["Electric_Field_Ex"].plot()
+ds["Electric_Field_Ex"].epoch.plot()
 plt.title("Electric field along the x-axis")
 plt.show()
 ```
@@ -231,7 +234,6 @@ done by passsing the index to the `time` parameter (e.g., `time=0` for
 the first snapshot).
 
 ```{code-cell} ipython3
-# We can plot the variable at a given time index
 ds["Electric_Field_Ex"].isel(time=20)
 ```
 
@@ -296,17 +298,17 @@ ds["Laser_Absorption_Fraction_in_Simulation"] = (
 ds["Laser_Absorption_Fraction_in_Simulation"].attrs["units"] = "%"
 ds["Laser_Absorption_Fraction_in_Simulation"].attrs["long_name"] = "Laser Absorption Fraction"
 
-ds["Laser_Absorption_Fraction_in_Simulation"].plot()
+ds["Laser_Absorption_Fraction_in_Simulation"].epoch.plot()
 plt.title("Laser absorption fraction in simulation")
 plt.show()
 ```
 
-You can also call the `plot()` function on several variables with
+You can also call the [`xarray.DataArray.epoch.plot`](project:#sdf_xarray.dataarray_accessor.EpochAccessor.plot) function on several variables with
 labels by delaying the call to `plt.show()`.
 
 ```{code-cell} ipython3
-ds["Total_Particle_Energy_Electron"].plot(label="Electron")
-ds["Total_Particle_Energy_Ion"].plot(label="Ion")
+ds["Total_Particle_Energy_Electron"].epoch.plot(label="Electron")
+ds["Total_Particle_Energy_Ion"].epoch.plot(label="Ion")
 plt.title("Particle Energy in Simulation per Species")
 plt.legend()
 plt.show()

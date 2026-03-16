@@ -96,23 +96,19 @@ def _process_latex_name(variable_name: str) -> str:
     return variable_name
 
 
-def _resolve_glob(path_glob: PathLike | Iterable[PathLike]) -> list[Path]:
-    """Resolve an input path/glob to sorted absolute SDF file paths.
+def resolve_paths(path_glob: PathLike | Iterable[PathLike]) -> list[Path]:
+    """Resolve a path/glob to sorted absolute SDF file paths.
 
-    Accepts either a single path-like glob pattern (e.g. ``"*.sdf"``) or a
+    Accepts a directory, single path-like glob pattern (e.g. ``"normal_*.sdf"``) or a
     list of path-like file names.
     """
 
-    if isinstance(path_glob, PathLike):
+    # Attempt to load directory or glob
+    try:
         p = Path(path_glob)
-        if p.is_dir():
-            raise TypeError(
-                "Directory paths are not supported; pass a glob pattern"
-                f"(e.g. {(p / '*.sdf').as_posix()}) or a list of file paths"
-                f"(e.g. {[(p / '0000.sdf').as_posix(), (p / '0001.sdf').as_posix()]})."
-            )
-        paths = list(p.parent.glob(p.name))
-    else:
+        paths = p.glob("*.sdf") if p.is_dir() else list(p.parent.glob(p.name))
+    # Otherwise assume the user has passed a list of file paths
+    except TypeError:
         paths = list({Path(p) for p in path_glob})
 
     resolved_paths = sorted(p.resolve() for p in paths)
@@ -121,9 +117,9 @@ def _resolve_glob(path_glob: PathLike | Iterable[PathLike]) -> list[Path]:
 
     for p in resolved_paths:
         if not p.is_file():
-            raise FileNotFoundError(f"{p.as_posix()} does not exist or is not a file.")
+            raise FileNotFoundError(f"{p.as_posix()} does not exist or is not a file")
         if p.suffix.lower() != ".sdf":
-            raise FileNotFoundError(f"{p.as_posix()} is not an SDF file.")
+            raise FileNotFoundError(f"{p.as_posix()} is not an SDF file")
     return resolved_paths
 
 
@@ -340,7 +336,7 @@ def open_mfdataset(
         from a relative or absolute file path. See :ref:`loading-input-deck` for details.
     """
 
-    paths = _resolve_glob(paths)
+    paths = resolve_paths(paths)
 
     if not separate_times:
         return combine_datasets(

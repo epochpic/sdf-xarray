@@ -1,25 +1,33 @@
 from types import MethodType
-from typing import Any
 
 import xarray as xr
 from matplotlib.animation import FuncAnimation
+from xarray.plot.accessor import DataArrayPlotAccessor
 
 from .plotting import animate, show
 
 
 @xr.register_dataarray_accessor("epoch")
 class EpochAccessor:
-    def __init__(self, xarray_obj):
+    def __init__(self, xarray_obj: xr.DataArray):
         self._obj = xarray_obj
 
-    def plot(self, *args, **kwargs) -> Any:
+    def plot(self, *args, **kwargs) -> DataArrayPlotAccessor:
         """
-        Builds upon `xarray.plot` while changing some of its default behaviours.
+        Builds upon `xarray.DataArray.plot` while changing some of its default behaviours.
 
-        Those changes are:
+        These changes are:
+
         - Flips the default axes order for 2D plots so that x and y are on the correct axes.
-            This exists because plotting of 2D data in xarray uses the `xarray.plot.pcolormesh`
-            function which takes assumes that ``x = dim[1]`` and ``y = dim[0]``.
+          This exists because plotting of 2D data in xarray uses the `xarray.plot.pcolormesh`
+          function which takes assumes that ``x = dim[1]`` and ``y = dim[0]``.
+
+        Parameters
+        ----------
+        args
+            Positional arguments passed to `xarray.DataArray.plot`.
+        kwargs
+            Keyword arguments passed to `xarray.DataArray.plot`.
         """
         dims = self._obj.dims
         is_not_2d_data = len(dims) != 2

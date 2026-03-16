@@ -96,24 +96,46 @@ def _process_latex_name(variable_name: str) -> str:
     return variable_name
 
 
-def resolve_paths(path_glob: PathLike | Iterable[PathLike]) -> list[Path]:
-    """Resolve a path/glob to sorted absolute SDF file paths.
+def resolve_paths(file_pattern: PathLike | Iterable[PathLike]) -> list[Path]:
+    """Resolve user input into sorted absolute paths to existing SDF files.
 
-    Accepts a directory, single path-like glob pattern (e.g. ``"normal_*.sdf"``) or a
-    list of path-like file names.
+    This helper is used by :py:func:`sdf_xarray.open_mfdataset` and :py:func:`sdf_xarray.open_mfdatatree` in order to decide which files to open.
+
+    Parameters
+    ----------
+    file_pattern
+        Any of the following:
+
+        - **Directory path**: load all ``*.sdf`` files in that directory.
+        - **Glob-like path**: load all files matching the pattern
+          (for example, ``normal_*.sdf``).
+        - **List of exact paths**: load only the provided files
+          (for example, ``["0000.sdf", "0010.sdf"]``).
+
+    Returns
+    -------
+    list[Path]
+        Numerically sorted absolute paths to files that exist and have the ``.sdf``
+        extension.
+
+    Raises
+    ------
+    FileNotFoundError
+        If no paths match, any resolved path is not a file, or any file does not
+        have the ``.sdf`` extension.
     """
 
     # Attempt to load directory or glob
     try:
-        p = Path(path_glob)
+        p = Path(file_pattern)
         paths = p.glob("*.sdf") if p.is_dir() else list(p.parent.glob(p.name))
     # Otherwise assume the user has passed a list of file paths
     except TypeError:
-        paths = list({Path(p) for p in path_glob})
+        paths = list({Path(p) for p in file_pattern})
 
     resolved_paths = sorted(p.resolve() for p in paths)
     if not resolved_paths:
-        raise FileNotFoundError(f"No files matched pattern or input: {path_glob!r}")
+        raise FileNotFoundError(f"No files matched pattern or input: {file_pattern!r}")
 
     for p in resolved_paths:
         if not p.is_file():

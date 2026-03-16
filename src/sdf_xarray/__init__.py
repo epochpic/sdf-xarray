@@ -96,21 +96,53 @@ def _process_latex_name(variable_name: str) -> str:
     return variable_name
 
 
-def _resolve_glob(path_glob: PathLike | Iterable[PathLike]):
-    """
-    Normalise input path_glob into a sorted list of absolute, resolved Path objects.
+def resolve_paths(file_pattern: PathLike | Iterable[PathLike]) -> list[Path]:
+    """Resolve user input into sorted absolute paths to existing SDF files.
+
+    This helper is used by :py:func:`sdf_xarray.open_mfdataset` and :py:func:`sdf_xarray.open_mfdatatree` in order to decide which files to open.
+
+    Parameters
+    ----------
+    file_pattern
+        Any of the following:
+
+        - **Directory path**: load all ``*.sdf`` files in that directory.
+        - **Glob-like path**: load all files matching the pattern
+          (for example, ``normal_*.sdf``).
+        - **List of exact paths**: load only the provided files
+          (for example, ``["0000.sdf", "0010.sdf"]``).
+
+    Returns
+    -------
+    list[Path]
+        Numerically sorted absolute paths to files that exist and have the ``.sdf``
+        extension.
+
+    Raises
+    ------
+    FileNotFoundError
+        If no paths match, any resolved path is not a file, or any file does not
+        have the ``.sdf`` extension.
     """
 
+    # Attempt to load directory or glob
     try:
-        p = Path(path_glob)
-        paths = list(p.parent.glob(p.name)) if p.name == "*.sdf" else list(p)
+        p = Path(file_pattern)
+        paths = p.glob("*.sdf") if p.is_dir() else list(p.parent.glob(p.name))
+    # Otherwise assume the user has passed a list of file paths
     except TypeError:
-        paths = list({Path(p) for p in path_glob})
+        paths = list({Path(p) for p in file_pattern})
 
-    paths = sorted(p.resolve() for p in paths)
-    if not paths:
-        raise FileNotFoundError(f"No files matched pattern or input: {path_glob!r}")
-    return paths
+    resolved_paths = sorted(p.resolve() for p in paths)
+    if not resolved_paths:
+        raise FileNotFoundError(f"No files matched pattern or input: {file_pattern!r}")
+
+    for p in resolved_paths:
+        if not p.is_file():
+            raise FileNotFoundError(f"{p.as_posix()} does not exist or is not a file")
+        if p.suffix.lower() != ".sdf":
+            raise FileNotFoundError(f"{p.as_posix()} is not an SDF file")
+    return resolved_paths
 
 
 def _build_datatree_from_dataset(
@@ -326,7 +358,7 @@ def open_mfdataset(
         from a relative or absolute file path. See :ref:`loading-input-deck` for details.
     """
 
-    paths = _resolve_glob(paths)
+    paths = resolve_paths(paths)
 
     if not separate_times:
         return combine_datasets(

@@ -9,8 +9,8 @@ import sdf_xarray as sdfxr
 from sdf_xarray import (
     SDFPreprocess,
     _process_latex_name,
-    _resolve_glob,
     download,
+    resolve_paths,
 )
 
 TEST_FILES_DIR = download.fetch_dataset("test_files_1D")
@@ -205,56 +205,93 @@ def test_multiple_files_multiple_time_dims():
         assert df["Absorption_Total_Laser_Energy_Injected"].shape == (11,)
 
 
-def test_resolve_glob_from_string_pattern():
+def test_resolve_paths_from_string_pattern():
     pattern = str(TEST_FILES_DIR / "*.sdf")
-    result = _resolve_glob(pattern)
+    result = resolve_paths(pattern)
     expected = sorted(TEST_FILES_DIR.glob("*.sdf"))
     assert result == expected
 
 
-def test_resolve_glob_from_path_glob():
+def test_resolve_paths_from_multiple_names_string_pattern(tmp_path):
+    mock_test_files_dir = tmp_path
+    (mock_test_files_dir / "normal_0000.sdf").touch()
+    (mock_test_files_dir / "normal_0001.sdf").touch()
+    (mock_test_files_dir / "other_0000.sdf").touch()
+
+    pattern = str(mock_test_files_dir / "normal_*.sdf")
+    result = resolve_paths(pattern)
+    expected = sorted(mock_test_files_dir.glob("normal_*.sdf"))
+    assert result == expected
+
+
+def test_resolve_paths_from_path_glob():
     pattern = TEST_FILES_DIR.glob("*.sdf")
-    result = _resolve_glob(pattern)
+    result = resolve_paths(pattern)
     expected = sorted(TEST_FILES_DIR.glob("*.sdf"))
     assert result == expected
 
 
-def test_resolve_glob_from_path_missing_glob():
+def test_resolve_paths_from_directory_path():
     pattern = TEST_FILES_DIR
-    with pytest.raises(TypeError):
-        _resolve_glob(pattern)
+    result = resolve_paths(pattern)
+    expected = sorted(TEST_FILES_DIR.glob("*.sdf"))
+    assert result == expected
 
 
-def test_resolve_glob_from_path_list():
+def test_resolve_paths_from_path_list():
     pattern = [TEST_FILES_DIR / "0000.sdf"]
-    result = _resolve_glob(pattern)
+    result = resolve_paths(pattern)
     expected = [TEST_FILES_DIR / "0000.sdf"]
     assert result == expected
 
 
-def test_resolve_glob_from_path_list_multiple():
+def test_resolve_paths_from_missing_file():
+    pattern = ["/test/0000.sdf"]
+    with pytest.raises(FileNotFoundError):
+        resolve_paths(pattern)
+
+
+def test_resolve_paths_from_non_sdf_file():
+    pattern = [TEST_FILES_DIR / "input.deck"]
+    with pytest.raises(FileNotFoundError):
+        resolve_paths(pattern)
+
+
+def test_resolve_paths_from_path_list_multiple():
     pattern = [TEST_FILES_DIR / "0000.sdf", TEST_FILES_DIR / "0001.sdf"]
-    result = _resolve_glob(pattern)
+    result = resolve_paths(pattern)
     expected = [TEST_FILES_DIR / "0000.sdf", TEST_FILES_DIR / "0001.sdf"]
     assert result == expected
 
 
-def test_resolve_glob_from_path_list_multiple_unordered():
+def test_resolve_paths_from_path_list_multiple_unordered():
     pattern = [TEST_FILES_DIR / "0001.sdf", TEST_FILES_DIR / "0000.sdf"]
-    result = _resolve_glob(pattern)
+    result = resolve_paths(pattern)
     expected = [TEST_FILES_DIR / "0000.sdf", TEST_FILES_DIR / "0001.sdf"]
     assert result == expected
 
 
-def test_resolve_glob_from_path_list_multiple_duplicates():
+def test_resolve_paths_from_path_list_multiple_duplicates():
     pattern = [
         TEST_FILES_DIR / "0000.sdf",
         TEST_FILES_DIR / "0000.sdf",
         TEST_FILES_DIR / "0001.sdf",
     ]
-    result = _resolve_glob(pattern)
+    result = resolve_paths(pattern)
     expected = [TEST_FILES_DIR / "0000.sdf", TEST_FILES_DIR / "0001.sdf"]
     assert result == expected
+
+
+def test_resolve_paths_from_path_list_missing_files():
+    pattern = [TEST_FILES_DIR / "0000.sdf", "/test/0000.sdf"]
+    with pytest.raises(FileNotFoundError):
+        resolve_paths(pattern)
+
+
+def test_resolve_paths_from_path_list_non_sdf_files():
+    pattern = [TEST_FILES_DIR / "0000.sdf", TEST_FILES_DIR / "input.deck"]
+    with pytest.raises(FileNotFoundError):
+        resolve_paths(pattern)
 
 
 @pytest.mark.parametrize(

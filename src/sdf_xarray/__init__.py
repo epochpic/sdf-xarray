@@ -23,6 +23,7 @@ from xarray.core.variable import Variable
 
 # NOTE: Do not delete these lines, otherwise the "epoch" dataset and dataarray
 # accessors will not be imported when the user imports sdf_xarray
+import sdf_xarray.dataarray_accessor
 import sdf_xarray.dataset_accessor
 import sdf_xarray.download
 import sdf_xarray.plotting  # noqa: F401

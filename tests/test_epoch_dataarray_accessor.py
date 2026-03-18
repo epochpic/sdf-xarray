@@ -2,10 +2,12 @@ import tempfile
 from importlib.metadata import version
 
 import matplotlib as mpl
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 import xarray as xr
 from matplotlib.animation import PillowWriter
+from matplotlib.container import BarContainer
 from packaging.version import Version
 
 import sdf_xarray as sdfxr
@@ -21,6 +23,13 @@ if Version(version("xarray")) >= Version("2025.8.0"):
 TEST_FILES_DIR_1D = download.fetch_dataset("test_files_1D")
 TEST_FILES_DIR_2D_MW = download.fetch_dataset("test_files_2D_moving_window")
 TEST_FILES_DIR_3D = download.fetch_dataset("test_files_3D")
+
+
+@pytest.fixture
+def subplots():
+    fig, ax = plt.subplots()
+    yield (fig, ax)
+    plt.close(fig)
 
 
 def test_animation_accessor():
@@ -234,3 +243,95 @@ def test_compute_global_limits_NaNs():
         expected_result_max = 2.70
         assert result_min == pytest.approx(expected_result_min, abs=1e-2)
         assert result_max == pytest.approx(expected_result_max, abs=1e-1)
+
+
+def test_epoch_plot_simple_1d_dataset(subplots):
+    with xr.open_mfdataset(
+        TEST_FILES_DIR_1D.glob("*.sdf"),
+        compat="no_conflicts",
+        join="outer",
+        preprocess=SDFPreprocess(),
+    ) as ds:
+        _, ax = subplots
+        ds["Derived_Number_Density_electron"].isel(time=0).epoch.plot(ax=ax)
+
+        assert len(ax.lines) == 1
+        assert ax.get_xlabel() == "X [m]"
+
+
+def test_epoch_plot_simple_2d_dataset(subplots):
+    with xr.open_mfdataset(
+        TEST_FILES_DIR_2D_MW.glob("*.sdf"),
+        preprocess=SDFPreprocess(),
+        combine="nested",
+        compat="no_conflicts",
+        join="outer",
+    ) as ds:
+        _, ax = subplots
+        ds["Derived_Number_Density_electron"].isel(time=0).epoch.plot(ax=ax)
+
+        assert len(ax.collections) > 0
+        assert ax.get_xlabel() == "X [m]"
+        assert ax.get_ylabel() == "Y [m]"
+
+
+def test_epoch_plot_simple_3d_dataset_slice(subplots):
+    with xr.open_dataset(TEST_FILES_DIR_3D / "0001.sdf") as ds:
+        _, ax = subplots
+        ds["Derived_Number_Density_Electron"].isel(Z_Grid_mid=0).epoch.plot(ax=ax)
+
+        assert len(ax.collections) > 0
+        assert ax.get_xlabel() == "X [m]"
+        assert ax.get_ylabel() == "Y [m]"
+
+
+def test_epoch_plot_flips_axis_order_for_2d_data(subplots):
+    with xr.open_mfdataset(
+        TEST_FILES_DIR_2D_MW.glob("*.sdf"),
+        preprocess=SDFPreprocess(),
+        combine="nested",
+        compat="no_conflicts",
+        join="outer",
+    ) as ds:
+        _, ax = subplots
+        ds["Derived_Number_Density_electron"].isel(time=0).epoch.plot(ax=ax)
+
+        assert ax.get_xlabel() == "X [m]"
+        assert ax.get_ylabel() == "Y [m]"
+
+
+def test_epoch_plot_flips_axis_order_for_2d_data_with_additional_params(subplots):
+    with xr.open_mfdataset(
+        TEST_FILES_DIR_2D_MW.glob("*.sdf"),
+        preprocess=SDFPreprocess(),
+        combine="nested",
+        compat="no_conflicts",
+        join="outer",
+    ) as ds:
+        _, ax = subplots
+        ds["Derived_Number_Density_electron"].isel(time=0).epoch.plot(
+            ax=ax,
+            xlim=(0.5, 1.0),
+            ylim=(0.0, 0.5),
+        )
+
+        assert ax.get_xlabel() == "X [m]"
+        assert ax.get_ylabel() == "Y [m]"
+        assert ax.get_xlim() == pytest.approx((0.5, 1.0), abs=1e-2)
+        assert ax.get_ylim() == pytest.approx((0.0, 0.5), abs=1e-2)
+
+
+def test_epoch_plot_flips_axis_order_for_2d_data_but_not_when_time_dim_present(
+    subplots,
+):
+    with xr.open_mfdataset(
+        TEST_FILES_DIR_2D_MW.glob("*.sdf"),
+        preprocess=SDFPreprocess(),
+        combine="nested",
+        compat="no_conflicts",
+        join="outer",
+    ) as ds:
+        _, ax = subplots
+        plot = ds["Derived_Number_Density_electron"].epoch.plot(ax=ax)
+
+        assert type(plot[2]) is BarContainer

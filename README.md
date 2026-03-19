@@ -1,5 +1,9 @@
 <h1 align="center">
-<img src="docs/_static/sdf-xarray-logo-dark.svg" width="400">
+    <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="docs/_static/sdf-xarray-logo-dark.svg">
+        <source media="(prefers-color-scheme: light)" srcset="docs/_static/sdf-xarray-logo-light.svg">
+        <img alt="sdf-xarray logo" src="docs/_static/sdf-xarray-logo-dark.svg" width="400">
+    </picture>
 </h1><br>
 
 ![Dynamic TOML Badge](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fepochpic%2Fsdf-xarray%2Frefs%2Fheads%2Fmain%2Fpyproject.toml&query=%24.project.requires-python&label=python&logo=python)

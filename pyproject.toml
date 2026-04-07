@@ -66,6 +66,7 @@ docs = [
   "pint-xarray",
   "myst-nb",
   "sphinx-copybutton",
+  "sphinx-design>=0.7.0",
   "pooch>=1.8.2",
   "tqdm",
 ]

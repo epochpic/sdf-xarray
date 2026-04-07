@@ -33,7 +33,7 @@ main_release = ".".join(release.split(".")[:3])
 dev_release = release.split(".")[-1]
 
 # Set html title manually for nicer formatting
-html_title = f"{project} {main_release} [{dev_release}] documentation"
+html_title = f"{project} {main_release} documentation"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

@@ -66,7 +66,7 @@ system, if you are having issues with it reading files, you might need to pass t
 
 ### Installing uv
 
-We recommend [installing uv](https://docs.astral.sh/uv/getting-started/installation/) which is a command line tool that can install both Python versions and packages. This tool is the current industry standard and additionally has the benefit of being significantly faster than other tools. 
+We recommend [installing uv](https://docs.astral.sh/uv/getting-started/installation/) which is a command line tool that can install both Python versions and packages. This tool is widely used in the Python community and is significantly faster than other tools that do the same. 
 
 `````{tab-set}
 ````{tab-item} Linux/MacOS

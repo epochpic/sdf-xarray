@@ -31,7 +31,7 @@ ds["Electric_Field_Ex"]
 
 ## Plotting
 
-On top of accessing variables, you can plot these datasets using
+You can plot datasets using
 [`xarray.DataArray.epoch.plot`](project:#sdf_xarray.dataarray_accessor.EpochAccessor.plot).
 This is a custom <project:#sdf_xarray> plotting routine that builds on top of
 <inv:#xarray.DataArray.plot>, so you keep the familiar <inv:#xarray> plotting

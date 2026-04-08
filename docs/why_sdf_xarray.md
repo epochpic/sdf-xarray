@@ -1,4 +1,4 @@
-# Why use sdf_xarray?
+# Why use sdf-xarray?
 
 `sdf_xarray` is a Python package that allows for you to load [EPOCH SDF files](https://epochpic.github.io/documentation/visualising_output.html) into a structured N-D labelled datasets (<inv:#xarray>). We leverage the underlying [`SDF-C`](https://github.com/epochpic/SDF_C) library to convert the binary SDF files to <inv:#xarray.Dataset>. This package might not work as expected when loading datasets so please check the <project:known_issues.md> page first before raising a [GitHub Issue](https://github.com/epochpic/sdf-xarray/issues/new).
 

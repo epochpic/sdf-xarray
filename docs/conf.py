@@ -50,6 +50,7 @@ extensions = [
     "myst_nb",
     "sphinx_copybutton",
     "sphinx_togglebutton",
+    "sphinx_design",
 ]
 
 source_suffix = {".rst": "restructuredtext", ".md": "myst-nb"}

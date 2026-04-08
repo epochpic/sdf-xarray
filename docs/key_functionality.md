@@ -199,9 +199,9 @@ ds["Electric_Field_Ex"]
 
 On top of accessing variables, you can plot these datasets using
 [`xarray.DataArray.epoch.plot`](project:#sdf_xarray.dataarray_accessor.EpochAccessor.plot).
-This is a custom <project:#sdf-xarray> plotting routine that builds on top of
+This is a custom <project:#sdf_xarray> plotting routine that builds on top of
 <inv:#xarray.DataArray.plot>, so you keep the familiar <inv:#xarray> plotting
-behaviour while using <project:#sdf-xarray> conveniences (see 
+behaviour while using <project:#sdf_xarray> conveniences (see 
 [here](project:#sdf_xarray.dataarray_accessor.EpochAccessor.plot) for details).
 Under the hood, plotting is still handled by <inv:#matplotlib>, which means you
 can use the full <inv:#matplotlib> API to customise your figure.

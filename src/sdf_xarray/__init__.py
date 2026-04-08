@@ -998,7 +998,7 @@ class SDFPreprocess:
     performs three main duties on each individual file's Dataset:
 
     1. Checks for a **matching job ID** across all files to ensure dataset consistency.
-    2. **Filters** the Dataset to keep only the variables specified in `data_vars`
+    2. **Filters** the Dataset to keep only the variables specified in ``data_vars``
        and their required coordinates.
     3. **Expands dimensions** to include a single 'time' coordinate, preparing the
        Dataset for concatenation.
@@ -1017,7 +1017,7 @@ class SDFPreprocess:
 
     Parameters
     ----------
-    data_vars :
+    data_vars
         A list of data variables to load in (If not specified loads
         in all variables)
     """

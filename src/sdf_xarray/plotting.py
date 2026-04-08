@@ -236,11 +236,6 @@ def _generate_animation(
         Matplotlib axes on which to plot
     kwargs
         Keyword arguments to be passed to matplotlib
-
-    Examples
-    --------
-    >>> anim = animate(ds["Derived_Number_Density_Electron"])
-    >>> anim.save("animation.gif")
     """
 
     if kwargs is None:
@@ -334,7 +329,7 @@ def animate(
 ) -> FuncAnimation:
     """
     Generate an animation using an `xarray.DataArray`. The intended use
-    of this function is via `sdf_xarray.plotting.EpochAccessor.animate`.
+    of this function is via `sdf_xarray.dataarray_accessor.EpochAccessor.animate`.
 
     Parameters
     ---------
@@ -362,7 +357,7 @@ def animate(
 
     Examples
     --------
-    >>> anim = animate(ds["Derived_Number_Density_Electron"])
+    >>> anim = ds["Derived_Number_Density_Electron"].epoch.animate()
     >>> anim.save("animation.gif")
     """
     import matplotlib.pyplot as plt  # noqa: PLC0415

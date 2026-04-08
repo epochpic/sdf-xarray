@@ -7,13 +7,27 @@ plasma PIC code.
 `sdf-xarray` uses the [SDF-C](https://github.com/epochpic/SDF_C) library.
 
 ```{toctree}
-:caption: 'Contents'
+:caption: 'Getting Started'
 :maxdepth: 1
 
-getting_started.md
-key_functionality.md
-animation.md
+installation.md
+why_sdf_xarray.md
+```
+
+```{toctree}
+:caption: 'User Guide'
+:maxdepth: 1
+
+loading_data.md
+understanding_datasets.md
 unit_conversion.md
+animation.md
+```
+
+```{toctree}
+:caption: 'Development'
+:maxdepth: 1
+
 known_issues.md
 contributing.md
 ```

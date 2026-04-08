@@ -122,7 +122,7 @@ print(f"Total particle energy absorbed: {ds["Total_Particle_Energy_in_Simulation
 print(f"The laser absorption fraction: {ds["Laser_Absorption_Fraction_in_Simulation"][-1].values:.1f} %")
 ```
 
-## Visualisation on HPCs
+## Visualisation on HPC Machines
 
 In many cases you will be running EPOCH simulations via a HPC cluster and your
 subsequent SDF files will probably be rather large and cumbersome to interact with

@@ -22,7 +22,7 @@ If you prefer using the native <inv:#xarray> functions, you can use the <inv:#xa
 <inv:#xarray> for `xarray.open_mfdatatree`.
 
 These functions should all work out of the box as long as <project:#sdf_xarray> is installed on your
-system, if you are having issues with it reading files, you might need to pass the parameter
+system. If you are having issues reading files, you might need to pass the parameter
 `engine=sdf_engine` when calling any of the above xarray functions.
 
 ```{important}

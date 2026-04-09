@@ -1,10 +1,15 @@
+from __future__ import annotations
+
 from types import MethodType
+from typing import TYPE_CHECKING
 
 import xarray as xr
-from matplotlib.animation import FuncAnimation
 from xarray.plot.accessor import DataArrayPlotAccessor
 
 from .plotting import animate, show
+
+if TYPE_CHECKING:
+    from matplotlib.animation import FuncAnimation
 
 
 @xr.register_dataarray_accessor("epoch")

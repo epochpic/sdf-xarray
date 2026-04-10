@@ -19,7 +19,8 @@ total_phase_space.attrs["long_name"] = "Phase Space Distribution"
 total_phase_space.attrs["units"] = "kg.m/s"
 
 anim = total_phase_space.epoch.animate()
-# Save the animation
-anim.save(input_dir / "phase_space.gif")
-# Or visualise it in a Jupyter notebook
+# Visualise it in a Jupyter notebook
 anim.show()
+
+# Or save the animation
+# anim.save(input_dir / "phase_space.gif")

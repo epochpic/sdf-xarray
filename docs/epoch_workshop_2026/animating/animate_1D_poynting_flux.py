@@ -25,7 +25,9 @@ I_Wcm2.attrs["long_name"] = "Poynting Flux Magnitude"
 I_Wcm2.attrs["units"] = "W/cm$^2$"
 
 anim = I_Wcm2.epoch.animate()
-# Save the animation
-anim.save(input_dir / "laser.gif", fps=10)
-# Or visualise it in a Jupyter notebook
+
+# Visualise it in a Jupyter notebook
 anim.show()
+
+# Or save the animation
+# anim.save(input_dir / "laser.gif", fps=10)

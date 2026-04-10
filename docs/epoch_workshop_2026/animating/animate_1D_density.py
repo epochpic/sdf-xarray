@@ -12,7 +12,8 @@ ds = ds.epoch.rescale_coords(1e6, "µm", ["X_Grid_mid"])
 
 anim = ds["Derived_Number_Density"].epoch.animate()
 
-# Save the animation
-anim.save(input_dir / "number_density.gif", fps=5)
-# Or visualise it in a Jupyter notebook
+# Visualise it in a Jupyter notebook
 anim.show()
+
+# Or save the animation
+# anim.save(input_dir / "number_density.gif", fps=5)

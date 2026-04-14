@@ -3,6 +3,7 @@ from __future__ import annotations
 from types import MethodType
 from typing import TYPE_CHECKING
 
+import numpy as np
 import xarray as xr
 from xarray.plot.accessor import DataArrayPlotAccessor
 
@@ -11,51 +12,28 @@ from .plotting import animate, show
 if TYPE_CHECKING:
     from matplotlib.animation import FuncAnimation
 
-import numpy as np
-from scipy.interpolate import RegularGridInterpolator
-    
-def resize_ndarray(
+
+def _resize_ndarray(
     arr: np.ndarray,
     new_shape: tuple | list | np.ndarray,
 ) -> np.ndarray:
-    new_shape = list(new_shape)
+
+    from scipy.interpolate import RegularGridInterpolator  # noqa: PLC0415
 
     if arr.ndim != len(new_shape):
-        raise ValueError("The number of dimensions in new_shape must match the input array.")
+        raise ValueError(
+            f"The number of dimensions must match the input array. (original: {arr.ndim}, new: {len(new_shape)})"
+        )
 
     old_grids = tuple(np.linspace(0, 1, size) for size in arr.shape)
-    interpolator = RegularGridInterpolator(old_grids, arr, bounds_error=False, fill_value=0)  
     new_grids = tuple(np.linspace(0, 1, size) for size in new_shape)
-    mesh = np.meshgrid(*new_grids, indexing='ij')
+    mesh = np.meshgrid(*new_grids, indexing="ij")
     coords = np.stack(mesh, axis=-1)
-    output = interpolator(coords)
 
-    return output
-
-def resize_dataarray(
-        da: xr.DataArray,
-        new_shape: tuple | list | np.ndarray,
-    ) -> xr.DataArray:
-
-    resized_data = resize_ndarray(da.values, new_shape)
-
-    da_resized = da.copy()
-
-    da_resized = xr.DataArray(
-        data=resized_data,
-        dims=da.dims,
-        attrs=da.attrs,
+    return RegularGridInterpolator(old_grids, arr, bounds_error=False, fill_value=0)(
+        coords
     )
 
-    shape = da_resized.shape
-    for i in range(len(da_resized.dims)):
-        coord = list(da_resized.dims)[i]
-        da_resized[coord] = resize_ndarray(da[coord], [shape[i]])
-        da_resized[coord].attrs = da[coord].attrs
-    
-    da_resized.attrs["original_shape"] = da.shape
-
-    return da_resized
 
 @xr.register_dataarray_accessor("epoch")
 class EpochAccessor:
@@ -117,3 +95,31 @@ class EpochAccessor:
         anim.show = MethodType(show, anim)
 
         return anim
+
+    def resize(
+        self,
+        new_shape: tuple | list | np.ndarray,
+    ) -> xr.DataArray:
+
+        da = self._obj
+        # Create a copy of the existing dataarray so that we can copy over the
+        # original dims, attrs and shape
+        da_resized = da.copy()
+
+        # Resize the dataarray's data, either via upsampling or downsampling
+        resized_data = _resize_ndarray(da.values, new_shape)
+
+        da_resized = xr.DataArray(
+            data=resized_data,
+            dims=da.dims,
+            attrs=da.attrs,
+        )
+        # Add a new attr containing the original shape
+        da_resized.attrs["original_shape"] = da.shape
+
+        # Resize the dataarray's underlying dimensions with their new shapes
+        for coord_name, shape in zip(da_resized.dims, da_resized.shape):
+            da_resized[coord_name] = _resize_ndarray(da[coord_name], [shape])
+            da_resized[coord_name].attrs = da[coord_name].attrs
+
+        return da_resized

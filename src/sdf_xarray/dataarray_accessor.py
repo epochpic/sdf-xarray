@@ -11,6 +11,51 @@ from .plotting import animate, show
 if TYPE_CHECKING:
     from matplotlib.animation import FuncAnimation
 
+import numpy as np
+from scipy.interpolate import RegularGridInterpolator
+    
+def resize_ndarray(
+    arr: np.ndarray,
+    new_shape: tuple | list | np.ndarray,
+) -> np.ndarray:
+    new_shape = list(new_shape)
+
+    if arr.ndim != len(new_shape):
+        raise ValueError("The number of dimensions in new_shape must match the input array.")
+
+    old_grids = tuple(np.linspace(0, 1, size) for size in arr.shape)
+    interpolator = RegularGridInterpolator(old_grids, arr, bounds_error=False, fill_value=0)  
+    new_grids = tuple(np.linspace(0, 1, size) for size in new_shape)
+    mesh = np.meshgrid(*new_grids, indexing='ij')
+    coords = np.stack(mesh, axis=-1)
+    output = interpolator(coords)
+
+    return output
+
+def resize_dataarray(
+        da: xr.DataArray,
+        new_shape: tuple | list | np.ndarray,
+    ) -> xr.DataArray:
+
+    resized_data = resize_ndarray(da.values, new_shape)
+
+    da_resized = da.copy()
+
+    da_resized = xr.DataArray(
+        data=resized_data,
+        dims=da.dims,
+        attrs=da.attrs,
+    )
+
+    shape = da_resized.shape
+    for i in range(len(da_resized.dims)):
+        coord = list(da_resized.dims)[i]
+        da_resized[coord] = resize_ndarray(da[coord], [shape[i]])
+        da_resized[coord].attrs = da[coord].attrs
+    
+    da_resized.attrs["original_shape"] = da.shape
+
+    return da_resized
 
 @xr.register_dataarray_accessor("epoch")
 class EpochAccessor:

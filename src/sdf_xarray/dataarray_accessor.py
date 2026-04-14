@@ -17,6 +17,17 @@ def _resize_ndarray(
     arr: np.ndarray,
     new_shape: tuple | list | np.ndarray,
 ) -> np.ndarray:
+    """
+    Resizes a `numpy.ndarray` to another shape. The returned array must have the
+    same dimensionality as the input array.
+
+    Parameters
+    ----------
+    arr
+        The input array.
+    new_shape
+        The shape of the new `xarray.DataArray`, must be the same length as arr.shape.
+    """
 
     from scipy.interpolate import RegularGridInterpolator  # noqa: PLC0415
 
@@ -100,6 +111,15 @@ class EpochAccessor:
         self,
         new_shape: tuple | list | np.ndarray,
     ) -> xr.DataArray:
+        """
+        Resizes a `xarray.DataArray` to another shape. The returned array must have the
+        same dimensionality as the input array.
+
+        Parameters
+        ----------
+        new_shape
+            The shape of the new `xarray.DataArray`, must be the same length as self.shape.
+        """
 
         da = self._obj
         # Create a copy of the existing dataarray so that we can copy over the

@@ -7,8 +7,7 @@ ds = sdfxr.open_mfdataset(
     input_dir, data_vars=["dist_fn_x_px_Left", "dist_fn_x_px_Right"]
 )
 
-# Convert the time to femtoseconds
-ds = ds.epoch.rescale_coords(1e15, "fs", "time")
+# Rescale coords to account for kilometers
 ds = ds.epoch.rescale_coords(1e-3, "km", ["X_x_px_Left"])
 
 # Sum phase-space of species "Left" and "Right" in "x_px" distribution function

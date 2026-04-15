@@ -52,8 +52,14 @@ ds = sdfxr.open_mfdataset("tutorial_dataset_1d/*.sdf")
 # Access a DataArray within the Dataset
 da = ds["Derived_Number_Density_Electron"]
 
+fig, ax = plt.subplots()
+
 # Create the FuncAnimation object
-anim = da.epoch.animate()
+anim = da.epoch.animate(ax=ax)
+
+# Matplotlib will attempt to display the first frame of the video
+# and since we don't want that on the documentation we close it
+plt.close(fig)
 
 # Display animation as jshtml
 anim.show()
@@ -82,7 +88,9 @@ Plotting a 2D simulation can be done in exactly the same way.
 ```{code-cell} ipython3
 ds = sdfxr.open_mfdataset("tutorial_dataset_2d/*.sdf")
 da = ds["Derived_Number_Density_Electron"]
-anim = da.epoch.animate()
+fig, ax = plt.subplots()
+anim = da.epoch.animate(ax=ax)
+plt.close(fig)
 anim.show()
 ```
 
@@ -91,8 +99,11 @@ plot it as a <inv:#xarray.plot.line>.
 
 ```{code-cell} ipython3
 da = ds["Derived_Number_Density_Electron"]
+fig, ax = plt.subplots()
+
 da_lineout = da.sel(Y_Grid_mid = 1e-6, method = "nearest")
-anim = da_lineout.epoch.animate(title = "Y = 1e-6 [m]")
+anim = da_lineout.epoch.animate(ax = ax, title = "Y = 1e-6 [m]")
+plt.close(fig)
 anim.show()
 ```
 
@@ -107,8 +118,10 @@ same way a 2D simulation can be plotted along a line.
 ds = sdfxr.open_mfdataset("tutorial_dataset_3d/*.sdf")
 
 da = ds["Derived_Number_Density"]
-da_lineout = da.sel(Y_Grid_mid = 0, method="nearest")
-anim = da_lineout.epoch.animate(title = "Y = 0 [m]", fps = 2)
+da_lineout = da.sel(Y_Grid_mid = 0, method = "nearest")
+fig, ax = plt.subplots()
+anim = da_lineout.epoch.animate(ax = ax, title = "Y = 0 [m]", fps = 2)
+plt.close(fig)
 anim.show()
 ```
 
@@ -118,7 +131,9 @@ the animation.
 ```{code-cell} ipython3
 ds = sdfxr.open_dataset("tutorial_dataset_3d/0005.sdf")
 da = ds["Derived_Number_Density"]
-anim = da.epoch.animate(t = "X_Grid_mid")
+fig, ax = plt.subplots()
+anim = da.epoch.animate(ax = ax, t = "X_Grid_mid")
+plt.close(fig)
 anim.show()
 ```
 
@@ -144,7 +159,9 @@ ds = xr.open_mfdataset(
    )
 
 da = ds["Derived_Number_Density_Beam_Electrons"]
-anim = da.epoch.animate(move_window=True, fps = 5)
+fig, ax = plt.subplots()
+anim = da.epoch.animate(ax = ax, move_window = True, fps = 5)
+plt.close(fig)
 anim.show()
 ```
 
@@ -175,12 +192,15 @@ da.data = da.values * 1e-6
 da.attrs["units"] = "cm$^{-3}$"
 da.attrs["long_name"] = "$n_e$"
 
+fig, ax = plt.subplots()
 anim = da.epoch.animate(
+   ax = ax,
    fps = 2,
    max_percentile = 95,
    title = "Target A",
    cmap = "plasma",
-   )
+)
+plt.close(fig)
 anim.show()
 ```
 
@@ -197,14 +217,16 @@ same axis.
 ```{code-cell} ipython3
 ds = sdfxr.open_mfdataset("tutorial_dataset_1d/*.sdf")
 
+fig, ax = plt.subplots()
 anim = ds.epoch.animate_multiple(
    ds["Derived_Number_Density_Electron"],
    ds["Derived_Number_Density_Ion"],
-   datasets_kwargs=[{"label": "Electron"}, {"label": "Ion"}],
-   ylim=(0e27,4e27),
-   ylabel="Derived Number Density [1/m$^3$]"
+   ax = ax,
+   datasets_kwargs = [{"label": "Electron"}, {"label": "Ion"}],
+   ylim = (0e27,4e27),
+   ylabel = "Derived Number Density [1/m$^3$]"
 )
-
+plt.close(fig)
 anim.show()
 ```
 
@@ -222,6 +244,8 @@ import numpy as np
 from matplotlib.colors import LogNorm
 
 ds = sdfxr.open_mfdataset("tutorial_dataset_2d/*.sdf")
+
+fig, ax = plt.subplots()
 
 flux_magnitude = np.sqrt(
    ds["Derived_Poynting_Flux_x"]**2 +
@@ -242,10 +266,12 @@ flux_norm = LogNorm(
 anim = ds.epoch.animate_multiple(
    ds["Derived_Number_Density_Electron"],
    flux_masked,
-   datasets_kwargs=[
+   ax = ax,
+   datasets_kwargs = [
       {"alpha": 1.0},
       {"cmap": "hot", "norm": flux_norm, "alpha": 0.9},
    ],
 )
+plt.close(fig)
 anim.show()
 ```

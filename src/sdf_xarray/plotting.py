@@ -365,7 +365,7 @@ def animate(
 
     # Create plot if no ax is provided
     if ax is None:
-        fig, ax = plt.subplots()
+        _, ax = plt.subplots()
 
     animation = _generate_animation(
         data,
@@ -380,18 +380,13 @@ def animate(
         kwargs=kwargs,
     )
 
-    anim = FuncAnimation(
-        fig,
+    return FuncAnimation(
+        ax.get_figure(),
         animation.update,
         frames=range(animation.n_frames),
         interval=1000 / fps,
         repeat=True,
     )
-
-    # Prevents figure from prematurely displaying in Jupyter notebook
-    plt.close(fig)
-
-    return anim
 
 
 def animate_multiple(
@@ -460,7 +455,7 @@ def animate_multiple(
 
     # Create plot if no ax is provided
     if ax is None:
-        fig, ax = plt.subplots()
+        _, ax = plt.subplots()
 
     n_datasets = len(datasets)
     if datasets_kwargs is None:
@@ -509,18 +504,13 @@ def animate_multiple(
         if show_legend:
             ax.legend(loc="upper right")
 
-    anim = FuncAnimation(
-        fig,
+    return FuncAnimation(
+        ax.get_figure(),
         update,
         frames=range(n_frames),
         interval=1000 / fps,
         repeat=True,
     )
-
-    # Prevents figure from prematurely displaying in Jupyter notebook
-    plt.close(fig)
-
-    return anim
 
 
 def show(anim):

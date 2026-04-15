@@ -90,6 +90,8 @@ ds = sdfxr.open_mfdataset("tutorial_dataset_2d/*.sdf")
 da = ds["Derived_Number_Density_Electron"]
 fig, ax = plt.subplots()
 anim = da.epoch.animate(ax=ax)
+# Matplotlib will attempt to display the first frame of the video
+# and since we don't want that on the documentation we close it
 plt.close(fig)
 anim.show()
 ```
@@ -103,6 +105,8 @@ fig, ax = plt.subplots()
 
 da_lineout = da.sel(Y_Grid_mid = 1e-6, method = "nearest")
 anim = da_lineout.epoch.animate(ax = ax, title = "Y = 1e-6 [m]")
+# Matplotlib will attempt to display the first frame of the video
+# and since we don't want that on the documentation we close it
 plt.close(fig)
 anim.show()
 ```
@@ -121,6 +125,8 @@ da = ds["Derived_Number_Density"]
 da_lineout = da.sel(Y_Grid_mid = 0, method = "nearest")
 fig, ax = plt.subplots()
 anim = da_lineout.epoch.animate(ax = ax, title = "Y = 0 [m]", fps = 2)
+# Matplotlib will attempt to display the first frame of the video
+# and since we don't want that on the documentation we close it
 plt.close(fig)
 anim.show()
 ```
@@ -133,6 +139,8 @@ ds = sdfxr.open_dataset("tutorial_dataset_3d/0005.sdf")
 da = ds["Derived_Number_Density"]
 fig, ax = plt.subplots()
 anim = da.epoch.animate(ax = ax, t = "X_Grid_mid")
+# Matplotlib will attempt to display the first frame of the video
+# and since we don't want that on the documentation we close it
 plt.close(fig)
 anim.show()
 ```
@@ -161,6 +169,8 @@ ds = xr.open_mfdataset(
 da = ds["Derived_Number_Density_Beam_Electrons"]
 fig, ax = plt.subplots()
 anim = da.epoch.animate(ax = ax, move_window = True, fps = 5)
+# Matplotlib will attempt to display the first frame of the video
+# and since we don't want that on the documentation we close it
 plt.close(fig)
 anim.show()
 ```
@@ -200,6 +210,8 @@ anim = da.epoch.animate(
    title = "Target A",
    cmap = "plasma",
 )
+# Matplotlib will attempt to display the first frame of the video
+# and since we don't want that on the documentation we close it
 plt.close(fig)
 anim.show()
 ```
@@ -226,6 +238,8 @@ anim = ds.epoch.animate_multiple(
    ylim = (0e27,4e27),
    ylabel = "Derived Number Density [1/m$^3$]"
 )
+# Matplotlib will attempt to display the first frame of the video
+# and since we don't want that on the documentation we close it
 plt.close(fig)
 anim.show()
 ```
@@ -272,6 +286,8 @@ anim = ds.epoch.animate_multiple(
       {"cmap": "hot", "norm": flux_norm, "alpha": 0.9},
    ],
 )
+# Matplotlib will attempt to display the first frame of the video
+# and since we don't want that on the documentation we close it
 plt.close(fig)
 anim.show()
 ```

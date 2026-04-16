@@ -28,6 +28,7 @@ kernelspec:
 
 - **input deck:** <path:datasets/2_1_two_stream_instability/input.deck>
 - **Python File:** <path:animating/animate_2D_dist_fn_multispecies.py>
+- **Python File (alternative):** <path:animating/animate_2D_dist_fn_multispecies_alternative.py>
 
 ```{code-cell} ipython3
 :load: ./animating/animate_2D_dist_fn_multispecies.py

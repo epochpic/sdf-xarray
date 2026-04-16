@@ -16,6 +16,11 @@ import xarray as xr
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from IPython.display import HTML
+
+# Matplotlib will attempt to display the first frame of the video
+# and since we don't want that on the documentation we run in 
+# notebook mode
+%matplotlib notebook
 ```
 
 ## Basic usage
@@ -107,7 +112,7 @@ same way a 2D simulation can be plotted along a line.
 ds = sdfxr.open_mfdataset("tutorial_dataset_3d/*.sdf")
 
 da = ds["Derived_Number_Density"]
-da_lineout = da.sel(Y_Grid_mid = 0, method="nearest")
+da_lineout = da.sel(Y_Grid_mid = 0, method = "nearest")
 anim = da_lineout.epoch.animate(title = "Y = 0 [m]", fps = 2)
 anim.show()
 ```
@@ -144,7 +149,7 @@ ds = xr.open_mfdataset(
    )
 
 da = ds["Derived_Number_Density_Beam_Electrons"]
-anim = da.epoch.animate(move_window=True, fps = 5)
+anim = da.epoch.animate(move_window = True, fps = 5)
 anim.show()
 ```
 
@@ -180,7 +185,7 @@ anim = da.epoch.animate(
    max_percentile = 95,
    title = "Target A",
    cmap = "plasma",
-   )
+)
 anim.show()
 ```
 
@@ -200,9 +205,9 @@ ds = sdfxr.open_mfdataset("tutorial_dataset_1d/*.sdf")
 anim = ds.epoch.animate_multiple(
    ds["Derived_Number_Density_Electron"],
    ds["Derived_Number_Density_Ion"],
-   datasets_kwargs=[{"label": "Electron"}, {"label": "Ion"}],
-   ylim=(0e27,4e27),
-   ylabel="Derived Number Density [1/m$^3$]"
+   datasets_kwargs = [{"label": "Electron"}, {"label": "Ion"}],
+   ylim = (0e27,4e27),
+   ylabel = "Derived Number Density [1/m$^3$]"
 )
 
 anim.show()
@@ -242,7 +247,7 @@ flux_norm = LogNorm(
 anim = ds.epoch.animate_multiple(
    ds["Derived_Number_Density_Electron"],
    flux_masked,
-   datasets_kwargs=[
+   datasets_kwargs = [
       {"alpha": 1.0},
       {"cmap": "hot", "norm": flux_norm, "alpha": 0.9},
    ],

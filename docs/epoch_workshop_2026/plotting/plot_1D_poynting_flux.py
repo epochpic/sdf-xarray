@@ -7,7 +7,7 @@ import sdf_xarray as sdfxr
 
 input_dir = Path("datasets/3_3_Gaussian_1d_laser")
 
-ds = sdfxr.open_dataset(input_dir / "0001.sdf")
+ds = sdfxr.open_dataset(input_dir / "0020.sdf")
 
 # Convert the x and y coords to microns
 ds = ds.epoch.rescale_coords(1e6, "µm", ["X_Grid_mid"])

@@ -27,6 +27,7 @@ animation.md
 ```{toctree}
 :caption: 'EPOCH Workshop 2026'
 
+epoch_workshop_2026/workshop_details.md
 epoch_workshop_2026/plots.md
 epoch_workshop_2026/animations.md
 epoch_workshop_2026/histograms.md

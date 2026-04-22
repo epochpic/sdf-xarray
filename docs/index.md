@@ -33,7 +33,6 @@ epoch_workshop_2026/animations.md
 epoch_workshop_2026/histograms.md
 ```
 
-
 ```{toctree}
 :caption: 'Development'
 :maxdepth: 1

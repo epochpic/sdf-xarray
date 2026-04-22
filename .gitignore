@@ -339,3 +339,4 @@ src/sdf_xarray/_version.py
 
 # Downloaded doc tutorial datasets
 docs/tutorial_*
+docs/epoch_workshop_2026/datasets

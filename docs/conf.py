@@ -65,7 +65,12 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = [
+    "_build",
+    "Thumbs.db",
+    ".DS_Store",
+    "epoch_workshop_2026/live_demo.ipynb",
+]
 
 # Numpy-doc config
 napoleon_google_docstring = False
@@ -153,3 +158,23 @@ for dataset in datasets:
         continue
     else:
         fetch_dataset(dataset, save_path=cwd)
+
+epoch_workshop_datasets = [
+    "1_1_drifting_bunch",
+    "2_1_two_stream_instability",
+    "3_3_Gaussian_1d_laser",
+    "3_5_Gaussian_beam",
+    "4_2_self_heating",
+    "4_3_basic_target",
+    "4_4_momentum_distribution",
+    "5_1_probe",
+    "5_2_subsets",
+]
+
+epoch_workshop_dataset_folder = cwd / "epoch_workshop_2026" / "datasets"
+for dataset in epoch_workshop_datasets:
+    # If the dataset already exists then don't download it again
+    if (epoch_workshop_dataset_folder / dataset).exists():
+        continue
+    else:
+        fetch_dataset(dataset, save_path=epoch_workshop_dataset_folder)

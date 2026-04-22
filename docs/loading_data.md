@@ -42,7 +42,7 @@ uv pip install "sdf-xarray[jupyter]"
 
 Additionally, if you wish to follow along using the same datasets featured in this documentation, 
 you can download them from Zenodo ([10.5281/zenodo.17618509](https://doi.org/10.5281/zenodo.17618509))
-using <project:#fetch_dataset>.
+using <project:#sdf_xarray.download.fetch_dataset>.
 ````
 
 ## Loading single files

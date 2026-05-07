@@ -8,6 +8,7 @@ import xarray as xr
 import sdf_xarray as sdfxr
 from sdf_xarray import (
     SDFPreprocess,
+    _load_deck,
     _process_latex_name,
     download,
     resolve_paths,
@@ -755,3 +756,12 @@ def test_open_mfdataset_deck_path_absolute_other_path():
     ) as df:
         assert "deck" in df.attrs
         assert "constant" not in df.attrs["deck"]
+
+
+def test_epydeck_parsing_failing_deck(tmp_path, capsys):
+    deck = tmp_path / "faulty.deck"
+    deck.write_text("begin:constant\nend:s", encoding="utf-8")
+
+    _load_deck("", deck)
+    out, _ = capsys.readouterr()
+    assert "error occurred while trying to load the input deck" in out

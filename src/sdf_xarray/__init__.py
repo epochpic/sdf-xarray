@@ -1,6 +1,7 @@
 import contextlib
 import os
 import re
+import traceback
 from collections import Counter, defaultdict
 from collections.abc import Callable, Iterable
 from importlib.metadata import version
@@ -71,7 +72,13 @@ def _load_deck(
         return {}
 
     with deck_path.open() as f:
-        return epydeck.load(f)
+        try:
+            return epydeck.load(f)
+        except Exception:
+            print(
+                f"The following error occurred while trying to load the input deck: {deck_path.as_uri()}"
+            )
+            traceback.print_exc()
 
 
 def _process_latex_name(variable_name: str) -> str:

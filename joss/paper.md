@@ -30,7 +30,7 @@ authors:
     orcid: 0000-0003-4138-4576
     affiliation: 1
 affiliations:
-  - name: University of York, United Kingdom
+  - name: York Plasma Institute, University of York, United Kingdom
     index: 1
     ror: 04m01e293
 date: 3 June 2026

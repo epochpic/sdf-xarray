@@ -45,7 +45,7 @@ sdf-xarray is a Python package that reads output files from the particle-in-cell
 
 EPOCH [@arber:2015], developed at the University of Warwick, is a Fortran-based Particle-In-Cell (PIC) code widely used in laser-plasma physics, primarily within the United Kingdom. The code was first developed in early 2008, prior to the standardisation of many modern output file formats and as a result EPOCH uses the University of Warwicks' custom Self-Describing Format (SDF) binary files. 
 
-Creating a new output module for the code to use a modern format such as netCDF [@rew:1989] is cumbersome as the code supports running simulations in 1D, 2D, 3D, or using a hybrid approximation or cylindrical geometry. All of these implementations are separate code repositories that contain diverging commit history making a unified module for all of them difficult.
+Creating a new output module for the code to use a modern format such as netCDF [@rew:1989] is cumbersome as the code supports running simulations in 1D, 2D, 3D, or using a hybrid approximation or cylindrical geometry. All of these implementations are separate code repositories that contain diverging commit histories making a unified module for all of them difficult.
 
 # State of field
 

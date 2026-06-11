@@ -120,11 +120,6 @@ This library was originally developed for the machine learning pipeline toolkit 
 
 This library has impacted the majority of EPOCH users at the University of York, and is used as teaching materials for a course on PIC code usage to undergraduate students. The library was also used in the EPOCH 2025 and 2026 workshops as the primary interfacing tool and has since seen usage across several other research institutions including Strathclyde University and Queens University Belfast. It has also seen usage in private companies such as First Light Fusion and several government entities.
 
-# Benchmark
-
-Discuss CPython parser from `SDF-C` to Xarray backend?
-
-sdf_helper vs sdf-xarray time to open file in seconds and RAM usage
 
 # AI usage disclosure
 

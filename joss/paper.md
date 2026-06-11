@@ -74,7 +74,7 @@ The loading of an SDF file can be split into 3 steps:
   - Some of the SDF file's grids and variables are not loaded due to them being problematic and not used in practice. 
   - Grid and variable names contain slashes between each section and sometimes spaces; These are replaced with underscores to match the Pythonic snake_case. e.g. `"Derived/Number Density/Electron"` -> `"Derived_Number_Density_Electron"`. 
   - By default particle data is not loaded due to it needing to load $> 10^15$ particles per species leading to much higher RAM requirements.
-  - The `input.deck` (simulation setup file) is appended to the global attributes.
+  - The `input.deck` (simulation setup file) is appended to the global attributes via epydeck [@hill:2024].
 
 Loading multiple files at once adds a time dimension and coordinate to the dataset using the `time` attribute from each SDF file and appends each SDF files data to it. At this stage we also check that the SDF files have the same `jobid` in case the user attempts to combine SDF files from two independent simulations.
 

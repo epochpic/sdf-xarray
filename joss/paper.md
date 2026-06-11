@@ -114,6 +114,8 @@ ds = ds.epoch.rescale_coords(1e6, "µm", ["X_Grid_mid"])
 
 This is often used in conjunction with the animation function in order to produce cleaner animations.
 
+As well as converting coordinates, one can also convert variables too by either directly manipulating the underlying NumPy array or using the [Pint](https://github.com/hgrecco/pint) package along with the separate Xarray API [pint-xarray](https://github.com/xarray-contrib/pint-xarray).
+
 # Research impact statement
 
 This library was originally developed for the machine learning pipeline toolkit [BEAM](https://github.com/epochpic/sdf-xarray#broad-epoch-analysis-modules-beam). The initial release of this package was developed by Peter Hill and has since been maintained and worked upon by Joel Adams. Since it's inception in 2024 several other EPOCH users at the York Plasma Institute have also used the library and consequently developed new features, or been the inspiration for the animation functions, unit conversion, and `input.deck` loading into a Python dictionary. 

@@ -17,6 +17,9 @@ authors:
     orcid: 0000-0003-3092-1858
     equal-contrib: true
     affiliation: 1
+  - name: Liam Pattinson
+    orcid: 0000-0001-8604-6904
+    affiliation: 1
   - name: Shaun Doherty
     orcid: 0009-0005-0693-030X
     affiliation: 1

@@ -39,7 +39,7 @@ bibliography: paper.bib
 
 # Summary
 
-sdf-xarray is a Python package that reads output files from the particle-in-cell code EPOCH into structured N-D labelled datasets provided by Xarray. Once loaded, these datasets can be interactively explored, animations can be generated, and variables can be converted between units.
+EPOCH is a physics code that outputs data in a custom binary format called SDF. sdf-xarray is a Python package which reads these files and parses them it into structured N-D labelled datasets provided by Xarray. These datasets can be interactively explored, animations can be generated, and variables can be converted between units.
 
 # Statement of need
 

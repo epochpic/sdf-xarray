@@ -43,22 +43,25 @@ sdf-xarray is a Python package that reads output files from the particle-in-cell
 
 # Statement of need
 
-EPOCH [@arber:2015], developed at the University of Warwick, is a Fortran-based Particle-In-Cell (PIC) code widely used in laser-plasma physics, primarily within the United Kingdom. The code was first developed in early 2008, prior to the standardisation of many modern output file formats and as a result EPOCH uses the University of Warwicks' custom Self-Describing Format (SDF) binary files. 
+EPOCH [@arber:2015], developed at the University of Warwick, is a Fortran-based Particle-In-Cell (PIC) code widely used in laser-plasma physics, primarily within the United Kingdom. The code was first developed at the University of Warwick in early 2008, prior to the standardisation of many modern output file formats and as a result uses the Universities custom Self-Describing Format (SDF) binary files. 
 
-Creating a new output module for the code to use a modern format such as netCDF [@rew:1989] is cumbersome as the code supports running simulations in 1D, 2D, 3D, or using a hybrid approximation or cylindrical geometry. All of these implementations are separate code repositories that contain diverging commit histories making a unified module for all of them difficult.
+Creating a new output module for the code to use a modern format such as netCDF [@rew:1989] is cumbersome as the code supports running simulations in 1D, 2D, 3D, using a hybrid approximation or cylindrical geometry. All of these implementations are separate code repositories that contain diverging commit histories which makes developing a unified module difficult.
 
 # State of field
 
-Several SDF wrappers have been created over the years including, but not limited to VisIt, Matlab, OpenPMD and a custom Python package called [`sdf_helper`](https://epochpic.github.io/documentation/visualising_output.html). While many of these visualisation software libraries are still very popular today they all come with downsides such as closed-source, paid licenses and age. 
+Several SDF wrappers for use in visualisation software have been created over the years including, but not limited to VisIt [@childs:2012], Matlab [@matlab:2022], OpenPMD [@huebl:2015] and a custom Python package called [`sdf_helper`](https://epochpic.github.io/documentation/visualising_output.html). While many of these visualisation software libraries are still very popular today they all come with downsides such as closed-source, paid licenses and lack of recent development. 
 
-The majority of current physicists are primarily familiar with Python and Matplotlib [@hunter:2007] for performing analysis of simulations. While `sdf_helper` might seem like an enticing choice it only has basic plotting routines, hasn't been actively maintained for several years and has no way to concatenate SDF files over time. Past versions of this package required installation via a Makefile located within the [`SDF-C`](https://github.com/epochpic/SDF_C) library that wasn't compatible with many modern Python workflows, however it has recently been made avaialable on PyPI. By using Xarray [@hoyer:2017] to load SDF files we can take advantage of several features:
+The majority of current physicists are primarily familiar with Python and Matplotlib [@hunter:2007] for performing analysis of simulations. While `sdf_helper` might seem like an enticing choice at first it only has basic Matplotlib plotting routines, hasn't been actively maintained for several years and has no ability to concatenate SDF files over time. Past versions of this package required installation via a Makefile located within the [`SDF-C`](https://github.com/epochpic/SDF_C) library that wasn't compatible with many modern Python workflows, however it has recently been made avaialable on PyPI under the name `sdfr`. 
 
-- Lazy loading which only loads in pointers to the data instead of the entire dataset, alleviating the RAM requirements for large SDF files.
+To address the above issues with `sdf_helper` this library was developed which converts the SDF files into Xarray [@hoyer:2017] datasets. By loading SDF files using this library we can take advantage of several features provided by it:
+
+- Lazy loading using Dask [@matthew:2015] which only loads in pointers to the data instead of the entire dataset, alleviating the RAM requirements for large SDF files.
+- Conversion of dataset arrays to NumPy [@harris:2020] or Pandas [@mckinney:2010].
+- Built-in interactivity with Jupyter notebooks [@granger:2021].
 - Built-in plotting functionality with Matplotlib.
-- Conversion of datasets to NumPy [@harris:2020] or Pandas [@mckinney:2010].
 - Opening multi-file datasets.
 
-Another feature of sdf-xarray is that it has a vast, interactive series of [documentation](https://sdf-xarray.readthedocs.io/en/stable) pages built to be accessible for Physicists whereas `sdf_helper` only contains a basic single [documentation](https://epochpic.github.io/documentation/visualising_output/python_sdf_helper.html) page.
+Another feature of sdf-xarray is that it has a vast, interactive (using Jupyter notebooks) series of [documentation](https://sdf-xarray.readthedocs.io/en/stable) pages whereas `sdf_helper` only contains a single [documentation](https://epochpic.github.io/documentation/visualising_output/python_sdf_helper.html) page.
 
 # Software design
 
@@ -69,12 +72,12 @@ This packages design can be separated into three key sections; loading, animatin
 The loading of an SDF file can be split into 3 steps:
 
 1. The `SDF-C` C-library reads the raw binary file.
-1. Cython [@behnel:2010] then decodes the `header`, `run_info` and assigns the data into Python `dataclasses`.
-1. These `dataclasses` are subsequently converted into a [custom backend](https://docs.xarray.dev/en/latest/internals/how-to-add-new-backend.html) suitable for use with the Xarray library.
+1. Cython [@behnel:2010] then decodes the `header`, `run_info` and converts the data into Python `dataclasses`.
+1. These `dataclasses` are subsequently parsed into a [custom backend](https://docs.xarray.dev/en/latest/internals/how-to-add-new-backend.html) suitable for use with the Xarray library.
   - Some of the SDF file's grids and variables are not loaded due to them being problematic and not used in practice. 
-  - Grid and variable names contain slashes between each section and sometimes spaces; These are replaced with underscores to match the Pythonic snake_case. e.g. `"Derived/Number Density/Electron"` -> `"Derived_Number_Density_Electron"`. 
-  - By default particle data is not loaded due to it needing to load $> 10^15$ particles per species leading to much higher RAM requirements.
-  - The `input.deck` (simulation setup file) is appended to the global attributes via epydeck [@hill:2024].
+  - Grid and variable names contain slashes between each section and sometimes spaces; These are replaced with underscores to match the Pythonic snake case. e.g. `"Derived/Number Density/Electron"` -> `"Derived_Number_Density_Electron"`. 
+  - By default particle data is not loaded due to it needing to load several orders of magnitudes of particles per species leading to much higher RAM requirements.
+  - The `input.deck` (simulation setup file) is appended to the datasets' global attributes via epydeck [@hill:2024].
 
 Loading multiple files at once adds a time dimension and coordinate to the dataset using the `time` attribute from each SDF file and appends each SDF files data to it. At this stage we also check that the SDF files have the same `jobid` in case the user attempts to combine SDF files from two independent simulations.
 
@@ -82,12 +85,12 @@ One of the shortcomings of using Xarray is that it requires that all the data is
 
 ## Animations
 
-Building animations of systems evolving over time (or some other coordinate) has always been helpful in providing insight to both the user and for use in presentations. While Matplotlib supports building animations using the `FuncAnimation()` function, it requires a complicated setup in order to work with Xarray. As a result, a custom function that builds on top of Matplotlib's implementation and provides a simple user interface was developed. An example of an animation of a plasmas number density evolving over time is as follows:
+Building animations of systems evolving over time (or some other coordinate) has always been helpful in providing insight to both the user and for use in presentations. While Matplotlib allows users to build animations, it can require quite a complicated setup in order to work with Xarray. As a result, sdf-xarray contains a custom function that builds on top of Matplotlib's implementation and provides a simple user interface. An example animation of a dataset variable evolving over time is as follows:
 
 ```python
 import sdf_xarray as sdfxr
 
-ds = sdfxr.open_dataset("path/to/dataset")
+ds = sdfxr.open_mfdataset("path/to/dataset/*.sdf")
 anim = ds["Derived_Number_Density"].epoch.animate()
 anim.show() # Visualisation directly in a Jupyter notebook
 anim.save("number_density.mp4", fps=10) # Or save the animation
@@ -95,15 +98,15 @@ anim.save("number_density.mp4", fps=10) # Or save the animation
 
 When creating animations of 2D simulation data a colorbar is required so to avoid it jumping around between frames, its min and max values are calculated at the start so that the final animation includes a fixed colorbar. 
 
-In some PIC simulations, such as Laser Wakefield Acceleration, the simulations are focused on how lasers propagates through plasmas in small local regions for some physical distance. Simulating 100s of microns of plasma is expensive so users instead create a moving window that follows the laser as it propagates through a plasma. This behaviour is supported in sdf-xarray animations, so if a user loads a dataset where there are `NaN`s in the data it interprets it as a moving window and changes the corresponding axes throughout the animation.
+EPOCH allows users to create simulations in which axes shift throughout the simulation (i.e. to track a lasers propagation through a long block of plasma) called moving windows as simulating the full picture is computationally expensive. This behaviour is supported in sdf-xarray animations, so if a user loads a dataset where there are `NaN`s in the data it interprets it as a moving window and changes the corresponding axes throughout the animation.
 
-On top of building single variable animations, users can utilise the `animate_multiple()` function to overlay multiple variables (i.e. 1D animation of electron density vs ion density over time). 
+On top of building single variable animations, users can utilise the `animate_multiple()` function to overlay multiple variables (i.e. 1D animation of electron density vs ion density over time).
 
 Further examples and explanation of animations can be seen in the [documentation](https://sdf-xarray.readthedocs.io/en/stable/animation.html).
 
 ## Rescaling datasets
 
-EPOCH expects users to be simulating plasmas with a physical size of $\approx 10^{-6}$ (microns) metres and the simulated time of $\approx 10^{-15}$ (femto) seconds. As a result of this often being the case a function for rescaling the physical and time dimensions was developed. An example of rescaling both of these dimensions is as follows:
+Most EPOCH users tend to simulate plasma with a physical size on the order of $\sim 10^{-6}$ (microns) metres with a simulated time on the order of $\sim 10^{-15}$ (femto) seconds. As a result of this, a custom function for rescaling the physical size and time dimensions was developed. An example of rescaling both of these dimensions is as follows:
 
 ```python
 # Convert the time to femtoseconds
@@ -112,16 +115,15 @@ ds = ds.epoch.rescale_coords(1e15, "fs", "time")
 ds = ds.epoch.rescale_coords(1e6, "µm", ["X_Grid_mid"])
 ```
 
-This is often used in conjunction with the animation function in order to produce cleaner animations.
+This is often used in conjunction with the animation function in order to produce visually cleaner animations.
 
-As well as converting coordinates, one can also convert variables too by either directly manipulating the underlying NumPy array or using the [Pint](https://github.com/hgrecco/pint) package along with the separate Xarray API [pint-xarray](https://github.com/xarray-contrib/pint-xarray).
+Converting variables can also be done by either directly manipulating the underlying NumPy array or using the [Pint](https://github.com/hgrecco/pint) package along with the Xarray API [pint-xarray](https://github.com/xarray-contrib/pint-xarray).
 
 # Research impact statement
 
-This library was originally developed for the machine learning pipeline toolkit [BEAM](https://github.com/epochpic/sdf-xarray#broad-epoch-analysis-modules-beam). The initial release of this package was developed by Peter Hill and has since been maintained and worked upon by Joel Adams. Since it's inception in 2024 several other EPOCH users at the York Plasma Institute have also used the library and consequently developed new features, or been the inspiration for the animation functions, unit conversion, and `input.deck` loading into a Python dictionary. 
+This library was originally developed for the machine learning pipeline toolkit [BEAM](https://github.com/epochpic/sdf-xarray#broad-epoch-analysis-modules-beam). The initial release of this package was developed by Peter Hill and has since been maintained and iterated upon by Joel Adams and several others. Since it's inception in 2024, many EPOCH users at the York Plasma Institute have adopted the library for their research and consequently developed new features. 
 
-This library has impacted the majority of EPOCH users at the University of York, and is used as teaching materials for a course on PIC code usage to undergraduate students. The library was also used in the EPOCH 2025 and 2026 workshops as the primary interfacing tool and has since seen usage across several other research institutions including Strathclyde University and Queens University Belfast. It has also seen usage in private companies such as First Light Fusion and several government entities.
-
+On top of it's adoption by PhD Students and academics at the University of York, it is also being used in teaching materials for a course on PIC codes delivered to undergraduate students. The library was also used as the primary interfacing tool in the EPOCH 2025 and 2026 workshops. It has also seen use across several other research institutions including Strathclyde University, Queens University Belfast, First Light Fusion and a few government entities.
 
 # AI usage disclosure
 

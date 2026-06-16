@@ -117,7 +117,7 @@ ds = ds.epoch.rescale_coords(1e6, "µm", ["X_Grid_mid", "Y_Grid_mid"])
 ds["Electric_Field_Ey"].epoch.plot()
 ```
 
-![Plot of the electric field of a laser focusing in a vacuum, generated through `sdf-xarray`.](Electric_Field_Ey.png){width="80%"}
+![Plot of the electric field of a laser focusing in a vacuum, generated through `sdf-xarray`.](Electric_Field_Ey.png){width="60%"}
 
 ### Animations
 

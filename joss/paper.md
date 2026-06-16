@@ -56,7 +56,7 @@ Several SDF wrappers for use in visualisation software have been created over th
 
 The majority of current physicists are primarily familiar with Python and Matplotlib [@hunter:2007] for performing analysis of simulations. While sdf_helper might seem like an enticing choice at first it only has basic Matplotlib plotting routines, hasn't been actively maintained for several years and has no ability to concatenate multiple SDF files for time resolved data. Past versions of this package required installation via a Makefile located within the [SDF-C](https://github.com/epochpic/SDF_C) library that wasn't compatible with many modern Python workflows, however it has recently been made avaialable on PyPI under the name "sdfr". This library also only has a single [documentation](https://epochpic.github.io/documentation/visualising_output/python_sdf_helper.html) page which doesn't cover all the features it supports.
 
-Developed as a modern successor to sdf_helper, sdf-xarray converts SDF files to Xarray [@hoyer:2017] datasets, thereby enabling the following features:
+Developed as a modern successor to `sdf_helper`, `sdf-xarray` converts SDF files to `xarray` [@hoyer:2017] datasets, enabling users to make use of `xarray`'s many features, such as:
 
 - Lazy loading using Dask [@matthew:2015] which only loads in pointers to the data instead of the entire dataset, alleviating the RAM requirements for large SDF files which can sometimes be on the order of 10-to-100GB.  
 - Conversion of dataset arrays to NumPy [@harris:2020] or Pandas [@mckinney:2010].
@@ -64,7 +64,7 @@ Developed as a modern successor to sdf_helper, sdf-xarray converts SDF files to 
 - Built-in plotting functionality with Matplotlib.
 - Opening multi-file datasets.
 
-[Documentation](https://sdf-xarray.readthedocs.io/en/stable) for sdf-xarray is vast, actively maintained and makes use of Jupyter notebooks to illustrate the interactive nature of Xarray.
+[Documentation](https://sdf-xarray.readthedocs.io/en/stable) for sdf-xarray is comprehensive, actively maintained and makes use of Jupyter notebooks to illustrate the interactive nature of Xarray.
 
 # Software design
 
@@ -144,7 +144,7 @@ Further examples and explanation of animations can be seen in the [documentation
 
 This library was originally developed for the machine learning pipeline toolkit [BEAM](https://github.com/epochpic/sdf-xarray#broad-epoch-analysis-modules-beam). The initial release of this package was developed by Peter Hill and has since been maintained and iterated upon by Joel Adams and several others. Since it's inception in 2024, many EPOCH users at the York Plasma Institute have adopted the library for their research and consequently developed new features. 
 
-On top of it's adoption by PhD Students and academics at the University of York, it is also being used in teaching materials for a course on PIC codes delivered to undergraduate students. The library was also used as the primary interfacing tool in the EPOCH 2025 and 2026 workshops. It has also seen use across several other research institutions including Strathclyde University, Queens University Belfast, First Light Fusion and a few government entities.
+On top of it's adoption by researchers at the University of York, Strathclyde University, Queens University Belfast, First Light Fusion and a few government entities, it is also being used in teaching materials for a course on PIC codes delivered to undergraduate students. The library was also used as the primary interfacing tool in the EPOCH 2025 and 2026 workshops.
 
 # AI usage disclosure
 

@@ -52,9 +52,9 @@ Integrating a modern output module like `NetCDF` [@rew:1989] is challenging beca
 
 # State of field
 
-Several SDF wrappers for use in visualisation software have been created over the years including, but not limited to (i) `VisIt` [@childs:2012], (ii) `Matlab` [@matlab:2022] which is closed-source and requires a paid license, (iii) `OpenPMD` [@huebl:2015] which is not currently widely adopted and (iv) a custom Python package called [`sdf_helper`](https://epochpic.github.io/documentation/visualising_output.html) which lacks recent development.
+Several SDF wrappers for use in visualisation software have been created over the years including, but not limited to (i) `VisIt` [@childs:2012], (ii) `Matlab` [@matlab:2022] which is closed-source and requires a paid license, (iii) `OpenPMD` [@huebl:2015] which is not currently widely adopted and (iv) a custom Python package called `sdf_helper` [@bennett:2014a] which lacks recent development.
 
-The majority of current physicists are primarily familiar with Python and `Matplotlib` [@hunter:2007] for performing analysis of simulations. While `sdf_helper` might seem like an enticing choice at first it only has basic `Matplotlib` plotting routines, hasn't been actively maintained for several years and has no ability to concatenate multiple SDF files for time resolved data. Past versions of this package required installation via a Makefile located within the [`SDF-C`](https://github.com/epochpic/SDF_C) library that wasn't compatible with many modern Python workflows, however it has recently been made avaialable on PyPI under the name "sdfr". This library also only has a single [documentation](https://epochpic.github.io/documentation/visualising_output/python_sdf_helper.html) page which doesn't cover all the features it supports.
+The majority of current physicists are primarily familiar with Python and `Matplotlib` [@hunter:2007] for performing analysis of simulations. While `sdf_helper` might seem like an enticing choice at first it only has basic `Matplotlib` plotting routines, hasn't been actively maintained for several years and has no ability to concatenate multiple SDF files for time resolved data. Past versions of this package required installation via a Makefile located within the `SDF-C` [@bennett:2014b] library that wasn't compatible with many modern Python workflows, however it has recently been made avaialable on PyPI under the name "sdfr". This library also only has a single [documentation](https://epochpic.github.io/documentation/visualising_output/python_sdf_helper.html) page which doesn't cover all the features it supports.
 
 Developed as a modern successor to `sdf_helper`, `sdf-xarray` converts SDF files to `Xarray` [@hoyer:2017] datasets, enabling users to make use of `Xarray`'s many features, such as:
 
@@ -99,7 +99,7 @@ ds = ds.epoch.rescale_coords(1e6, "µm", ["X_Grid_mid", "Y_Grid_mid"])
 
 This is often used in conjunction with generating plots and animations.
 
-Converting variables can also be done by either directly manipulating the underlying `NumPy` array or using the [`Pint`](https://github.com/hgrecco/pint) package along with the `Xarray` API [`pint-xarray`](https://github.com/xarray-contrib/pint-xarray).
+Converting variables can also be done by either directly manipulating the underlying `NumPy` array or using the `Pint` [@grecco:2012] package along with the `Xarray` API `pint-xarray` [@magin:2020].
 
 ## Plotting
 

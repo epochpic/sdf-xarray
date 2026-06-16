@@ -52,19 +52,22 @@ Integrating a modern output module like `NetCDF` [@rew:1989] is challenging beca
 
 # State of field
 
-Several SDF wrappers for use in visualisation software have been created over the years including, but not limited to (i) `VisIt` [@childs:2012], (ii) `Matlab` [@matlab:2022] which is closed-source and requires a paid license, (iii) `OpenPMD` [@huebl:2015] which is not currently widely adopted and (iv) a custom Python package called `sdf_helper` [@bennett:2014a] which lacks recent development.
+Several SDF wrappers [@bennett:2014a] for use in visualisation software have been created over the years including, but not limited to (i) `VisIt` [@childs:2012], (ii) `Matlab` [@matlab:2022] which is closed-source and requires a paid license, (iii) `OpenPMD` [@huebl:2015] which is not currently widely adopted and (iv) a custom Python package called `sdf_helper`.
 
-The majority of current physicists are primarily familiar with Python and `Matplotlib` [@hunter:2007] for performing analysis of simulations. While `sdf_helper` might seem like an enticing choice at first it only has basic `Matplotlib` plotting routines, hasn't been actively maintained for several years and has no ability to concatenate multiple SDF files for time resolved data. Past versions of this package required installation via a Makefile located within the `SDF-C` [@bennett:2014b] library that wasn't compatible with many modern Python workflows, however it has recently been made avaialable on PyPI under the name "sdfr". This library also only has a single [documentation](https://epochpic.github.io/documentation/visualising_output/python_sdf_helper.html) page which doesn't cover all the features it supports.
+Python and `Matplotlib` [@hunter:2007] are standard tools for plasma physics simulation analysis. The `sdf_helper` Python package supports this workflow by providing simple data extraction to `NumPy` [@harris:2020] and custom `Matplotlib` plotting routines. Unfortunately, it lacks native capabilities for concatenating multiple SDF files into time-resolved datasets.
 
-Developed as a modern successor to `sdf_helper`, `sdf-xarray` converts SDF files to `Xarray` [@hoyer:2017] datasets, enabling users to make use of `Xarray`'s many features, such as:
+Developed as a modern successor to `sdf_helper`, `sdf-xarray` converts SDF files to `Xarray` [@hoyer:2017] datasets, enabling users to leverage core ecosystem features, including:
 
-- Lazy loading using `Dask` [@matthew:2015] which only loads in pointers to the data instead of the entire dataset, alleviating the RAM requirements for large SDF files which can sometimes be on the order of 10-to-100GB.
-- Conversion of dataset arrays to `NumPy` [@harris:2020] or `Pandas` [@mckinney:2010].
-- Built-in interactivity with `Jupyter` notebooks [@granger:2021].
-- Built-in plotting functionality with `Matplotlib`.
-- Opening multi-file datasets.
+- **Lazy data loading via `Dask` [@matthew:2015]:** Instantiates pointers rather than loading the entire dataset into memory, substantially mitigating RAM constraints when handling large-scale files on the order of 10-100 GB.
+- **Deferred computation:** Leverages `Dask` to postpone execution on data arrays until explicitly required or evaluated.
+- **Ecosystem interoperability:** Simplifies conversion of dataset arrays to `NumPy` or `Pandas` [@mckinney:2010] structures for downstream analysis.
+- **Interactive development:** Provides native compatibility with `Jupyter` notebooks [@granger:2021] to support iterative workflows.
+- **Built-in visualisation:** Contains integrated `Matplotlib` routines for rapid, native plotting of multidimensional data.
+- **Multi-file aggregation:** Facilitates the simultaneous opening and unified handling of split-file datasets.
 
-[Documentation](https://sdf-xarray.readthedocs.io/en/stable) for `sdf-xarray` is comprehensive, actively maintained and makes use of `Jupyter` notebooks to illustrate the interactive nature of `Xarray`.
+In addition to leveraging `Xarray`'s core ecosystem, `sdf-xarray` has comprehensive [documentation](https://sdf-xarray.readthedocs.io/en/stable) which is actively maintained and makes use of `Jupyter` notebooks to illustrate the interactive nature of the package.
+
+Both `sdf_helper` and `sdf-xarray` serve as wrappers around the C-based `SDF-C` library [@bennett:2014b]. Although the underlying library historically required manual compilation via a Makefile, `sdf-xarray` utilises the modern `scikit-build-core` backend to automate this process for local builds. Furthermore, during the release cycle, `sdf-xarray` leverages `cibuildwheel` to distribute pre-compiled binaries across Windows, macOS, and various Linux distributions. Originally, `sdf_helper`, released back in 2014, did not have this automated build process, making installation less consistent across operating systems. It also did not respect isolated Python virtual environments, causing some users to face system-wide dependency conflicts. Several months after the release of `sdf-xarray` in 2024, `sdf_helper` was updated to adopt a similar automated pipeline and published on PyPI as `sdfr` to alleviate these deployment challenges.
 
 # Software design
 
@@ -74,7 +77,7 @@ This packages design can be separated into three key sections; loading, plotting
 
 The loading of an SDF file can be split into 3 steps:
 
-1. The `SDF-C` C-library reads the raw binary file.
+1. The `SDF-C` C library reads the raw binary file.
 1. `Cython` [@behnel:2010] then decodes the `header`, `run_info` and converts the data into Python `dataclasses`.
 1. These `dataclasses` are subsequently parsed into a [custom backend](https://docs.xarray.dev/en/latest/internals/how-to-add-new-backend.html) suitable for use with the `Xarray` library.
     - Some of the file's grids and variables are not loaded due to them being problematic and not used in practice. 

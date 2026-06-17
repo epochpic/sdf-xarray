@@ -87,7 +87,7 @@ The loading of an SDF file can be split into 3 steps:
 
 loading multiple files introduces a time dimension and coordinate derived from each file's `time` attribute, appending the dataset's data along this axis. At this stage we also check that the files have the same `jobid` in case the user attempts to combine files from two different simulations.
 
-A primary limitation of `Xarray` is its strict requirement for fixed grids. EPOCH outputs both fixed global-grid data and variable-grid data which can change with each output. Consequently, datasets with time-varying grid sizes cannot be integrated into standard `Xarray` datasets.
+A primary limitation of `Xarray` is its strict requirement for fixed grids. EPOCH outputs both fixed global-grid data and variable-grid data that can change with each SDF output; consequently, datasets with time-varying grid sizes cannot be natively integrated into standard `Xarray` structures. To mitigate this constraint, `sdf-xarray` provides a `separate_times` flag when opening multi-file datasets, which creates distinct time dimensions for variables with differing output frequencies. This approach increases RAM overhead as the dimension sizes of each variable must be explicitly evaluated prior to a being assigned to a time dimension.
 
 ## Rescaling datasets
 
@@ -111,6 +111,7 @@ Converting variables can also be done by either directly manipulating the underl
 ```python
 import sdf_xarray as sdfxr
 
+# Opens a single-file dataset
 ds = sdfxr.open_dataset("0010.sdf")
 ds = ds.epoch.rescale_coords(1e6, "µm", ["X_Grid_mid", "Y_Grid_mid"])
 
@@ -126,6 +127,7 @@ Building animations provides insight into how systems evolving over time. While 
 ```python
 import sdf_xarray as sdfxr
 
+# Opens a multi-file dataset using globs or a list of paths
 ds = sdfxr.open_mfdataset("*.sdf")
 ds = ds.epoch.rescale_coords(1e15, "fs", "time")
 ds = ds.epoch.rescale_coords(1e6, "µm", ["X_Grid_mid", "Y_Grid_mid"])

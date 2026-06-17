@@ -149,7 +149,7 @@ Further examples and explanation of animations can be seen in the [documentation
 
 This library was originally developed for the machine learning pipeline toolkit [BEAM](https://github.com/epochpic/sdf-xarray#broad-epoch-analysis-modules-beam). The initial release of this package was developed by Peter Hill and has since been maintained and iterated upon by Joel Adams and several others. Since it's inception in 2024, many EPOCH users at the York Plasma Institute have adopted the library for their research and consequently developed new features. 
 
-On top of it's adoption by researchers at the University of York, Strathclyde University, Queens University Belfast, First Light Fusion and a few government entities, it is also being used in teaching materials for a course on PIC codes delivered to undergraduate students. The library was also used as the primary interfacing tool in the EPOCH 2025 and 2026 workshops.
+On top of it's adoption by researchers at the University of York, Strathclyde University, Queens University Belfast, First Light Fusion and a few government entities, it is also being used in teaching materials for a course on PIC codes delivered to undergraduate students at the University of York. The library was also used as the primary interfacing tool in the EPOCH 2025 and 2026 workshops.
 
 # AI usage disclosure
 

@@ -83,7 +83,7 @@ The loading of an SDF file can be split into 3 steps:
     - Some of the file's grids and variables are not loaded due to them being problematic and not used in practice. 
     - Grid and variable names contain slashes between each section and sometimes spaces; These are replaced with underscores to match the Pythonic snake case. e.g. `"Derived/Number Density/Electron"` -> `"Derived_Number_Density_Electron"`. 
     - Particle data takes up a significant portion of the size of a file if it is present and therefore by default is not loaded to alleviate the RAM requirements.
-    - The `input.deck` (simulation setup file) is appended to the datasets' global attributes via `epydeck` [@hill:2024].
+    - The `input.deck` (simulation setup file) is appended to the datasets' global attributes via `epydeck` [@hill:2024a].
 
 loading multiple files introduces a time dimension and coordinate derived from each file's `time` attribute, appending the dataset's data along this axis. At this stage we also check that the files have the same `jobid` in case the user attempts to combine files from two different simulations.
 
@@ -151,7 +151,7 @@ This library was originally developed for the machine learning pipeline toolkit 
 
 Beyond its foundational deployment at the University of York, `sdf-xarray` has achieved broader institutional adoption, seeing active use by researchers at the University of Strathclyde, Queen's University Belfast, First Light Fusion, and several government entities. In addition to driving primary research, the library serves a distinct educational role; it has been integrated into a course on PIC codes delivered to undergraduate students at the University of York and served as the primary data-interfacing utility for both the 2025 and 2026 international EPOCH user workshops.
 
-On top of it's adoption by researchers at the University of York, Strathclyde University, Queens University Belfast, First Light Fusion and a few government entities, it is also being used in teaching materials for a course on PIC codes delivered to undergraduate students at the University of York. The library was also used as the primary interfacing tool in the EPOCH 2025 and 2026 workshops.
+By adhering strictly to FAIR (Findable, Accessible, Interoperable, and Reusable) data principles, `sdf-xarray` alongside it's sister BEAM packages, `epyscan` and `epydeck` [@hill:2024b] maintains a transparent, community-driven developement model that encourages external contributions. In recognition of this commitment to open science and its measurable impact on the plasma physics community, the BEAM project was awarded the [2025 University of York Open Research Award in the Postgraduate Researcher (Sciences) category](https://uoy.atlassian.net/wiki/spaces/YorkOpenResearch/pages/995426305/York+Open+Research+Awards+2025#BEAM%3A-Broad-Epoch-Analysis-Modules).
 
 # AI usage disclosure
 

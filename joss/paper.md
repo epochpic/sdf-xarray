@@ -42,13 +42,13 @@ bibliography: paper.bib
 
 # Summary
 
-EPOCH is a plasma physics code that outputs files using a custom binary format called SDF. `sdf-xarray` is a Python package which reads these files and parses them it into structured N-D labelled datasets provided by `Xarray`. `sdf-xarray` has built-in functions for plotting, animation and unit conversion, allowing for simple interaction and manipulation for easy data analysis.
+EPOCH is a plasma physics code that outputs files using a custom binary format called SDF. `sdf-xarray` is a Python package which reads these files and parses them into structured N-D labelled datasets provided by `Xarray`. `sdf-xarray` has built-in functions for plotting, animation and unit conversion, allowing for simple interaction and manipulation for easy data analysis.
 
 # Statement of need
 
-EPOCH [@arber:2015], developed at the University of Warwick, is a Fortran-based Particle-In-Cell (PIC) code widely used in laser-plasma physics, primarily within the United Kingdom. The code was first developed at the University of Warwick in early 2008, prior to the standardisation of many modern output file formats and as a result uses the universities' custom Self-Describing Format (SDF) binary files. 
+EPOCH [@arber:2015], developed at the University of Warwick, is a Fortran-based Particle-In-Cell (PIC) code widely used in laser-plasma physics, primarily within the United Kingdom. The code was first developed at the University of Warwick in early 2008, prior to the standardisation of many modern output file formats and as a result uses the university's custom Self-Describing Format (SDF) binary files. 
 
-Integrating a modern output module like `NetCDF` [@rew:1989] is challenging because the codebase accommodates one-, two-, and three-dimensional simulations across three variants: a regular grid geometry, a cylindrical geometry and a hybrid approximation. Multiple copies of the variants exists and are stored in forks and branches containing diverging commit histories making development of a unified module challenging.
+Integrating a modern output module like `NetCDF` [@rew:1989] is challenging because the codebase accommodates one-, two-, and three-dimensional simulations across three variants: a regular grid geometry, a cylindrical geometry and a hybrid approximation. Multiple copies of the variants exist and are stored in forks and branches containing diverging commit histories making development of a unified module challenging.
 
 # State of field
 
@@ -71,7 +71,7 @@ Both `sdf_helper` and `sdf-xarray` serve as wrappers around the C-based `SDF-C` 
 
 # Software design
 
-This packages design can be separated into three key sections; loading, plotting and rescaling. 
+This package's design can be separated into three key sections: loading, plotting and rescaling. 
 
 ## Loading SDF files
 
@@ -112,7 +112,7 @@ ds["Electric_Field_Ey"].epoch.plot()
 
 ### Animations
 
-Building animations provides insight into how systems evolving over time. While `Matplotlib` allows users to build animations, it can require quite a complicated setup in order to work with `Xarray`. As a result, `sdf-xarray` contains a custom function that builds on top of `Matplotlib`'s implementation and provides a simple user interface. An example animation of a dataset variable evolving over time is as follows:
+Building animations provides insight into how systems evolve over time. While `Matplotlib` allows users to build animations, it can require quite a complicated setup in order to work with `Xarray`. As a result, `sdf-xarray` contains a custom function that builds on top of `Matplotlib`'s implementation and provides a simple user interface. An example animation of a dataset variable evolving over time is as follows:
 
 ```python
 import sdf_xarray as sdfxr
@@ -129,7 +129,7 @@ anim = ds["Electric_Field_Ey"].epoch.animate()
 
 The minimum and maximum values of a variable can change between each SDF file, so when generating an animation the limits must be found over the whole dataset. This behaviour exists by default in `sdf-xarray` animations.
 
-EPOCH allows users to create simulations in which axes shift throughout the simulation (i.e. to track a lasers propagation through a long block of plasma) called moving windows as simulating the full picture is computationally expensive. `sdf-xarray` animations allow the user to specify a boolean value for this `moving_window` functionality to follow the simulation box instead of maintaining fixed axes.
+EPOCH provides a ``moving window" feature which shifts the axes as a simulation progresses (e.g. to track a laser pulse propagating through a long block of plasma). This saves computational resources by simulating only the most dynamic region of the domain rather than its full extent. `sdf-xarray` animations allow the user to specify a boolean value for this `moving_window` functionality to follow the simulation box instead of maintaining fixed axes.
 
 On top of building single variable animations, users can utilise the `animate_multiple()` function to overlay multiple variables.
 
@@ -137,11 +137,11 @@ Further examples and explanation of animations can be seen in the [documentation
 
 # Research impact statement
 
-This library was originally developed for the machine learning pipeline toolkit [BEAM](https://github.com/epochpic/sdf-xarray#broad-epoch-analysis-modules-beam). The initial software architecture was designed by Peter Hill, with subsequent maintenance, optimization, and feature iteration led by Joel Adams and community contributors. Since it's inception, the library has been widely adopted by EPOCH users at the York Plasma Institute, fostering a collaborative development environment where active researchers contribute new features to the codebase.
+This library was originally developed for the machine learning pipeline toolkit [BEAM](https://github.com/epochpic/sdf-xarray#broad-epoch-analysis-modules-beam). The initial software architecture was designed by Peter Hill, with subsequent maintenance, optimization, and feature iteration led by Joel Adams and community contributors. Since its inception, the library has been widely adopted by EPOCH users at the York Plasma Institute, fostering a collaborative development environment where active researchers contribute new features to the codebase.
 
 Beyond its foundational deployment at the University of York, `sdf-xarray` has achieved broader institutional adoption, seeing active use by researchers at the University of Strathclyde, Queen's University Belfast, First Light Fusion, and several government entities. In addition to driving primary research, the library serves a distinct educational role; it has been integrated into a course on PIC codes delivered to undergraduate students at the University of York and served as the primary data-interfacing utility for both the 2025 and 2026 international EPOCH user workshops.
 
-By adhering strictly to FAIR (Findable, Accessible, Interoperable, and Reusable) data principles, `sdf-xarray` alongside it's sister BEAM packages, `epyscan` and `epydeck` [@hill:2024b] maintains a transparent, community-driven developement model that encourages external contributions. In recognition of this commitment to open science and its measurable impact on the plasma physics community, the BEAM project was awarded the 2025 University of York Open Research Award in the Postgraduate Researcher (Sciences) category.
+By adhering strictly to FAIR (Findable, Accessible, Interoperable, and Reusable) data principles, `sdf-xarray` alongside its sister BEAM packages, `epyscan` and `epydeck` [@hill:2024b] maintains a transparent, community-driven development model that encourages external contributions. In recognition of this commitment to open science and its measurable impact on the plasma physics community, the BEAM project was awarded the 2025 University of York Open Research Award in the Postgraduate Researcher (Sciences) category.
 
 # AI usage disclosure
 
@@ -149,7 +149,7 @@ Some of the code and documentation in this library was partially developed with 
 
 # Acknowledgements
 
-This projects initial development was funded by the PlasmaFAIR project, EPSRC Grant EP/V051822/1
+This project's initial development was funded by the PlasmaFAIR project, EPSRC Grant EP/V051822/1
 
 We acknowledge the University of Warwick EPOCH development team for their support of the project and indirect contributions to this project by several anonymous contributors.
 

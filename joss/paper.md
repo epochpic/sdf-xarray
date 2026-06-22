@@ -75,7 +75,7 @@ This packages design can be separated into three key sections; loading, plotting
 
 ## Loading SDF files
 
-Data ingestion follows a three-stage pipeline: raw binary reading via the underlying `SDF-C` library, decoding into Python `dataclasse`s using `Cython` [@behnel:2010], and parsing into a custom `Xarray` backend. During this process, the backend sanitises variable names to Pythonic snake_case, attaches simulation input data using `epydeck` [@hill:2024a], and omits heavy particle data by default to conserve memory.
+Data ingestion follows a three-stage pipeline: raw binary reading via the underlying `SDF-C` library, decoding into Python dataclasses using `Cython` [@behnel:2010], and parsing into a custom `Xarray` backend. During this process, the backend sanitises variable names to Pythonic `snake_case`, attaches simulation input data using `epydeck` [@hill:2024a], and omits heavy particle data by default to conserve memory.
 
 For multi-file datasets, `sdf-xarray` aggregates data along a time dimension derived from each file's `time` attribute. However, this multi-file ingestion highlights a core limitation: `Xarray` strictly requires fixed grids, whereas EPOCH can output variable-grid data that changes with each step. Because these time-varying grids cannot natively coexist in a standard `Xarray` structure, `sdf-xarray` introduces a `separate_times` flag. This creates distinct time dimensions for variables with differing output frequencies, ensuring structural compatibility at the expense of a brief pre-evaluation RAM overhead.
 

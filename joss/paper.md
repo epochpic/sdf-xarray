@@ -52,7 +52,7 @@ Integrating a modern output module like `NetCDF` [@rew:1989] is challenging beca
 
 # State of field
 
-Several SDF wrappers [@bennett:2014a] for use in visualisation software have been created over the years including, but not limited to (i) `VisIt` [@childs:2012], (ii) `Matlab` [@matlab:2022] which is closed-source and requires a paid license, (iii) `OpenPMD` [@huebl:2015] which is not currently widely adopted and (iv) a custom Python package called `sdf_helper`.
+Several SDF wrappers [@bennett:2014a] for use in visualisation software have been created, including but not limited to: `VisIt` [@childs:2012]; `Matlab` [@matlab:2022] which is closed-source and requires a paid license; `OpenPMD` [@huebl:2015] which is not currently widely adopted; and a Python package called `sdf_helper`.
 
 Python and `Matplotlib` [@hunter:2007] are standard tools for plasma physics simulation analysis. The `sdf_helper` Python package supports this workflow by providing simple data extraction to `NumPy` [@harris:2020] and custom `Matplotlib` plotting routines. Unfortunately, it lacks native capabilities for concatenating multiple SDF files into time-resolved datasets.
 
@@ -82,10 +82,10 @@ The loading of an SDF file can be split into 3 steps:
 1. These `dataclasses` are subsequently parsed into a [custom backend](https://docs.xarray.dev/en/latest/internals/how-to-add-new-backend.html) suitable for use with the `Xarray` library.
     - Some of the file's grids and variables are not loaded due to them being problematic and not used in practice. 
     - Grid and variable names contain slashes between each section and sometimes spaces; These are replaced with underscores to match the Pythonic snake case. e.g. `"Derived/Number Density/Electron"` -> `"Derived_Number_Density_Electron"`. 
-    - Particle data takes up a significant portion of the size of a file if it is present and therefore by default is not loaded to alleviate the RAM requirements.
+    - As particle data takes up a significant portion of the size of a file, it is not loaded by default to alleviate RAM requirements.
     - The `input.deck` (simulation setup file) is appended to the datasets' global attributes via `epydeck` [@hill:2024a].
 
-loading multiple files introduces a time dimension and coordinate derived from each file's `time` attribute, appending the dataset's data along this axis. At this stage we also check that the files have the same `jobid` in case the user attempts to combine files from two different simulations.
+Loading multiple files introduces a time dimension and coordinate derived from each file's `time` attribute, appending the dataset's data along this axis. At this stage we also check that the files have the same `jobid` in case the user attempts to combine files from two different simulations.
 
 A primary limitation of `Xarray` is its strict requirement for fixed grids. EPOCH outputs both fixed global-grid data and variable-grid data that can change with each SDF output; consequently, datasets with time-varying grid sizes cannot be natively integrated into standard `Xarray` structures. To mitigate this constraint, `sdf-xarray` provides a `separate_times` flag when opening multi-file datasets, which creates distinct time dimensions for variables with differing output frequencies. This approach increases RAM overhead as the dimension sizes of each variable must be explicitly evaluated prior to a being assigned to a time dimension.
 

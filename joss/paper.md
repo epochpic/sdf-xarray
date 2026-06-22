@@ -75,19 +75,9 @@ This packages design can be separated into three key sections; loading, plotting
 
 ## Loading SDF files
 
-The loading of an SDF file can be split into 3 steps:
+Data ingestion follows a three-stage pipeline: raw binary reading via the underlying `SDF-C` library, decoding into Python `dataclasse`s using `Cython` [@behnel:2010], and parsing into a custom `Xarray` backend. During this process, the backend sanitises variable names to Pythonic snake_case, attaches simulation input data using `epydeck` [@hill:2024a], and omits heavy particle data by default to conserve memory.
 
-1. The `SDF-C` C library reads the raw binary file.
-1. `Cython` [@behnel:2010] then decodes the `header`, `run_info` and converts the data into Python `dataclasses`.
-1. These `dataclasses` are subsequently parsed into a [custom backend](https://docs.xarray.dev/en/latest/internals/how-to-add-new-backend.html) suitable for use with the `Xarray` library.
-    - Some of the file's grids and variables are not loaded due to them being problematic and not used in practice. 
-    - Grid and variable names contain slashes between each section and sometimes spaces; These are replaced with underscores to match the Pythonic snake case. e.g. `"Derived/Number Density/Electron"` -> `"Derived_Number_Density_Electron"`. 
-    - As particle data takes up a significant portion of the size of a file, it is not loaded by default to alleviate RAM requirements.
-    - The `input.deck` (simulation setup file) is appended to the datasets' global attributes via `epydeck` [@hill:2024a].
-
-Loading multiple files introduces a time dimension and coordinate derived from each file's `time` attribute, appending the dataset's data along this axis. At this stage we also check that the files have the same `jobid` in case the user attempts to combine files from two different simulations.
-
-A primary limitation of `Xarray` is its strict requirement for fixed grids. EPOCH outputs both fixed global-grid data and variable-grid data that can change with each SDF output; consequently, datasets with time-varying grid sizes cannot be natively integrated into standard `Xarray` structures. To mitigate this constraint, `sdf-xarray` provides a `separate_times` flag when opening multi-file datasets, which creates distinct time dimensions for variables with differing output frequencies. This approach increases RAM overhead as the dimension sizes of each variable must be explicitly evaluated prior to a being assigned to a time dimension.
+For multi-file datasets, `sdf-xarray` aggregates data along a time dimension derived from each file's `time` attribute. However, this multi-file ingestion highlights a core limitation: `Xarray` strictly requires fixed grids, whereas EPOCH can output variable-grid data that changes with each step. Because these time-varying grids cannot natively coexist in a standard `Xarray` structure, `sdf-xarray` introduces a `separate_times` flag. This creates distinct time dimensions for variables with differing output frequencies, ensuring structural compatibility at the expense of a brief pre-evaluation RAM overhead.
 
 ## Rescaling datasets
 

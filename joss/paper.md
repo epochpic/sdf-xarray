@@ -1,5 +1,5 @@
 ---
-title: 'sdf-xarray: Interactive data reading for particle-in-cell simulations'
+title: 'sdf-xarray: Interactive data reading and visualisation for EPOCH particle-in-cell simulations'
 tags:
   - Python
   - xarray

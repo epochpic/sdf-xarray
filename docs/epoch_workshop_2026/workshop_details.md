@@ -1,6 +1,6 @@
 # Workshop Details
 
-The workshop consisted of a series of talks and practical sessions delivered at the University of York over the course of 2 days (23-24 April). It covered setting up both EPOCH and sdf-xarray along with delving into the details of how PIC codes work. The timetable is located [here](https://epochpic.github.io/quickstart/epoch_workshop_2026.html) and recordings of the presentations can be found on [YouTube](https://youtube.com/playlist?list=PLXfw-OhAIheRtwRqrGZvMqFuQ2GrIBLVl).
+The workshop consisted of a series of talks and practical sessions delivered at the University of York over the course of 2 days (23-24 April). It covered setting up both  `EPOCH` and `sdf-xarray` along with delving into the details of how PIC codes work. The timetable is located [here](https://epochpic.github.io/quickstart/epoch_workshop_2026.html) and recordings of the presentations can be found on [YouTube](https://youtube.com/playlist?list=PLXfw-OhAIheRtwRqrGZvMqFuQ2GrIBLVl).
 
 ## Live Demo
 

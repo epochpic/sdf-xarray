@@ -8,7 +8,7 @@ ds = sdfxr.open_mfdataset(
 )
 
 # Rescale coords to account for kilometers
-ds = ds.epoch.rescale_coords(1e-3, "km", ["X_x_px_Left"])
+ds = ds.epoch.rescale_coords("km", ["X_x_px_Left"], 1e-3)
 
 # Sum phase-space of species "Left" and "Right" in "x_px" distribution function
 # NOTE: We only use the values from the right distribution function as if we inherit

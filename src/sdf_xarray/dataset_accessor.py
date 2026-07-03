@@ -19,37 +19,39 @@ class EpochAccessor:
 
     def rescale_coords(
         self,
-        multiplier: float,
         unit_label: str,
         coord_names: str | list[str],
+        multiplier: float | None = None,
     ) -> xr.Dataset:
         """
-        Rescales specified X and Y coordinates in the Dataset by a given multiplier
-        and updates the unit label attribute.
+        Rescales specified coordinates in a Dataset by a given unit. If the
+        multiplier is not specified then the coordinates are automatically
+        scaled using `pint <https://pint.readthedocs.io/en/stable>`_, if the multiplier is specified then it will be
+        used to rescale the coordinate.
 
         Parameters
         ----------
-        multiplier : float
-            The factor by which to multiply the coordinate values (e.g., 1e6 for meters to microns).
         unit_label : str
             The new unit label for the coordinates (e.g., "µm").
         coord_names : str or list of str
             The name(s) of the coordinate variable(s) to rescale.
             If a string, only that coordinate is rescaled.
             If a list, all listed coordinates are rescaled.
-
-        Returns
-        -------
-        xr.Dataset
-            A new Dataset with the updated and rescaled coordinates.
+        multiplier : float or None
+            The factor by which to multiply the coordinate values (e.g., 1e6
+            for meters to microns). If not specified then ``pint`` is used to
+            rescale the units automatically.
 
         Examples
         --------
-        # Convert X, Y, and Z from meters to microns
-        >>> ds_in_microns = ds.epoch.rescale_coords(1e6, "µm", coord_names=["X_Grid", "Y_Grid", "Z_Grid"])
-
-        # Convert only X to millimeters
-        >>> ds_in_mm = ds.epoch.rescale_coords(1000, "mm", coord_names="X_Grid")
+        >>> # Convert X, Y, and Z from meters to microns using pint
+        >>> ds_in_microns = ds.epoch.rescale_coords("µm", coord_names=["X_Grid", "Y_Grid", "Z_Grid"])
+        >>>
+        >>> # Convert X, Y, and Z from meters to microns
+        >>> ds_in_microns = ds.epoch.rescale_coords("µm", coord_names=["X_Grid", "Y_Grid", "Z_Grid"], 1e6)
+        >>>
+        >>> # Convert time to femtoseconds
+        >>> ds_in_mm = ds.epoch.rescale_coords("fs", coord_names="time")
         """
 
         ds = self._ds
@@ -72,9 +74,19 @@ class EpochAccessor:
 
             coord_original = ds[coord_name]
 
-            coord_rescaled = coord_original * multiplier
-            coord_rescaled.attrs = coord_original.attrs.copy()
-            coord_rescaled.attrs["units"] = unit_label
+            if multiplier is not None:
+                coord_rescaled = coord_original * multiplier
+                coord_rescaled.attrs = coord_original.attrs.copy()
+                coord_rescaled.attrs["units"] = unit_label
+            else:
+                coord_rescaled: xr.DataArray = (
+                    coord_original.pint.quantify(coord_original.attrs["units"])
+                    .pint.to(unit_label)
+                    .pint.dequantify()
+                )
+                # Ensure the unit label follows the same naming convension the
+                # user has specified and not the one given by pint
+                coord_rescaled.attrs["units"] = unit_label
 
             new_coords[coord_name] = coord_rescaled
 

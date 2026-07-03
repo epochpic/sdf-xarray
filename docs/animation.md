@@ -170,8 +170,8 @@ Some functionality such as `aspect` and `size` are not fully implemented yet.
 ds = sdfxr.open_mfdataset("tutorial_dataset_2d/*.sdf")
 
 # Change the units of the coordinates
-ds = ds.epoch.rescale_coords(1e6, "µm", ["X_Grid_mid", "Y_Grid_mid"])
-ds = ds.epoch.rescale_coords(1e15, "fs", ["time"])
+ds = ds.epoch.rescale_coords("µm", ["X_Grid_mid", "Y_Grid_mid"])
+ds = ds.epoch.rescale_coords("fs", ["time"])
 ds["time"].attrs["long_name"] = "t"
 
 # Change units and name of the variable

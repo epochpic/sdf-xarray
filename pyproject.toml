@@ -78,6 +78,8 @@ test = [
   "matplotlib",
   "pooch>=1.8.2",
   "tqdm",
+  "pint",
+  "pint-xarray",
 ]
 
 [project.entry-points."xarray.backends"]

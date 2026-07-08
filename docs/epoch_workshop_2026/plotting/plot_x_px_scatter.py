@@ -9,7 +9,7 @@ input_dir = Path("datasets/5_2_subsets")
 ds = sdfxr.open_dataset(input_dir / "0000.sdf", keep_particles=True)
 
 ds = ds.epoch.rescale_coords(
-    1e6, "µm", ["X_Particles_subset_Refluxers_Electron", "Y_Target_mid"]
+    "µm", ["X_Particles_subset_Refluxers_Electron", "Y_Target_mid"], 1e6
 )
 
 x = ds["X_Particles_subset_Refluxers_Electron"]

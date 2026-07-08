@@ -10,7 +10,7 @@ input_dir = Path("datasets/3_5_Gaussian_beam")
 ds = sdfxr.open_dataset(input_dir / "0001.sdf")
 
 # Convert the x and y coords to microns
-ds = ds.epoch.rescale_coords(1e6, "µm", ["X_Grid_mid", "Y_Grid_mid"])
+ds = ds.epoch.rescale_coords("µm", ["X_Grid_mid", "Y_Grid_mid"], 1e6)
 
 # Calculate Poynting flux magnitude
 flux_magnitude = np.sqrt(

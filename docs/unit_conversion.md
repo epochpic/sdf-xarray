@@ -30,7 +30,7 @@ plt.rcParams.update({
 For simple scaling and unit relabelling of coordinates (e.g., converting meters to microns),
 the most straightforward approach is to use the [`xarray.Dataset.epoch.rescale_coords`](project:#sdf_xarray.dataset_accessor.EpochAccessor.rescale_coords) dataset accessor.
 This function scales the coordinate values by a given multiplier and updates the
-`"units"` attribute in one step.
+`"units"` attribute in one step. If the multiplier is not specified then the conversion parameter is inferred from the units and converted automatically using `pint` (see [](#unit-conversion-with-pint-xarray) for details).
 
 ### Rescaling grid coordinates
 
@@ -41,7 +41,7 @@ We can use the [`xarray.Dataset.epoch.rescale_coords`](project:#sdf_xarray.datas
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
 
 ds = sdfxr.open_mfdataset("tutorial_dataset_2d/*.sdf")
-ds_in_microns = ds.epoch.rescale_coords(1e6, "µm", ["X_Grid_mid", "Y_Grid_mid"])
+ds_in_microns = ds.epoch.rescale_coords("µm", ["X_Grid_mid", "Y_Grid_mid"], 1e6)
 
 ds["Derived_Number_Density_Electron"].isel(time=0).epoch.plot(ax=ax1)
 ax1.set_title("Original X Coordinate (m)")
@@ -55,7 +55,7 @@ fig.tight_layout()
 ### Rescaling time coordinate
 
 We can also use the [`xarray.Dataset.epoch.rescale_coords`](project:#sdf_xarray.dataset_accessor.EpochAccessor.rescale_coords) method to convert the time coordinate from
-seconds (`s`) to femto-seconds (`fs`) by applying a multiplier of `1e15`.
+seconds (`s`) to femto-seconds (`fs`).
 
 ```{code-cell} ipython3
 ds = sdfxr.open_mfdataset("tutorial_dataset_2d/*.sdf")
@@ -63,7 +63,7 @@ ds["time"]
 ```
 
 ```{code-cell} ipython3
-ds = ds.epoch.rescale_coords(1e15, "fs", "time")
+ds = ds.epoch.rescale_coords("fs", "time")
 ds["time"]
 ```
 

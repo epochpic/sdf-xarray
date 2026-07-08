@@ -13,7 +13,7 @@ input_dir = Path("datasets/4_2_self_heating")
 ds = sdfxr.open_mfdataset(input_dir)
 
 # Convert the time to femtoseconds
-ds = ds.epoch.rescale_coords(1e15, "fs", "time")
+ds = ds.epoch.rescale_coords("fs", "time", 1e15)
 
 # Averate temperature over all spatial cells at each time-step
 kB = 1.380649e-23

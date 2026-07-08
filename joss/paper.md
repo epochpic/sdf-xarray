@@ -50,7 +50,7 @@ EPOCH [@arber:2015], developed at the University of Warwick, is a Fortran-based 
 
 Integrating a modern output module like `NetCDF` [@rew:1989] is challenging because the codebase accommodates one-, two-, and three-dimensional simulations across three variants: a regular grid geometry, a cylindrical geometry and a hybrid approximation. Multiple copies of the variants exist and are stored in forks and branches containing diverging commit histories making development of a unified module challenging.
 
-# State of field
+# State of the field
 
 Several SDF wrappers [@bennett:2014a] for use in visualisation software have been created, including but not limited to: `VisIt` [@childs:2012]; `Matlab` [@matlab:2022] which is closed-source and requires a paid license; `OpenPMD` [@huebl:2015] which is not currently widely adopted; and a Python package called `sdf_helper`.
 

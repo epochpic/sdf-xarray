@@ -56,6 +56,47 @@ def get_frame_title(
     return f"{title_custom}{title_t_axis}{title_sdf}"
 
 
+def get_axis_label(dim: xr.DataArray):
+    label = f"{dim.long_name} [{dim.units}]"
+    return label
+
+
+def _recover_vertex_coord(w_mid):
+    # Takes a midpoint coordinate, returns a vertex coordinate
+    w_size = w_mid.size
+    dw = w_mid[1] - w_mid[0]
+    w = np.zeros(w_mid.size + 1)
+    w[:w_size] = w_mid - dw/2
+    w[w_size] = w[w_size-1] + dw
+    return w
+
+
+def shift_cmap(cmap, vmin, vmax, vcenter, N=1024):
+    """
+    Creates a new colourmap where the visual center of the original 
+    colourmap is shifted to a specific data value.
+    """
+    import matplotlib.pyplot as plt
+    import matplotlib.colors as mc
+
+    # get the original colourmap
+    if type(cmap) == str:
+        cmap = plt.get_cmap(cmap)
+    
+    midpoint = (vcenter - vmin) / (vmax - vmin)
+    lower_size = int(N * midpoint)
+    upper_size = N - lower_size
+    
+    bottom_colors = cmap(np.linspace(0.0, 0.5, lower_size))
+    top_colors = cmap(np.linspace(0.5, 1.0, upper_size))
+    new_colors = np.vstack((bottom_colors, top_colors))
+    
+    new_cmap = mc.ListedColormap(new_colors, name=f"shifted_{cmap.name}")
+
+    return new_cmap
+
+
+
 def calculate_window_boundaries(
     data: xr.DataArray,
     xlim: tuple[float, float] | None = None,
@@ -135,7 +176,142 @@ def _set_axes_labels(ax: plt.Axes, axis_kwargs: dict) -> None:
         ax.set_ylabel(axis_kwargs["ylabel"])
 
 
-def _setup_2d_plot(
+def voxel_plot(
+        da,
+        vmin = None,
+        vmax = None,
+        vcenter = None,
+        mask = None,
+        xlim = (None, None),
+        ylim = (None, None),
+        zlim = (None, None),
+        aspect = "equal",
+        elev = 30,
+        azim = -60,
+        cmap = "viridis",
+        cbar_scale = 0.9,
+    ):
+    """
+    Will take 3 dimensional data and plot it as voxels.
+
+    Parameters
+    ----------
+    da
+        DataArray to be plotted.
+    vmin
+        Minimum value. If `mask` is not stated, will be used to define the mask.
+    vmax
+        Maximum value. If `mask` is not stated, will be used to define the mask.
+    vcenter
+        Center value of the colourmap. Useful for diverging colourmaps with non-symetrical data.
+    mask
+        Array of bools specifing which cells to show. Must be same size as `da`
+    xlim, ylim, zlim
+        Sets the limits of the plot.
+    aspect
+        Aspect ratio of the plot. "equal", "auto" or list of floats. (default = "equal")
+    elev
+        Elevation angle in degrees. (default = 30)
+    azim
+        Azimithul angle in degrees. (default = -60)
+    cmap
+        Colourmap (default = "viridis")
+    cbar_scale
+        Vertical scale of the colorbar (default = 0.9)
+    """
+    import matplotlib.pyplot as plt
+
+    print("Warning! voxel plots can be extremely intensive!")
+
+    # Limit arrays based on axis limits
+    da = da.epoch.limit((xlim, ylim, zlim))
+
+    dims = da.dims
+
+    # Create W_Grid from W_Grid_mid coords
+    x = _recover_vertex_coord(da[dims[0]])
+    y = _recover_vertex_coord(da[dims[1]])
+    z = _recover_vertex_coord(da[dims[2]])
+
+    # Create mesh
+    x_mesh, y_mesh, z_mesh = np.meshgrid(x, y, z, indexing="ij")
+
+    if vmin == None:
+        vmin = np.min(da.values)
+    if vmax == None:
+        vmax = np.max(da.values)
+
+    # Mask out data
+    if mask == None:
+        mask = (da > vmin) * (da < vmax)
+
+    # Plot the data array
+    fig = plt.figure(figsize=(8, 6))
+    ax = fig.add_subplot(projection='3d')
+    ax.view_init(elev, azim)
+
+    # Set axis labels
+    ax.set_xlabel(get_axis_label(da[dims[0]]))
+    ax.set_ylabel(get_axis_label(da[dims[1]]))
+    ax.set_zlabel(get_axis_label(da[dims[2]]))
+
+    # Find axis limits
+    xlim = list(xlim)
+    ylim = list(ylim)
+    zlim = list(zlim)
+    if xlim[0] == None:
+        xlim[0] = x.min()
+    if xlim[1] == None:
+        xlim[1] = x.max()
+    if ylim[0] == None:
+        ylim[0] = y.min()
+    if ylim[1] == None:
+        ylim[1] = y.max()
+    if zlim[0] == None:
+        zlim[0] = z.min()
+    if zlim[1] == None:
+        zlim[1] = z.max()
+
+    # Set aspect ratio  of plot
+    if aspect == "equal":
+        x_aspect = 1
+        y_aspect = 1
+        z_aspect = 1
+    elif aspect == "auto":
+        x_aspect = xlim[1] - xlim[0]
+        y_aspect = ylim[1] - ylim[0]
+        z_aspect = zlim[1] - zlim[0]
+    else:
+        x_aspect, y_aspect, z_aspect = aspect
+    ax.set_box_aspect((x_aspect, y_aspect, z_aspect))
+
+    # Limit axis of plot
+    ax.set_xlim(xlim[0], xlim[1])
+    ax.set_ylim(ylim[0], ylim[1])
+    ax.set_zlim(zlim[0], zlim[1])
+
+    # Colour bar and colour map
+    if vcenter is not None:
+        cmap = shift_cmap(cmap, vmin, vmax, vcenter)
+    norm = plt.Normalize(vmin = vmin, vmax = vmax)
+    cmap = plt.get_cmap(cmap)
+    colours = cmap(norm(da))
+    
+    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+    sm.set_array([])  # Required for the colorbar to function
+    cbar_label = get_axis_label(da)
+    fig.colorbar(sm, ax=ax, label=cbar_label, shrink = cbar_scale, aspect = 20*cbar_scale)
+
+    ax.voxels(
+        x_mesh, y_mesh, z_mesh,
+        mask,
+        facecolors = colours,
+    )
+
+    return fig, ax
+
+
+def _setup_line_plot(
     data: xr.DataArray,
     ax: plt.Axes,
     coord_names: list[str],
@@ -145,7 +321,7 @@ def _setup_2d_plot(
     max_percentile: float,
     t: str,
 ) -> tuple[float, float]:
-    """Setup 2D plot initialization."""
+    """Line animation initialization."""
 
     kwargs.setdefault("x", coord_names[0])
 
@@ -161,7 +337,7 @@ def _setup_2d_plot(
     return global_min, global_max
 
 
-def _setup_3d_plot(
+def _setup_pcolormesh_plot(
     data: xr.DataArray,
     ax: plt.Axes,
     coord_names: list[str],
@@ -172,7 +348,46 @@ def _setup_3d_plot(
     max_percentile: float,
     t: str,
 ) -> None:
-    """Setup 3D plot initialization."""
+    """pcolormesh animation initialization."""
+    import matplotlib.pyplot as plt  # noqa: PLC0415
+
+    if "norm" not in kwargs:
+        global_min, global_max = compute_global_limits(
+            data, min_percentile, max_percentile
+        )
+        kwargs["norm"] = plt.Normalize(vmin=global_min, vmax=global_max)
+
+    kwargs["add_colorbar"] = False
+    kwargs.setdefault("x", coord_names[0])
+    kwargs.setdefault("y", coord_names[1])
+
+    argmin_time = np.unravel_index(np.argmin(data.values), data.shape)[0]
+    plot = data.isel({t: argmin_time}).plot(ax=ax, **kwargs)
+    kwargs["cmap"] = plot.cmap
+
+    _set_axes_labels(ax, axis_kwargs)
+
+    if kwargs_original.get("add_colorbar", True):
+        long_name = data.attrs.get("long_name")
+        units = data.attrs.get("units")
+        fig = plot.get_figure()
+        fig.colorbar(plot, ax=ax, label=f"{long_name} [{units}]")
+
+def _setup_voxel_plot(
+    data: xr.DataArray,
+    ax: plt.Axes,
+    coord_names: list[str],
+    kwargs: dict,
+    kwargs_original: dict,
+    axis_kwargs: dict,
+    min_percentile: float,
+    max_percentile: float,
+    t: str,
+) -> None:
+    """
+    Voxel animation initialization.
+    NOTE: this function exists for completeness, voxel plots don't work in animations yet
+    """
     import matplotlib.pyplot as plt  # noqa: PLC0415
 
     if "norm" not in kwargs:
@@ -262,7 +477,7 @@ def _generate_animation(
 
     global_min = global_max = None
     if data.ndim == 2:
-        global_min, global_max = _setup_2d_plot(
+        global_min, global_max = _setup_line_plot(
             data=data,
             ax=ax,
             coord_names=coord_names,
@@ -273,7 +488,7 @@ def _generate_animation(
             t=t,
         )
     elif data.ndim == 3:
-        _setup_3d_plot(
+        _setup_pcolormesh_plot(
             data=data,
             ax=ax,
             coord_names=coord_names,
@@ -284,6 +499,19 @@ def _generate_animation(
             max_percentile=max_percentile,
             t=t,
         )
+    elif data.ndim == 4:
+        raise NotImplementedError("Voxel animations are not currently supported.")
+        # _setup_voxel_plot(
+        #     data=data,
+        #     ax=ax,
+        #     coord_names=coord_names,
+        #     kwargs=kwargs,
+        #     kwargs_original=kwargs_original,
+        #     axis_kwargs=axis_kwargs,
+        #     min_percentile=min_percentile,
+        #     max_percentile=max_percentile,
+        #     t=t,
+        # )
 
     ax.set_title(get_frame_title(data, 0, display_sdf_name, title, t))
 

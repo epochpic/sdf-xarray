@@ -57,8 +57,7 @@ def get_frame_title(
 
 
 def get_axis_label(dim: xr.DataArray):
-    label = f"{dim.long_name} [{dim.units}]"
-    return label
+    return f"{dim.long_name} [{dim.units}]"
 
 
 def _recover_vertex_coord(w_mid):
@@ -66,35 +65,32 @@ def _recover_vertex_coord(w_mid):
     w_size = w_mid.size
     dw = w_mid[1] - w_mid[0]
     w = np.zeros(w_mid.size + 1)
-    w[:w_size] = w_mid - dw/2
-    w[w_size] = w[w_size-1] + dw
+    w[:w_size] = w_mid - dw / 2
+    w[w_size] = w[w_size - 1] + dw
     return w
 
 
 def shift_cmap(cmap, vmin, vmax, vcenter, N=1024):
     """
-    Creates a new colourmap where the visual center of the original 
+    Creates a new colourmap where the visual center of the original
     colourmap is shifted to a specific data value.
     """
-    import matplotlib.pyplot as plt
-    import matplotlib.colors as mc
+    import matplotlib.colors as mc  # noqa: PLC0415
+    import matplotlib.pyplot as plt  # noqa: PLC0415
 
     # get the original colourmap
-    if type(cmap) == str:
+    if type(cmap) is str:
         cmap = plt.get_cmap(cmap)
-    
+
     midpoint = (vcenter - vmin) / (vmax - vmin)
     lower_size = int(N * midpoint)
     upper_size = N - lower_size
-    
+
     bottom_colors = cmap(np.linspace(0.0, 0.5, lower_size))
     top_colors = cmap(np.linspace(0.5, 1.0, upper_size))
     new_colors = np.vstack((bottom_colors, top_colors))
-    
-    new_cmap = mc.ListedColormap(new_colors, name=f"shifted_{cmap.name}")
 
-    return new_cmap
-
+    return mc.ListedColormap(new_colors, name=f"shifted_{cmap.name}")
 
 
 def calculate_window_boundaries(
@@ -176,21 +172,21 @@ def _set_axes_labels(ax: plt.Axes, axis_kwargs: dict) -> None:
         ax.set_ylabel(axis_kwargs["ylabel"])
 
 
-def voxel_plot(
-        da,
-        vmin = None,
-        vmax = None,
-        vcenter = None,
-        mask = None,
-        xlim = (None, None),
-        ylim = (None, None),
-        zlim = (None, None),
-        aspect = "equal",
-        elev = 30,
-        azim = -60,
-        cmap = "viridis",
-        cbar_scale = 0.9,
-    ):
+def voxel_plot(  # noqa: PLR0912, PLR0915
+    da,
+    vmin=None,
+    vmax=None,
+    vcenter=None,
+    mask=None,
+    xlim=(None, None),
+    ylim=(None, None),
+    zlim=(None, None),
+    aspect="equal",
+    elev=30,
+    azim=-60,
+    cmap="viridis",
+    cbar_scale=0.9,
+):
     """
     Will take 3 dimensional data and plot it as voxels.
 
@@ -219,7 +215,7 @@ def voxel_plot(
     cbar_scale
         Vertical scale of the colorbar (default = 0.9)
     """
-    import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt  # noqa: PLC0415
 
     print("Warning! voxel plots can be extremely intensive!")
 
@@ -236,18 +232,18 @@ def voxel_plot(
     # Create mesh
     x_mesh, y_mesh, z_mesh = np.meshgrid(x, y, z, indexing="ij")
 
-    if vmin == None:
+    if vmin is None:
         vmin = np.min(da.values)
-    if vmax == None:
+    if vmax is None:
         vmax = np.max(da.values)
 
     # Mask out data
-    if mask == None:
+    if mask is None:
         mask = (da > vmin) * (da < vmax)
 
     # Plot the data array
     fig = plt.figure(figsize=(8, 6))
-    ax = fig.add_subplot(projection='3d')
+    ax = fig.add_subplot(projection="3d")
     ax.view_init(elev, azim)
 
     # Set axis labels
@@ -259,17 +255,17 @@ def voxel_plot(
     xlim = list(xlim)
     ylim = list(ylim)
     zlim = list(zlim)
-    if xlim[0] == None:
+    if xlim[0] is None:
         xlim[0] = x.min()
-    if xlim[1] == None:
+    if xlim[1] is None:
         xlim[1] = x.max()
-    if ylim[0] == None:
+    if ylim[0] is None:
         ylim[0] = y.min()
-    if ylim[1] == None:
+    if ylim[1] is None:
         ylim[1] = y.max()
-    if zlim[0] == None:
+    if zlim[0] is None:
         zlim[0] = z.min()
-    if zlim[1] == None:
+    if zlim[1] is None:
         zlim[1] = z.max()
 
     # Set aspect ratio  of plot
@@ -293,19 +289,21 @@ def voxel_plot(
     # Colour bar and colour map
     if vcenter is not None:
         cmap = shift_cmap(cmap, vmin, vmax, vcenter)
-    norm = plt.Normalize(vmin = vmin, vmax = vmax)
+    norm = plt.Normalize(vmin=vmin, vmax=vmax)
     cmap = plt.get_cmap(cmap)
     colours = cmap(norm(da))
-    
+
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
     sm.set_array([])  # Required for the colorbar to function
     cbar_label = get_axis_label(da)
-    fig.colorbar(sm, ax=ax, label=cbar_label, shrink = cbar_scale, aspect = 20*cbar_scale)
+    fig.colorbar(sm, ax=ax, label=cbar_label, shrink=cbar_scale, aspect=20 * cbar_scale)
 
     ax.voxels(
-        x_mesh, y_mesh, z_mesh,
+        x_mesh,
+        y_mesh,
+        z_mesh,
         mask,
-        facecolors = colours,
+        facecolors=colours,
     )
 
     return fig, ax
@@ -372,6 +370,7 @@ def _setup_pcolormesh_plot(
         units = data.attrs.get("units")
         fig = plot.get_figure()
         fig.colorbar(plot, ax=ax, label=f"{long_name} [{units}]")
+
 
 def _setup_voxel_plot(
     data: xr.DataArray,

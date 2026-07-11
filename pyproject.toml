@@ -69,6 +69,7 @@ docs = [
   "sphinx-design>=0.7.0",
   "pooch>=1.8.2",
   "tqdm",
+  "scipy",
 ]
 build = ["cibuildwheel[uv]"]
 lint = ["ruff"]
@@ -80,6 +81,7 @@ test = [
   "tqdm",
   "pint",
   "pint-xarray",
+  "scipy",
 ]
 
 [project.entry-points."xarray.backends"]

@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     import matplotlib.pyplot as plt
     from matplotlib.animation import FuncAnimation
     from matplotlib.axes import Axes
+    from matplotlib.colors import ListedColormap
     from matplotlib.figure import Figure
 
 
@@ -58,12 +59,13 @@ def get_frame_title(
     return f"{title_custom}{title_t_axis}{title_sdf}"
 
 
-def get_axis_label(dim: xr.DataArray):
+def get_axis_label(dim: xr.DataArray) -> str:
+    """Formats the axes label for a given dim in the form of ``dim.long_name [dim.units]``."""
     return f"{dim.long_name} [{dim.units}]"
 
 
-def _recover_vertex_coord(w_mid):
-    # Takes a midpoint coordinate, returns a vertex coordinate
+def _recover_vertex_coord(w_mid: xr.DataArray) -> np.ndarray:
+    """Takes a midpoint coordinate, returns a vertex coordinate."""
     w_size = w_mid.size
     dw = w_mid[1] - w_mid[0]
     w = np.zeros(w_mid.size + 1)
@@ -72,10 +74,30 @@ def _recover_vertex_coord(w_mid):
     return w
 
 
-def shift_cmap(cmap, vmin, vmax, vcenter, N=1024):
+def shift_cmap(
+    cmap: str, vmin: float, vmax: float, vcenter: float, N: int = 1024
+) -> ListedColormap:
     """
-    Creates a new colourmap where the visual center of the original
-    colourmap is shifted to a specific data value.
+    Create a new colormap where the visual center of the original
+    colormap is shifted to a specific data value.
+
+    Parameters
+    ----------
+    cmap : str or matplotlib.colors.Colormap
+        The name of the original colormap (e.g., 'viridis') or the colormap object itself.
+    vmin : float
+        The minimum value of your data range.
+    vmax : float
+        The maximum value of your data range.
+    vcenter : float
+        The data value that should map to the visual midpoint (0.5) of the colormap.
+    N : int, default 1024
+        The number of interpolation steps (color bins) in the new colormap.
+
+    Returns
+    -------
+    matplotlib.colors.ListedColormap
+        The newly constructed, shifted colormap.
     """
     import matplotlib.colors as mc  # noqa: PLC0415
     import matplotlib.pyplot as plt  # noqa: PLC0415

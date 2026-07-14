@@ -7,7 +7,9 @@ import numpy as np
 import pytest
 import xarray as xr
 from matplotlib.animation import PillowWriter
+from matplotlib.colors import ListedColormap
 from matplotlib.container import BarContainer
+from mpl_toolkits.mplot3d import Axes3D
 from packaging.version import Version
 
 import sdf_xarray as sdfxr
@@ -335,3 +337,241 @@ def test_epoch_plot_flips_axis_order_for_2d_data_but_not_when_time_dim_present(
         plot = ds["Derived_Number_Density_electron"].epoch.plot(ax=ax)
 
         assert type(plot[2]) is BarContainer
+
+
+def _make_3d_da(shape=(4, 5, 6)):
+    """Small synthetic 3-D DataArray with the metadata voxel_plot expects."""
+    nx, ny, nz = shape
+    rng = np.random.default_rng(42)
+    data = rng.uniform(0.0, 1.0, (nx, ny, nz)).astype(np.float64)
+    return xr.DataArray(
+        data,
+        dims=["X_Grid_mid", "Y_Grid_mid", "Z_Grid_mid"],
+        coords={
+            "X_Grid_mid": xr.Variable(
+                "X_Grid_mid",
+                np.linspace(0.0, 1e-5, nx),
+                attrs={"long_name": "X", "units": "m"},
+            ),
+            "Y_Grid_mid": xr.Variable(
+                "Y_Grid_mid",
+                np.linspace(0.0, 2e-5, ny),
+                attrs={"long_name": "Y", "units": "m"},
+            ),
+            "Z_Grid_mid": xr.Variable(
+                "Z_Grid_mid",
+                np.linspace(0.0, 3e-5, nz),
+                attrs={"long_name": "Z", "units": "m"},
+            ),
+        },
+        attrs={"long_name": "Test Density", "units": "1/m^3"},
+    )
+
+
+@pytest.fixture
+def close_figs():
+    yield
+    plt.close("all")
+
+
+def test_recover_vertex_coord_size():
+    mid = xr.DataArray(np.linspace(0.5, 4.5, 5))
+    vertex = sxp._recover_vertex_coord(mid)
+    assert vertex.size == mid.size + 1
+
+
+def test_recover_vertex_coord_values():
+    mid = xr.DataArray(np.array([0.5, 1.5, 2.5]))
+    vertex = sxp._recover_vertex_coord(mid)
+    np.testing.assert_allclose(vertex, [0.0, 1.0, 2.0, 3.0])
+
+
+def test_shift_cmap_returns_listed_colormap():
+    result = sxp.shift_cmap("RdBu", vmin=-1.0, vmax=1.0, vcenter=0.0)
+    assert isinstance(result, ListedColormap)
+
+
+def test_shift_cmap_total_colors():
+    result = sxp.shift_cmap("RdBu", vmin=-1.0, vmax=1.0, vcenter=0.0, N=100)
+    assert len(result.colors) == 100
+
+
+def test_shift_cmap_asymmetric_center():
+    result = sxp.shift_cmap("viridis", vmin=0.0, vmax=1.0, vcenter=0.25, N=200)
+    assert isinstance(result, ListedColormap)
+    assert len(result.colors) == 200
+
+
+def test_voxel_plot_returns_fig_and_ax(close_figs):
+    da = _make_3d_da()
+    fig, ax = sxp.voxel_plot(da)
+    assert isinstance(ax, Axes3D)
+
+
+def test_voxel_plot_axis_labels(close_figs):
+    da = _make_3d_da()
+    _, ax = sxp.voxel_plot(da)
+    assert ax.get_xlabel() == "X [m]"
+    assert ax.get_ylabel() == "Y [m]"
+    assert ax.get_zlabel() == "Z [m]"
+
+
+def test_voxel_plot_default_axis_limits(close_figs):
+    da = _make_3d_da()
+    _, ax = sxp.voxel_plot(da)
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+    zlim = ax.get_zlim()
+    assert xlim[0] < xlim[1]
+    assert ylim[0] < ylim[1]
+    assert zlim[0] < zlim[1]
+
+
+def test_voxel_plot_with_xlim_ylim_zlim(close_figs):
+    da = _make_3d_da()
+    x0, x1 = 2e-6, 8e-6
+    y0, y1 = 2e-6, 1.8e-5
+    z0, z1 = 5e-6, 2.5e-5
+    _, ax = sxp.voxel_plot(da, xlim=(x0, x1), ylim=(y0, y1), zlim=(z0, z1))
+    assert ax.get_xlim() == pytest.approx((x0, x1), rel=0.1)
+    assert ax.get_ylim() == pytest.approx((y0, y1), rel=0.1)
+    assert ax.get_zlim() == pytest.approx((z0, z1), rel=0.1)
+
+
+def test_voxel_plot_with_explicit_vmin_vmax(close_figs):
+    da = _make_3d_da()
+    fig, ax = sxp.voxel_plot(da, vmin=0.2, vmax=0.8)
+    assert isinstance(ax, Axes3D)
+
+
+def test_voxel_plot_with_vcenter(close_figs):
+    da = _make_3d_da()
+    fig, ax = sxp.voxel_plot(da, cmap="RdBu", vcenter=1e-2)
+    assert isinstance(ax, Axes3D)
+
+
+def test_voxel_plot_with_custom_mask(close_figs):
+    da = _make_3d_da()
+    mask = da.values > 0.5
+    fig, ax = sxp.voxel_plot(da, mask=mask)
+    assert isinstance(ax, Axes3D)
+
+
+def test_voxel_plot_aspect_auto(close_figs):
+    da = _make_3d_da()
+    _, ax = sxp.voxel_plot(da, aspect="auto")
+    box = ax.get_box_aspect()
+    # voxel_plot uses vertex coords (half-cell beyond midpoints) for axis ranges;
+    # matplotlib normalizes the absolute values, so only ratios are stable
+    x_vert = sxp._recover_vertex_coord(da["X_Grid_mid"])
+    y_vert = sxp._recover_vertex_coord(da["Y_Grid_mid"])
+    z_vert = sxp._recover_vertex_coord(da["Z_Grid_mid"])
+    x_range = x_vert.max() - x_vert.min()
+    y_range = y_vert.max() - y_vert.min()
+    z_range = z_vert.max() - z_vert.min()
+    assert box[1] / box[0] == pytest.approx(y_range / x_range, rel=0.05)
+    assert box[2] / box[0] == pytest.approx(z_range / x_range, rel=0.05)
+
+
+def test_voxel_plot_aspect_custom_tuple(close_figs):
+    da = _make_3d_da()
+    _, ax = sxp.voxel_plot(da, aspect=(1.0, 2.0, 3.0))
+    box = ax.get_box_aspect()
+    assert box[1] / box[0] == pytest.approx(2.0, rel=0.01)
+    assert box[2] / box[0] == pytest.approx(3.0, rel=0.01)
+
+
+def test_epoch_plot_dispatches_to_voxel_for_3d_spatial_data(close_figs):
+    with xr.open_dataset(TEST_FILES_DIR_3D / "0001.sdf") as ds:
+        da = ds["Derived_Number_Density_Electron"].isel(
+            X_Grid_mid=slice(0, 4),
+            Y_Grid_mid=slice(0, 4),
+            Z_Grid_mid=slice(0, 4),
+        )
+        fig, ax = da.epoch.plot()
+        assert isinstance(ax, Axes3D)
+        assert ax.get_xlabel() == "X [m]"
+        assert ax.get_ylabel() == "Y [m]"
+        assert ax.get_zlabel() == "Z [m]"
+
+
+def test_resize_basic():
+    da = _make_3d_da(shape=(8, 10, 12))
+    da_small = da.epoch.resize((4, 5, 6))
+    assert da_small.shape == (4, 5, 6)
+    assert da_small.dims == da.dims
+
+
+def test_resize_stores_original_shape_attrs():
+    da = _make_3d_da(shape=(8, 10, 12))
+    da_small = da.epoch.resize((4, 5, 6))
+    assert da_small.attrs["original_shape"] == (8, 10, 12)
+
+
+def test_resize_coord_range_preserved():
+    da = _make_3d_da(shape=(8, 10, 12))
+    da_small = da.epoch.resize((4, 5, 6))
+    # For _mid coords, resize preserves the vertex (cell-edge) range rather than
+    # the midpoint values; check that the outer vertices are unchanged
+    orig_vertex = sxp._recover_vertex_coord(da["X_Grid_mid"])
+    new_vertex = sxp._recover_vertex_coord(da_small["X_Grid_mid"])
+    np.testing.assert_allclose(float(new_vertex[0]), float(orig_vertex[0]), rtol=1e-6)
+    np.testing.assert_allclose(float(new_vertex[-1]), float(orig_vertex[-1]), rtol=1e-6)
+
+
+def test_resize_wrong_ndim_raises():
+    da = _make_3d_da()
+    with pytest.raises(ValueError, match="dimensions"):
+        da.epoch.resize((4, 5))
+
+
+def test_resize_with_mid_coord():
+    da = _make_3d_da(shape=(6, 8, 10))
+    da_small = da.epoch.resize((3, 4, 5))
+    assert da_small.shape == (3, 4, 5)
+    for dim in da_small.dims:
+        assert da_small[dim].size == da_small.sizes[dim]
+
+
+def test_limit_reduces_coord_range():
+    da = _make_3d_da()
+    x_mid = 5e-6
+    da_lim = da.epoch.limit(((0.0, x_mid), (None, None), (None, None)))
+    assert float(da_lim["X_Grid_mid"][-1]) <= x_mid + 1e-7
+
+
+def test_limit_with_none_uses_existing_bounds():
+    da = _make_3d_da()
+    da_lim = da.epoch.limit(((None, None), (None, None), (None, None)))
+    assert da_lim.shape == da.shape
+
+
+def test_limit_stores_original_lims_on_coord():
+    da = _make_3d_da()
+    x_min = float(da["X_Grid_mid"][0])
+    x_max = float(da["X_Grid_mid"][-1])
+    da_lim = da.epoch.limit(((0.0, 5e-6), (None, None), (None, None)))
+    assert da_lim["X_Grid_mid"].attrs["original_lims"] == pytest.approx(
+        (x_min, x_max), rel=1e-6
+    )
+
+
+def test_limit_no_drop():
+    da = _make_3d_da()
+    da_lim = da.epoch.limit(((0.0, 5e-6), (None, None), (None, None)), drop=False)
+    assert da_lim.shape == da.shape
+    assert np.any(np.isnan(da_lim.values))
+
+
+def test_animate_raises_for_4d_data():
+    da = xr.DataArray(
+        np.zeros((3, 4, 5, 6)),
+        dims=["time", "X_Grid_mid", "Y_Grid_mid", "Z_Grid_mid"],
+        coords={
+            "time": xr.Variable(
+                "time", [1.0, 2.0, 3.0], attrs={"long_name": "Time", "units": "s"}
+            )
+        },
+    )
+    with pytest.raises(NotImplementedError, match="Voxel animations"):
+        da.epoch.animate()

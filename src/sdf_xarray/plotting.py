@@ -3,7 +3,7 @@ from __future__ import annotations
 import warnings
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 import xarray as xr
@@ -11,6 +11,8 @@ import xarray as xr
 if TYPE_CHECKING:
     import matplotlib.pyplot as plt
     from matplotlib.animation import FuncAnimation
+    from matplotlib.axes import Axes
+    from matplotlib.figure import Figure
 
 
 @dataclass
@@ -172,21 +174,22 @@ def _set_axes_labels(ax: plt.Axes, axis_kwargs: dict) -> None:
         ax.set_ylabel(axis_kwargs["ylabel"])
 
 
-def voxel_plot(  # noqa: PLR0912, PLR0915
-    da,
-    vmin=None,
-    vmax=None,
-    vcenter=None,
-    mask=None,
-    xlim=(None, None),
-    ylim=(None, None),
-    zlim=(None, None),
-    aspect="equal",
-    elev=30,
-    azim=-60,
-    cmap="viridis",
-    cbar_scale=0.9,
-):
+def voxel_plot(
+    da: xr.DataArray,
+    vmin: float | None = None,
+    vmax: float | None = None,
+    vcenter: float | None = None,
+    mask: list[bool] | None = None,
+    xlim: tuple[float | None, float | None] = (None, None),
+    ylim: tuple[float | None, float | None] = (None, None),
+    zlim: tuple[float | None, float | None] = (None, None),
+    aspect: Literal["equal"] | Literal["auto"] = "equal",
+    elev: int = 30,
+    azim: int = -60,
+    cmap: str = "viridis",
+    cbar_scale: float = 0.9,
+    **kwargs,
+) -> tuple[Figure, Axes]:
     """
     Will take 3 dimensional data and plot it as voxels.
 
@@ -251,40 +254,25 @@ def voxel_plot(  # noqa: PLR0912, PLR0915
     ax.set_ylabel(get_axis_label(da[dims[1]]))
     ax.set_zlabel(get_axis_label(da[dims[2]]))
 
-    # Find axis limits
-    xlim = list(xlim)
-    ylim = list(ylim)
-    zlim = list(zlim)
-    if xlim[0] is None:
-        xlim[0] = x.min()
-    if xlim[1] is None:
-        xlim[1] = x.max()
-    if ylim[0] is None:
-        ylim[0] = y.min()
-    if ylim[1] is None:
-        ylim[1] = y.max()
-    if zlim[0] is None:
-        zlim[0] = z.min()
-    if zlim[1] is None:
-        zlim[1] = z.max()
+    # Find and set axis limits
+    xlim, ylim, zlim = [
+        (data.min() if low is None else low, data.max() if high is None else high)
+        for (low, high), data in zip([xlim, ylim, zlim], [x, y, z])
+    ]
 
-    # Set aspect ratio  of plot
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylim)
+    ax.set_zlim(zlim)
+
+    # Compute and set the box aspect ratio
     if aspect == "equal":
-        x_aspect = 1
-        y_aspect = 1
-        z_aspect = 1
+        box_aspect = (1, 1, 1)
     elif aspect == "auto":
-        x_aspect = xlim[1] - xlim[0]
-        y_aspect = ylim[1] - ylim[0]
-        z_aspect = zlim[1] - zlim[0]
+        box_aspect = (xlim[1] - xlim[0], ylim[1] - ylim[0], zlim[1] - zlim[0])
     else:
-        x_aspect, y_aspect, z_aspect = aspect
-    ax.set_box_aspect((x_aspect, y_aspect, z_aspect))
+        box_aspect = aspect
 
-    # Limit axis of plot
-    ax.set_xlim(xlim[0], xlim[1])
-    ax.set_ylim(ylim[0], ylim[1])
-    ax.set_zlim(zlim[0], zlim[1])
+    ax.set_box_aspect(box_aspect)
 
     # Colour bar and colour map
     if vcenter is not None:
@@ -298,13 +286,7 @@ def voxel_plot(  # noqa: PLR0912, PLR0915
     cbar_label = get_axis_label(da)
     fig.colorbar(sm, ax=ax, label=cbar_label, shrink=cbar_scale, aspect=20 * cbar_scale)
 
-    ax.voxels(
-        x_mesh,
-        y_mesh,
-        z_mesh,
-        mask,
-        facecolors=colours,
-    )
+    ax.voxels(x_mesh, y_mesh, z_mesh, mask, facecolors=colours, **kwargs)
 
     return fig, ax
 

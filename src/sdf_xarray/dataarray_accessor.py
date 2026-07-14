@@ -68,6 +68,8 @@ class EpochAccessor:
             Keyword arguments passed to `xarray.DataArray.plot`.
         """
         dims = self._obj.dims
+        is_time_dim_present = "time" in dims
+        is_x_or_y_specified_in_kwargs = "x" in kwargs or "y" in kwargs
 
         if len(dims) == 1:
             return self._obj.plot(*args, **kwargs)
@@ -78,7 +80,11 @@ class EpochAccessor:
             updated_kwargs.setdefault("y", dims[1])
             return self._obj.plot(*args, **updated_kwargs)
 
-        if len(dims) == 3:
+        if (
+            len(dims) == 3
+            and not is_time_dim_present
+            and not is_x_or_y_specified_in_kwargs
+        ):
             return voxel_plot(self._obj, *args, **kwargs)
 
         return self._obj.plot(*args, **kwargs)

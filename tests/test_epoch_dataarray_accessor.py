@@ -402,13 +402,15 @@ def test_shift_cmap_asymmetric_center():
     assert len(result.colors) == 200
 
 
-def test_voxel_plot_returns_fig_and_ax(close_figs):
+@pytest.mark.usefixtures("close_figs")
+def test_voxel_plot_returns_fig_and_ax():
     da = _make_3d_da()
-    fig, ax = sxp.voxel_plot(da)
+    _, ax = sxp.voxel_plot(da)
     assert isinstance(ax, Axes3D)
 
 
-def test_voxel_plot_axis_labels(close_figs):
+@pytest.mark.usefixtures("close_figs")
+def test_voxel_plot_axis_labels():
     da = _make_3d_da()
     _, ax = sxp.voxel_plot(da)
     assert ax.get_xlabel() == "X [m]"
@@ -416,7 +418,8 @@ def test_voxel_plot_axis_labels(close_figs):
     assert ax.get_zlabel() == "Z [m]"
 
 
-def test_voxel_plot_default_axis_limits(close_figs):
+@pytest.mark.usefixtures("close_figs")
+def test_voxel_plot_default_axis_limits():
     da = _make_3d_da()
     _, ax = sxp.voxel_plot(da)
     xlim = ax.get_xlim()
@@ -427,7 +430,8 @@ def test_voxel_plot_default_axis_limits(close_figs):
     assert zlim[0] < zlim[1]
 
 
-def test_voxel_plot_with_xlim_ylim_zlim(close_figs):
+@pytest.mark.usefixtures("close_figs")
+def test_voxel_plot_with_xlim_ylim_zlim():
     da = _make_3d_da()
     x0, x1 = 2e-6, 8e-6
     y0, y1 = 2e-6, 1.8e-5
@@ -438,26 +442,30 @@ def test_voxel_plot_with_xlim_ylim_zlim(close_figs):
     assert ax.get_zlim() == pytest.approx((z0, z1), rel=0.1)
 
 
-def test_voxel_plot_with_explicit_vmin_vmax(close_figs):
+@pytest.mark.usefixtures("close_figs")
+def test_voxel_plot_with_explicit_vmin_vmax():
     da = _make_3d_da()
-    fig, ax = sxp.voxel_plot(da, vmin=0.2, vmax=0.8)
+    _, ax = sxp.voxel_plot(da, vmin=0.2, vmax=0.8)
     assert isinstance(ax, Axes3D)
 
 
-def test_voxel_plot_with_vcenter(close_figs):
+@pytest.mark.usefixtures("close_figs")
+def test_voxel_plot_with_vcenter():
     da = _make_3d_da()
-    fig, ax = sxp.voxel_plot(da, cmap="RdBu", vcenter=1e-2)
+    _, ax = sxp.voxel_plot(da, cmap="RdBu", vcenter=1e-2)
     assert isinstance(ax, Axes3D)
 
 
-def test_voxel_plot_with_custom_mask(close_figs):
+@pytest.mark.usefixtures("close_figs")
+def test_voxel_plot_with_custom_mask():
     da = _make_3d_da()
     mask = da.values > 0.5
-    fig, ax = sxp.voxel_plot(da, mask=mask)
+    _, ax = sxp.voxel_plot(da, mask=mask)
     assert isinstance(ax, Axes3D)
 
 
-def test_voxel_plot_aspect_auto(close_figs):
+@pytest.mark.usefixtures("close_figs")
+def test_voxel_plot_aspect_auto():
     da = _make_3d_da()
     _, ax = sxp.voxel_plot(da, aspect="auto")
     box = ax.get_box_aspect()
@@ -473,7 +481,8 @@ def test_voxel_plot_aspect_auto(close_figs):
     assert box[2] / box[0] == pytest.approx(z_range / x_range, rel=0.05)
 
 
-def test_voxel_plot_aspect_custom_tuple(close_figs):
+@pytest.mark.usefixtures("close_figs")
+def test_voxel_plot_aspect_custom_tuple():
     da = _make_3d_da()
     _, ax = sxp.voxel_plot(da, aspect=(1.0, 2.0, 3.0))
     box = ax.get_box_aspect()
@@ -481,14 +490,15 @@ def test_voxel_plot_aspect_custom_tuple(close_figs):
     assert box[2] / box[0] == pytest.approx(3.0, rel=0.01)
 
 
-def test_epoch_plot_dispatches_to_voxel_for_3d_spatial_data(close_figs):
+@pytest.mark.usefixtures("close_figs")
+def test_epoch_plot_dispatches_to_voxel_for_3d_spatial_data():
     with xr.open_dataset(TEST_FILES_DIR_3D / "0001.sdf") as ds:
         da = ds["Derived_Number_Density_Electron"].isel(
             X_Grid_mid=slice(0, 4),
             Y_Grid_mid=slice(0, 4),
             Z_Grid_mid=slice(0, 4),
         )
-        fig, ax = da.epoch.plot()
+        _, ax = da.epoch.plot()
         assert isinstance(ax, Axes3D)
         assert ax.get_xlabel() == "X [m]"
         assert ax.get_ylabel() == "Y [m]"

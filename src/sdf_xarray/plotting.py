@@ -242,7 +242,10 @@ def voxel_plot(
     """
     import matplotlib.pyplot as plt  # noqa: PLC0415
 
-    print("Warning! voxel plots can be extremely intensive!")
+    warnings.warn(
+        "Voxel plots can be extremely computationally expensive and may take longer than expected to plot.",
+        stacklevel=2,
+    )
 
     # Limit arrays based on axis limits
     da = da.epoch.limit((xlim, ylim, zlim))

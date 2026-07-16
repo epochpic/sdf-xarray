@@ -20,7 +20,7 @@ jobs:
         submodules: "recursive"
 
     - name: Cache Zenodo datasets
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         enableCrossOsArchive: true
         path: ~/.cache/sdf_datasets

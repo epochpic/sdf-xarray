@@ -410,6 +410,14 @@ def test_voxel_plot_returns_fig_and_ax():
 
 
 @pytest.mark.usefixtures("close_figs")
+def test_voxel_plot_accepts_axes():
+    da = _make_3d_da()
+    _, ax = plt.subplots(figsize=(8, 6), subplot_kw={"projection": "3d"})
+    sxp.voxel_plot(da, ax=ax)
+    assert isinstance(ax, Axes3D)
+
+
+@pytest.mark.usefixtures("close_figs")
 def test_voxel_plot_axis_labels():
     da = _make_3d_da()
     _, ax = sxp.voxel_plot(da)

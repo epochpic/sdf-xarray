@@ -198,6 +198,7 @@ def _set_axes_labels(ax: plt.Axes, axis_kwargs: dict) -> None:
 
 def voxel_plot(
     da: xr.DataArray,
+    ax: plt.Axes | None = None,
     vmin: float | None = None,
     vmax: float | None = None,
     vcenter: float | None = None,
@@ -211,7 +212,7 @@ def voxel_plot(
     cmap: str = "viridis",
     cbar_scale: float = 0.9,
     **kwargs,
-) -> tuple[Figure, Axes]:
+) -> None:
     """
     Will take 3 dimensional data and plot it as voxels.
 
@@ -219,6 +220,8 @@ def voxel_plot(
     ----------
     da
         DataArray to be plotted.
+    ax
+        Matplotlib axes on which to plot.
     vmin
         Minimum value. If `mask` is not stated, will be used to define the mask.
     vmax
@@ -247,6 +250,11 @@ def voxel_plot(
         stacklevel=2,
     )
 
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(8, 6), subplot_kw={"projection": "3d"})
+    else:
+        fig = ax.get_figure()
+
     # Limit arrays based on axis limits
     da = da.epoch.limit((xlim, ylim, zlim))
 
@@ -270,8 +278,6 @@ def voxel_plot(
         mask = (da > vmin) * (da < vmax)
 
     # Plot the data array
-    fig = plt.figure(figsize=(8, 6))
-    ax = fig.add_subplot(projection="3d")
     ax.view_init(elev, azim)
 
     # Set axis labels

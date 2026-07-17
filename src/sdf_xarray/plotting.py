@@ -273,7 +273,7 @@ def voxel_plot(
 
     # Mask out data
     if mask is None:
-        mask = (da > vmin) * (da < vmax)
+        mask = (da >= vmin) * (da <= vmax)
 
     # Plot the data array
     ax.view_init(elev, azim)

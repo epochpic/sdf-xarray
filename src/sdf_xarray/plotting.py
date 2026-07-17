@@ -11,9 +11,7 @@ import xarray as xr
 if TYPE_CHECKING:
     import matplotlib.pyplot as plt
     from matplotlib.animation import FuncAnimation
-    from matplotlib.axes import Axes
     from matplotlib.colors import ListedColormap
-    from matplotlib.figure import Figure
 
 
 @dataclass

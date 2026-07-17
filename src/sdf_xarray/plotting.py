@@ -210,7 +210,7 @@ def voxel_plot(
     cmap: str = "viridis",
     cbar_scale: float = 0.9,
     **kwargs,
-) -> None:
+) -> tuple[plt.Figure, plt.Axes]:
     """
     Will take 3 dimensional data and plot it as voxels.
 
@@ -219,7 +219,7 @@ def voxel_plot(
     da
         DataArray to be plotted.
     ax
-        Matplotlib axes on which to plot.
+        Matplotlib axes on which to plot (This must use a 3d projection).
     vmin
         Minimum value. If `mask` is not stated, will be used to define the mask.
     vmax

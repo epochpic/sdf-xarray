@@ -21,6 +21,7 @@ why_sdf_xarray.md
 loading_data.md
 understanding_datasets.md
 unit_conversion.md
+plots.md
 animation.md
 ```
 

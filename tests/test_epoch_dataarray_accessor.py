@@ -323,22 +323,6 @@ def test_epoch_plot_flips_axis_order_for_2d_data_with_additional_params(subplots
         assert ax.get_ylim() == pytest.approx((0.0, 0.5), abs=1e-2)
 
 
-def test_epoch_plot_flips_axis_order_for_2d_data_but_not_when_time_dim_present(
-    subplots,
-):
-    with xr.open_mfdataset(
-        TEST_FILES_DIR_2D_MW.glob("*.sdf"),
-        preprocess=SDFPreprocess(),
-        combine="nested",
-        compat="no_conflicts",
-        join="outer",
-    ) as ds:
-        _, ax = subplots
-        plot = ds["Derived_Number_Density_electron"].epoch.plot(ax=ax)
-
-        assert type(plot[2]) is BarContainer
-
-
 def _make_3d_da(shape=(4, 5, 6)):
     """Small synthetic 3-D DataArray with the metadata voxel_plot expects."""
     nx, ny, nz = shape

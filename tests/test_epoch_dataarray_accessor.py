@@ -8,7 +8,6 @@ import pytest
 import xarray as xr
 from matplotlib.animation import PillowWriter
 from matplotlib.colors import ListedColormap
-from matplotlib.container import BarContainer
 from mpl_toolkits.mplot3d import Axes3D
 from packaging.version import Version
 

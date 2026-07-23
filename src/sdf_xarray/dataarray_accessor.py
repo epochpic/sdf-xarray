@@ -63,7 +63,7 @@ class EpochAccessor:
         Parameters
         ----------
         hist
-            If `True`, will plot a histogram regardless of dimensionality (default = False).
+            If ``True``, will plot a histogram regardless of dimensionality (default = ``False``).
         args
             Positional arguments passed to `xarray.DataArray.plot`.
         kwargs

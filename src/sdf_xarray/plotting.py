@@ -52,7 +52,7 @@ def get_frame_title(
     t_axis_units_formatted = f" [{t_axis_units}]" if t_axis_units else ""
     title_t_axis = f"{data[t].long_name} = {t_axis_value:.2e}{t_axis_units_formatted}"
 
-    # Adds sdf name to the title, if specifed
+    # Adds sdf name to the title, if specified
     title_sdf = f", {frame:04d}.sdf" if display_sdf_name else ""
     return f"{title_custom}{title_t_axis}{title_sdf}"
 
@@ -122,7 +122,7 @@ def calculate_window_boundaries(
     t: str = "time",
 ) -> np.ndarray:
     """Calculate the boundaries a moving window frame. If the user specifies xlim, this will
-    be used as the initial boundaries and the window will move along acordingly.
+    be used as the initial boundaries and the window will move along accordingly.
 
     Parameters
     ----------
@@ -153,7 +153,7 @@ def calculate_window_boundaries(
         window_boundaries[i, 0] = x_grid_non_nan[0] - x_half_cell
         window_boundaries[i, 1] = x_grid_non_nan[-1] + x_half_cell
 
-    # User's choice for initial window edge supercedes the one calculated
+    # User's choice for initial window edge supersedes the one calculated
     if xlim is not None:
         window_boundaries = window_boundaries + xlim - window_boundaries[0]
     return window_boundaries
@@ -225,9 +225,9 @@ def voxel_plot(
     vmax
         Maximum value. If `mask` is not stated, will be used to define the mask.
     vcenter
-        Center value of the colourmap. Useful for diverging colourmaps with non-symetrical data.
+        Center value of the colourmap. Useful for diverging colourmaps with non-symmetrical data.
     mask
-        Array of bools specifing which cells to show. Must be same size as `da`
+        Array of bools specifying which cells to show. Must be same size as ``da``
     xlim, ylim, zlim
         Sets the limits of the plot.
     aspect
@@ -235,7 +235,7 @@ def voxel_plot(
     elev
         Elevation angle in degrees. (default = 30)
     azim
-        Azimithul angle in degrees. (default = -60)
+        Azimuthal angle in degrees. (default = -60)
     cmap
         Colourmap (default = "viridis")
     cbar_scale

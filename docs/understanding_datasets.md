@@ -29,7 +29,7 @@ ds = sdfxr.open_mfdataset("tutorial_dataset_1d/*.sdf")
 ds["Electric_Field_Ex"]
 ```
 
-## Visulisation
+## Visualisation
 
 `sdf-xarray` has built-in plotting and animation functionality, more details can
 be found on [Plots](./plots.md) and [Animations](./animation.md).
@@ -54,7 +54,7 @@ print(f"The time at the 20th simulation step is {sim_time:.2e} s")
 
 You can select and extract a single simulation snapshot using the integer
 index of the time step with the <inv:#xarray.Dataset.isel> function. This can be
-done by passsing the index to the `time` parameter (e.g., `time=0` for
+done by passing the index to the `time` parameter (e.g., `time=0` for
 the first snapshot).
 
 ```{code-cell} ipython3
@@ -62,7 +62,7 @@ ds["Electric_Field_Ex"].isel(time=20)
 ```
 
 We can also use the <inv:#xarray.Dataset.sel> function if you wish to pass a
-value intead of an index.
+value instead of an index.
 
 ```{tip}
 If you know roughly what time you wish to select but not the exact value

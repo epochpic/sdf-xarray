@@ -4,7 +4,7 @@ kernelspec:
   name: python3
 ---
 
-# Plots
+# Plotting
 
 You can plot datasets using
 [`xarray.DataArray.epoch.plot`](project:#sdf_xarray.dataarray_accessor.EpochAccessor.plot).
@@ -47,6 +47,7 @@ Two dimensional data will be plotted as a mesh.
 ds = sdfxr.open_dataset("tutorial_dataset_2d/0010.sdf")
 da = ds["Derived_Number_Density_Electron"]
 da.epoch.plot()
+plt.show()
 ```
 
 ## Voxel plots
@@ -54,10 +55,11 @@ da.epoch.plot()
 Three dimensional data will be plotted using voxels. This behaviour is not native
 to <inv:#xarray>, it has been custom built specifically for this package.
 
-```bash
+```python
 ds = sdfxr.open_dataset("tutorial_dataset_3d/0000.sdf")
 da = ds["Derived_Number_Density"]
 da.epoch.plot(vmin = 1e27)
+plt.show()
 ```
 
 ![voxel_plot_high_res](./figures/voxel_plot_high_res.png)
@@ -76,6 +78,7 @@ ds = sdfxr.open_dataset("tutorial_dataset_3d/0005.sdf")
 da = ds["Derived_Number_Density"]
 da_resized = da.epoch.resize((20, 20, 20))
 da_resized.epoch.plot(vmin = 1e27)
+plt.show()
 ```
 
 ## Histograms
@@ -88,4 +91,5 @@ ds = sdfxr.open_dataset("tutorial_dataset_3d/0005.sdf")
 da = ds["Derived_Number_Density"]
 
 da.epoch.plot(hist = True)
+plt.show()
 ```

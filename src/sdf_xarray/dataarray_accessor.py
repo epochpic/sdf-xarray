@@ -50,7 +50,7 @@ class EpochAccessor:
     def __init__(self, xarray_obj: xr.DataArray):
         self._obj = xarray_obj
 
-    def plot(self, hist = False, *args, **kwargs) -> DataArrayPlotAccessor:
+    def plot(self, hist=False, *args, **kwargs) -> DataArrayPlotAccessor:
         """
         Builds upon `xarray.DataArray.plot` while changing some of its default behaviours.
 
@@ -71,7 +71,7 @@ class EpochAccessor:
         """
         dims = self._obj.dims
 
-        if hist == True:
+        if hist:
             return self._obj.plot.hist(*args, **kwargs)
 
         if len(dims) == 1:

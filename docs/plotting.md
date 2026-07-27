@@ -70,7 +70,7 @@ expected to plot.
 ```
 
 Because voxel plots are very expensive, even with relatively small data arrays,
-plotting can be sped up by using <project:#sdf_xarray.dataarray_accessor.EpochAccessor.resize>,
+plotting can be sped up by using [`xarray.DataArray.epoch.resize`](project:#sdf_xarray.dataarray_accessor.EpochAccessor.resize),
 which uses interpolation to reduce the resolution.
 
 ```{code-cell} ipython3

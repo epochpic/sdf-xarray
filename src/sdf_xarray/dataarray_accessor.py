@@ -144,7 +144,7 @@ class EpochAccessor:
         for i in range(len(da_resized.dims)):
             coord = list(da_resized.dims)[i]
 
-            if coord[-4:] == "_mid":
+            if coord.endswith("_mid"):
                 # If the coordinate is a midpoint coordinate, care must be taken to resize correctly
                 vertex_coord = _recover_vertex_coord(da[coord])
                 vertex_coord_resized = np.linspace(

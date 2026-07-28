@@ -212,7 +212,7 @@ def voxel_plot(
     **kwargs,
 ) -> tuple[plt.Figure, plt.Axes]:
     """
-    Will take 3 dimensional data and plot it as voxels.
+    Plot 3-dimensional data as voxels.
 
     Parameters
     ----------

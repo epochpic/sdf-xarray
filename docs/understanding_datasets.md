@@ -112,7 +112,7 @@ print(f"The laser absorption fraction: {ds["Laser_Absorption_Fraction_in_Simulat
 
 ## Limit
 
-The `.epoch` accessor, has the ability to "limit" data arrays. This is a helper
+The `.epoch` accessor has the ability to "limit" data arrays. This is a helper
 function which applies <inv:#xarray.DataArray.where> to the upper and lower bounds
 of each dimension. You can use `None` to preserve the existing limit.
 

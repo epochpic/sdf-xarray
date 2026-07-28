@@ -81,20 +81,19 @@ def shift_cmap(
 
     Parameters
     ----------
-    cmap : str or matplotlib.colors.Colormap
+    cmap
         The name of the original colormap (e.g., 'viridis') or the colormap object itself.
-    vmin : float
+    vmin
         The minimum value of your data range.
-    vmax : float
+    vmax
         The maximum value of your data range.
-    vcenter : float
+    vcenter
         The data value that should map to the visual midpoint (0.5) of the colormap.
-    N : int, default 1024
+    N
         The number of interpolation steps (color bins) in the new colormap.
 
     Returns
     -------
-    matplotlib.colors.ListedColormap
         The newly constructed, shifted colormap.
     """
     import matplotlib.colors as mc  # noqa: PLC0415

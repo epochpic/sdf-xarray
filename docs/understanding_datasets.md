@@ -29,23 +29,10 @@ ds = sdfxr.open_mfdataset("tutorial_dataset_1d/*.sdf")
 ds["Electric_Field_Ex"]
 ```
 
-## Plotting
+## Visualisation
 
-You can plot datasets using
-[`xarray.DataArray.epoch.plot`](project:#sdf_xarray.dataarray_accessor.EpochAccessor.plot).
-This is a custom <project:#sdf_xarray> plotting routine that builds on top of
-<inv:#xarray.DataArray.plot>, so you keep the familiar <inv:#xarray> plotting
-behaviour while using <project:#sdf_xarray> conveniences (see 
-[here](project:#sdf_xarray.dataarray_accessor.EpochAccessor.plot) for details).
-Under the hood, plotting is still handled by <inv:#matplotlib>, which means you
-can use the full <inv:#matplotlib> API to customise your figure.
-
-```{code-cell} ipython3
-# This is discretized in both space and time
-ds["Electric_Field_Ex"].epoch.plot()
-plt.title("Electric field along the x-axis")
-plt.show()
-```
+`sdf-xarray` has built-in plotting and animation functionality, more details can
+be found on [](./plotting.md) and [](./animation.md).
 
 ## Dimension slicing
 
@@ -56,6 +43,7 @@ for easy indexing. To quickly determine the number of time steps available,
 you can check the size of the time dimension.
 
 ```{code-cell} ipython3
+ds = sdfxr.open_mfdataset("tutorial_dataset_1d/*.sdf")
 # This corresponds to the number of individual SDF files loaded
 print(f"There are a total of {ds['time'].size} time steps")
 
@@ -66,7 +54,7 @@ print(f"The time at the 20th simulation step is {sim_time:.2e} s")
 
 You can select and extract a single simulation snapshot using the integer
 index of the time step with the <inv:#xarray.Dataset.isel> function. This can be
-done by passsing the index to the `time` parameter (e.g., `time=0` for
+done by passing the index to the `time` parameter (e.g., `time=0` for
 the first snapshot).
 
 ```{code-cell} ipython3
@@ -74,7 +62,7 @@ ds["Electric_Field_Ex"].isel(time=20)
 ```
 
 We can also use the <inv:#xarray.Dataset.sel> function if you wish to pass a
-value intead of an index.
+value instead of an index.
 
 ```{tip}
 If you know roughly what time you wish to select but not the exact value
@@ -120,6 +108,51 @@ plt.show()
 print(f"Total laser energy injected: {ds["Absorption_Total_Laser_Energy_Injected"][-1].values:.1e} J")
 print(f"Total particle energy absorbed: {ds["Total_Particle_Energy_in_Simulation"][-1].values:.1e} J")
 print(f"The laser absorption fraction: {ds["Laser_Absorption_Fraction_in_Simulation"][-1].values:.1f} %")
+```
+
+## Limit
+
+The `.epoch` accessor has the ability to "limit" data arrays. This is a helper
+function which applies <inv:#xarray.DataArray.where> to the upper and lower bounds
+of each dimension. You can use `None` to preserve the existing limit.
+
+```{code-cell} ipython3
+ds = sdfxr.open_dataset("tutorial_dataset_2d/0020.sdf")
+da = ds["Derived_Number_Density_Electron"]
+da.epoch.plot()
+print(f"Orignal shape: {da.shape}")
+plt.show()
+```
+
+```{code-cell} ipython3
+da_limit = da.epoch.limit(((-2e-6, 2e-6), (None, 0)))
+da_limit.epoch.plot()
+print(f"New shape: {da_limit.shape}")
+plt.show()
+```
+
+## Resize
+
+The data arrays can be interpolated with <project:#sdf_xarray.dataarray_accessor.EpochAccessor.resize>
+to either increase or decrease the resolution while mantaining the general structure.
+Decreasing the size may be useful to download large data from HPCs to local machines
+or ploting with [](./plotting.md#voxel-plots). Be aware that the original
+data will not be preserved.
+
+```{code-cell} ipython3
+ds = sdfxr.open_dataset("tutorial_dataset_2d/0020.sdf")
+da = ds["Derived_Number_Density_Electron"]
+
+da.epoch.plot()
+print(f"Orignal shape: {da.shape}")
+plt.show()
+```
+
+```{code-cell} ipython3
+da_resized = da.epoch.resize((50, 50))
+da_resized.epoch.plot()
+print(f"New shape: {da_resized.shape}")
+plt.show()
 ```
 
 ## Visualisation on HPC Machines

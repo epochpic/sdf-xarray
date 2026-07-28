@@ -35,9 +35,10 @@ resolved data has 2 dimensions.
 
 | Dimensions |      Plotting function        |        Notes          |
 | ---------- | ----------------------------- | --------------------- |
-|    `2`     | <inv:#xarray.plot.line>       |                       |
-|    `3`     | <inv:#xarray.plot.pcolormesh> |                       |
-|    `>3`    | <inv:#xarray.plot.hist>       | Not fully implemented |
+|     2      | <inv:#xarray.plot.line>       |                       |
+|     3      | <inv:#xarray.plot.pcolormesh> |                       |
+|     4      | <inv:#mpl_toolkits.mplot3d.axes3d.Axes3D.voxels>| WIP |
+|     >4     | <inv:#xarray.plot.hist>       | Not fully implemented |
 
 
 ### 1D simulation
@@ -102,6 +103,10 @@ anim.show()
 ```
 
 ### 3D simulation
+
+```{warning}
+[Voxel](./plotting.md#voxel-plots) animations are not currently implemented. 
+```
 
 Opening a 3D simulation as a multi-file dataset and plotting it will
 return a <inv:#xarray.plot.hist>. However, this may not be

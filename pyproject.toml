@@ -69,6 +69,7 @@ docs = [
   "sphinx-design>=0.7.0",
   "pooch>=1.8.2",
   "tqdm",
+  "scipy",
 ]
 build = ["cibuildwheel[uv]"]
 lint = ["ruff"]
@@ -80,6 +81,7 @@ test = [
   "tqdm",
   "pint",
   "pint-xarray",
+  "scipy",
 ]
 
 [project.entry-points."xarray.backends"]
@@ -133,6 +135,10 @@ ignore = [
   "PLR2004", # magic-comparison
   "B9",      # flake8-bugbear opinionated warnings
   "PLR0913", # remove maximum number of arguments in a function
+  "PLR0917", # remove maximum number of positional arguments in a function
+  "BLE001",  # allow capturing of base exception
 ]
-exclude = ["**/_version.py"]
-# Auto-generated file
+exclude = ["**/_version.py"] # Auto-generated file
+
+[tool.pytest.ini_options]
+filterwarnings = ['ignore::UserWarning']

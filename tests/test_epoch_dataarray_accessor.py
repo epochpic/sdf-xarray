@@ -26,11 +26,10 @@ TEST_FILES_DIR_2D_MW = download.fetch_dataset("test_files_2D_moving_window")
 TEST_FILES_DIR_3D = download.fetch_dataset("test_files_3D")
 
 
-@pytest.fixture
-def subplots():
-    fig, ax = plt.subplots()
-    yield (fig, ax)
-    plt.close(fig)
+@pytest.fixture(autouse=True)
+def close_figs():
+    yield
+    plt.close("all")
 
 
 def test_animation_accessor():
@@ -246,21 +245,21 @@ def test_compute_global_limits_NaNs():
         assert result_max == pytest.approx(expected_result_max, abs=1e-1)
 
 
-def test_epoch_plot_simple_1d_dataset(subplots):
+def test_epoch_plot_simple_1d_dataset():
     with xr.open_mfdataset(
         TEST_FILES_DIR_1D.glob("*.sdf"),
         compat="no_conflicts",
         join="outer",
         preprocess=SDFPreprocess(),
     ) as ds:
-        _, ax = subplots
+        _, ax = plt.subplots()
         ds["Derived_Number_Density_electron"].isel(time=0).epoch.plot(ax=ax)
 
         assert len(ax.lines) == 1
         assert ax.get_xlabel() == "X [m]"
 
 
-def test_epoch_plot_simple_2d_dataset(subplots):
+def test_epoch_plot_simple_2d_dataset():
     with xr.open_mfdataset(
         TEST_FILES_DIR_2D_MW.glob("*.sdf"),
         preprocess=SDFPreprocess(),
@@ -268,7 +267,7 @@ def test_epoch_plot_simple_2d_dataset(subplots):
         compat="no_conflicts",
         join="outer",
     ) as ds:
-        _, ax = subplots
+        _, ax = plt.subplots()
         ds["Derived_Number_Density_electron"].isel(time=0).epoch.plot(ax=ax)
 
         assert len(ax.collections) > 0
@@ -276,9 +275,9 @@ def test_epoch_plot_simple_2d_dataset(subplots):
         assert ax.get_ylabel() == "Y [m]"
 
 
-def test_epoch_plot_simple_3d_dataset_slice(subplots):
+def test_epoch_plot_simple_3d_dataset_slice():
     with xr.open_dataset(TEST_FILES_DIR_3D / "0001.sdf") as ds:
-        _, ax = subplots
+        _, ax = plt.subplots()
         ds["Derived_Number_Density_Electron"].isel(Z_Grid_mid=0).epoch.plot(ax=ax)
 
         assert len(ax.collections) > 0
@@ -286,7 +285,7 @@ def test_epoch_plot_simple_3d_dataset_slice(subplots):
         assert ax.get_ylabel() == "Y [m]"
 
 
-def test_epoch_plot_flips_axis_order_for_2d_data(subplots):
+def test_epoch_plot_flips_axis_order_for_2d_data():
     with xr.open_mfdataset(
         TEST_FILES_DIR_2D_MW.glob("*.sdf"),
         preprocess=SDFPreprocess(),
@@ -294,14 +293,14 @@ def test_epoch_plot_flips_axis_order_for_2d_data(subplots):
         compat="no_conflicts",
         join="outer",
     ) as ds:
-        _, ax = subplots
+        _, ax = plt.subplots()
         ds["Derived_Number_Density_electron"].isel(time=0).epoch.plot(ax=ax)
 
         assert ax.get_xlabel() == "X [m]"
         assert ax.get_ylabel() == "Y [m]"
 
 
-def test_epoch_plot_flips_axis_order_for_2d_data_with_additional_params(subplots):
+def test_epoch_plot_flips_axis_order_for_2d_data_with_additional_params():
     with xr.open_mfdataset(
         TEST_FILES_DIR_2D_MW.glob("*.sdf"),
         preprocess=SDFPreprocess(),
@@ -309,7 +308,7 @@ def test_epoch_plot_flips_axis_order_for_2d_data_with_additional_params(subplots
         compat="no_conflicts",
         join="outer",
     ) as ds:
-        _, ax = subplots
+        _, ax = plt.subplots()
         ds["Derived_Number_Density_electron"].isel(time=0).epoch.plot(
             ax=ax,
             xlim=(0.5, 1.0),
@@ -351,12 +350,6 @@ def _make_3d_da(shape=(4, 5, 6)):
     )
 
 
-@pytest.fixture
-def close_figs():
-    yield
-    plt.close("all")
-
-
 def test_recover_vertex_coord_size():
     mid = xr.DataArray(np.linspace(0.5, 4.5, 5))
     vertex = sxp._recover_vertex_coord(mid)
@@ -385,14 +378,12 @@ def test_shift_cmap_asymmetric_center():
     assert len(result.colors) == 200
 
 
-@pytest.mark.usefixtures("close_figs")
 def test_voxel_plot_returns_fig_and_ax():
     da = _make_3d_da()
     _, ax = sxp.voxel_plot(da)
     assert isinstance(ax, Axes3D)
 
 
-@pytest.mark.usefixtures("close_figs")
 def test_voxel_plot_accepts_axes():
     da = _make_3d_da()
     _, ax = plt.subplots(figsize=(8, 6), subplot_kw={"projection": "3d"})
@@ -400,7 +391,6 @@ def test_voxel_plot_accepts_axes():
     assert isinstance(ax, Axes3D)
 
 
-@pytest.mark.usefixtures("close_figs")
 def test_voxel_plot_axis_labels():
     da = _make_3d_da()
     _, ax = sxp.voxel_plot(da)
@@ -409,7 +399,6 @@ def test_voxel_plot_axis_labels():
     assert ax.get_zlabel() == "Z [m]"
 
 
-@pytest.mark.usefixtures("close_figs")
 def test_voxel_plot_default_axis_limits():
     da = _make_3d_da()
     _, ax = sxp.voxel_plot(da)
@@ -421,7 +410,6 @@ def test_voxel_plot_default_axis_limits():
     assert zlim[0] < zlim[1]
 
 
-@pytest.mark.usefixtures("close_figs")
 def test_voxel_plot_with_xlim_ylim_zlim():
     da = _make_3d_da()
     x0, x1 = 2e-6, 8e-6
@@ -433,21 +421,18 @@ def test_voxel_plot_with_xlim_ylim_zlim():
     assert ax.get_zlim() == pytest.approx((z0, z1), rel=0.1)
 
 
-@pytest.mark.usefixtures("close_figs")
 def test_voxel_plot_with_explicit_vmin_vmax():
     da = _make_3d_da()
     _, ax = sxp.voxel_plot(da, vmin=0.2, vmax=0.8)
     assert isinstance(ax, Axes3D)
 
 
-@pytest.mark.usefixtures("close_figs")
 def test_voxel_plot_with_vcenter():
     da = _make_3d_da()
     _, ax = sxp.voxel_plot(da, cmap="RdBu", vcenter=1e-2)
     assert isinstance(ax, Axes3D)
 
 
-@pytest.mark.usefixtures("close_figs")
 def test_voxel_plot_with_custom_mask():
     da = _make_3d_da()
     mask = da.values > 0.5
@@ -455,7 +440,6 @@ def test_voxel_plot_with_custom_mask():
     assert isinstance(ax, Axes3D)
 
 
-@pytest.mark.usefixtures("close_figs")
 def test_voxel_plot_aspect_auto():
     da = _make_3d_da()
     _, ax = sxp.voxel_plot(da, aspect="auto")
@@ -472,7 +456,6 @@ def test_voxel_plot_aspect_auto():
     assert box[2] / box[0] == pytest.approx(z_range / x_range, rel=0.05)
 
 
-@pytest.mark.usefixtures("close_figs")
 def test_voxel_plot_aspect_custom_tuple():
     da = _make_3d_da()
     _, ax = sxp.voxel_plot(da, aspect=(1.0, 2.0, 3.0))
@@ -481,7 +464,6 @@ def test_voxel_plot_aspect_custom_tuple():
     assert box[2] / box[0] == pytest.approx(3.0, rel=0.01)
 
 
-@pytest.mark.usefixtures("close_figs")
 def test_epoch_plot_dispatches_to_voxel_for_3d_spatial_data():
     with xr.open_dataset(TEST_FILES_DIR_3D / "0001.sdf") as ds:
         da = ds["Derived_Number_Density_Electron"].isel(

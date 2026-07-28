@@ -105,7 +105,7 @@ anim.show()
 ### 3D simulation
 
 ```{warning}
-[Voxel](./plots.md#voxel-plots) animations are not currently implemented. 
+[Voxel](./plotting.md#voxel-plots) animations are not currently implemented. 
 ```
 
 Opening a 3D simulation as a multi-file dataset and plotting it will

@@ -32,7 +32,7 @@ ds["Electric_Field_Ex"]
 ## Visualisation
 
 `sdf-xarray` has built-in plotting and animation functionality, more details can
-be found on [Plots](./plots.md) and [Animations](./animation.md).
+be found on [](./plotting.md) and [](./animation.md).
 
 ## Dimension slicing
 
@@ -136,7 +136,7 @@ plt.show()
 The data arrays can be interpolated with <project:#sdf_xarray.dataarray_accessor.EpochAccessor.resize>
 to either increase or decrease the resolution while mantaining the general structure.
 Decreasing the size may be useful to download large data from HPCs to local machines
-or ploting with [voxel plots](./plots.md#voxel-plots). Be aware that the original
+or ploting with [](./plotting.md#voxel-plots). Be aware that the original
 data will not be preserved.
 
 ```{code-cell} ipython3

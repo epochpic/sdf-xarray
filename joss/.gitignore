@@ -1,0 +1,5 @@
+# Ignore EPOCH files
+*.sdf
+deck.status
+o1.visit
+epoch2d.dat

@@ -4,6 +4,7 @@ import numpy as np
 import numpy.testing as npt
 import pytest
 import xarray as xr
+from sdf_xarray.sdf_interface import SDFFile, Variable
 
 import sdf_xarray as sdfxr
 from sdf_xarray import (
@@ -58,6 +59,66 @@ def test_preferred_chunks_metadata(xrlib: XRLibrary):
     with xrlib.open_dataset(TEST_FILES_DIR / "0000.sdf") as df:
         for var in df.data_vars:
             assert "preferred_chunks" in df[var].encoding
+
+
+@pytest.fixture
+def variable_reads(monkeypatch):
+    reads = []
+
+    class TrackingSDFFile(SDFFile):
+        def read(self, var):
+            if isinstance(var, Variable):
+                reads.append(var.name)
+            return super().read(var)
+
+    monkeypatch.setattr(sdfxr, "SDFFile", TrackingSDFFile)
+    return reads
+
+
+@pytest.mark.parametrize("chunks", [None, {}, "auto"])
+@pytest.mark.parametrize(
+    ("path", "variable", "original_name"),
+    [
+        (TEST_FILES_DIR / "0010.sdf", "Electric_Field_Ex", "Electric Field/Ex"),
+        (TEST_FILES_DIR / "0010.sdf", "Particles_Px_proton", "Particles/Px/proton"),
+        (TEST_ARRAYS_DIR / "0001.sdf", "Random_States", "Random States"),
+    ],
+)
+def test_variable_values_are_deferred(
+    path, variable, original_name, chunks, variable_reads
+):
+    with SDFFile(str(path)) as raw:
+        expected = raw.variables[original_name].data
+
+    with xr.open_dataset(path, keep_particles=True, chunks=chunks) as ds:
+        assert variable_reads == []
+        data = ds[variable]
+        assert data.shape == expected.shape
+        assert data.dtype == expected.dtype
+        selected = data.isel({data.dims[0]: slice(1, 4)})
+        assert variable_reads == []
+        npt.assert_array_equal(selected.values, expected[1:4])
+        assert variable_reads == [original_name]
+
+
+@pytest.mark.parametrize(
+    "indices",
+    [
+        ([0, 2], [1, 3]),
+        ([2, 0, 2], [3, 1]),
+        (slice(None, None, -1), [3, 1]),
+        (2, [3, 1]),
+    ],
+)
+def test_lazy_orthogonal_indexing(indices):
+    with SDFFile(str(TEST_FILES_DIR / "0010.sdf")) as raw:
+        expected = xr.DataArray(raw.variables["dist_fn/x_px/electron"].data)
+
+    with xr.open_dataset(TEST_FILES_DIR / "0010.sdf") as ds:
+        data = ds["dist_fn_x_px_electron"]
+        selected = data.isel(dict(zip(data.dims, indices)))
+        expected = expected.isel(dict(zip(expected.dims, indices)))
+        npt.assert_array_equal(selected.values, expected.values)
 
 
 @pytest.mark.parametrize("xrlib", [xr, sdfxr])

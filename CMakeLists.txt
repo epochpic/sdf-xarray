@@ -39,7 +39,7 @@ add_custom_command(
           "${_sdf_input}" --output-file ${_sdf_output}
           "-I${_sdf_module_dir}"
           -3
-  DEPENDS "${_sdf_input}"
+  DEPENDS "${_sdf_input}" "${_sdf_module_dir}/csdf.pxd"
   VERBATIM)
 
 python_add_library(sdf_interface MODULE ${_sdf_output} WITH_SOABI)

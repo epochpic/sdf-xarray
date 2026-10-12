@@ -277,22 +277,28 @@ cdef class SDFFile:
             raise RuntimeError(f"Could not read variable '{var.name}'")
 
         self._c_sdf_file.current_block = block
-        csdf.sdf_helper_read_data(self._c_sdf_file, block)
+        try:
+            csdf.sdf_helper_read_data(self._c_sdf_file, block)
 
-        if is_mesh:
-            # Meshes store the data for separate dimensions in block.grids
-            if not (block.grids is not NULL and block.grids[0] is not NULL):
-                raise RuntimeError(f"Could not read variable '{var.name}'")
+            if is_mesh:
+                # Meshes store the data for separate dimensions in block.grids
+                if not (block.grids is not NULL and block.grids[0] is not NULL):
+                    raise RuntimeError(f"Could not read variable '{var.name}'")
 
-            data = []
-            for i, dim in enumerate(var.shape):
-                data.append(
-                    self._make_array((dim,), var.dtype, block.grids[i])
-                )
-            return tuple(data)
+                data = []
+                for i, dim in enumerate(var.shape):
+                    data.append(
+                        self._make_array((dim,), var.dtype, block.grids[i])
+                    )
+                return tuple(data)
 
-        # Normal variables
-        return self._make_array(var.shape, var.dtype, block.data)
+            # Normal variables
+            return self._make_array(var.shape, var.dtype, block.data)
+        finally:
+            # The library keeps every block it reads cached until the file is
+            # closed, but we've just copied it into numpy, so release it now.
+            # Otherwise we hold two copies of everything that's been read
+            csdf.sdf_stack_free_block(self._c_sdf_file, block)
 
     cdef _read_mid_grid(self, mesh: Mesh):
         """Read a midpoint grid"""

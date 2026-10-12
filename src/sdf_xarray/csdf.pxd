@@ -125,3 +125,4 @@ cdef extern from "sdf_helper.h":
 cdef extern from "stack_allocator.h":
     void sdf_stack_destroy(sdf_file_t *h)
     void sdf_stack_init(sdf_file_t *h)
+    void sdf_stack_free_block(sdf_file_t *h, sdf_block_t *b)

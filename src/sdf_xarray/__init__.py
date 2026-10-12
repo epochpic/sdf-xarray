@@ -801,7 +801,14 @@ class SDFDataStore(AbstractDataStore):
                 # scalar, or because it's an array over something
                 # else. We have no more information, so just make up
                 # some (hopefully) unique dimension names
-                shape = getattr(value.data, "shape", ())
+                if isinstance(value, Constant):
+                    shape = ()
+                    data = value.data
+                else:
+                    shape = value.shape
+                    data = indexing.LazilyIndexedArray(
+                        SDFBackendArray(key, self, shape=shape, dtype=value.dtype)
+                    )
                 dims = [f"dim_{key}_{n}" for n, _ in enumerate(shape)]
                 base_name = _rename_with_underscore(key)
 
@@ -811,7 +818,7 @@ class SDFDataStore(AbstractDataStore):
                 if value.units is not None:
                     data_attrs["units"] = value.units
 
-                var = Variable(dims, value.data, attrs=data_attrs)
+                var = Variable(dims, data, attrs=data_attrs)
 
                 # Provide preferred_chunks for constants so dask aligns to natural shapes
                 var.encoding["preferred_chunks"] = dict(zip(dims, shape))
@@ -884,14 +891,14 @@ class SDFDataStore(AbstractDataStore):
                 "long_name": long_name,
             }
             lazy_data = indexing.LazilyIndexedArray(
-                SDFBackendArray(key, self, shape=value.shape, dtype=value.data.dtype)
+                SDFBackendArray(key, self, shape=value.shape, dtype=value.dtype)
             )
             var = Variable(var_coords, lazy_data, data_attrs)
             # Set preferred chunks to match on-disk layout
             # For point data (1D): full dimension
             # For grid data (N-D): individual grid chunk sizes
             if value.is_point_data:
-                var.encoding["preferred_chunks"] = {var_coords[0]: len(value.data)}
+                var.encoding["preferred_chunks"] = {var_coords[0]: value.shape[0]}
             else:
                 # Align with on-disk grid structure
                 chunk_dict = {}

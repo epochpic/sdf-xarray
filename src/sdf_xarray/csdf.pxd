@@ -61,6 +61,7 @@ cdef extern from "sdf.h":
         int64_t dims[SDF_MAXDIMS]
         int64_t local_dims[SDF_MAXDIMS]
         int64_t data_length
+        int64_t data_location
         int32_t ndims, geometry, datatype, blocktype
         int32_t stagger, datatype_out
         char const_value[16]

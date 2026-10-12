@@ -625,34 +625,68 @@ def make_time_dims(path_glob):
     return time_dims, var_times_map
 
 
+def _read_span(key, size: int) -> tuple[int, int, int | slice]:
+    """Translate a basic (int or slice) indexer along one axis into the
+    contiguous range ``[start, stop)`` that must be read from disk, plus the
+    indexer to apply to that range once it has been read."""
+    if isinstance(key, slice):
+        indices = range(*key.indices(size))
+        if not indices:
+            return 0, 0, slice(0, 0)
+        first, last = sorted((indices[0], indices[-1]))
+        return first, last + 1, slice(None, None, indices.step)
+    key = int(key)
+    if key < 0:
+        key += size
+    return key, key + 1, 0
+
+
 class SDFBackendArray(BackendArray):
-    """Adapater class required for lazy loading"""
+    """Adapter class required for lazy loading.
 
-    __slots__ = ("datastore", "dtype", "shape", "variable_name")
+    Reads go through :py:meth:`SDFFile.read`, which only reads the span of the
+    last (slowest-varying, as SDF arrays are Fortran ordered) axis that is
+    actually requested. Point mesh coordinates are a single on-disk block
+    holding every component, so ``component`` selects which one this array is.
+    """
 
-    def __init__(self, variable_name, datastore, shape, dtype):
+    __slots__ = ("component", "datastore", "dtype", "shape", "variable_name")
+
+    def __init__(self, variable_name, datastore, shape, dtype, component=None):
         self.datastore = datastore
         self.variable_name = variable_name
         self.shape = shape
         self.dtype = dtype
-
-    def get_array(self, needs_lock=True):
-        with self.datastore.acquire_context(needs_lock) as ds:
-            return ds.variables[self.variable_name]
+        self.component = component
 
     def __getitem__(self, key: indexing.ExplicitIndexer) -> np.typing.ArrayLike:
+        # use BASIC here as we only receive ints and slices. The SDF library can
+        # only read contiguous ranges, so a list like [0, 5] costs the same as
+        # 0:6 anyway; xarray reads that range and then applies the list itself.
         return indexing.explicit_indexing_adapter(
             key,
             self.shape,
-            indexing.IndexingSupport.OUTER,
+            indexing.IndexingSupport.BASIC,
             self._raw_indexing_method,
         )
 
     def _raw_indexing_method(self, key: tuple) -> np.typing.ArrayLike:
-        # thread safe method that access to data on disk
-        with self.datastore.acquire_context():
-            original_array = self.get_array(needs_lock=False)
-            return original_array.data[key]
+        with self.datastore.acquire_context() as sdf_file:
+            if self.component is not None:
+                mesh = sdf_file.grids[self.variable_name]
+                start, stop, last_key = _read_span(key[0], self.shape[0])
+                data = sdf_file.read_mesh_component(mesh, self.component, start, stop)
+                return data[last_key]
+
+            variable = sdf_file.variables[self.variable_name]
+            if not key:
+                return sdf_file.read(variable)
+            start, stop, last_key = _read_span(key[-1], self.shape[-1])
+            if start == stop:
+                empty = np.empty((*self.shape[:-1], 0), dtype=self.dtype)
+                return empty[(*key[:-1], slice(None))]
+            data = sdf_file.read(variable, start, stop)
+            return data[(*key[:-1], last_key)]
 
 
 class SDFDataStore(AbstractDataStore):
@@ -765,7 +799,25 @@ class SDFDataStore(AbstractDataStore):
 
             base_name = _process_grid_name(value.name, _norm_grid_name)
 
-            for label, coord, unit in zip(value.labels, value.data, value.units):
+            if value.is_point_data:
+                # Particle positions are not dimension coordinates, so they
+                # don't need to be in memory to build an index; keep them lazy
+                coord_data = [
+                    indexing.LazilyIndexedArray(
+                        SDFBackendArray(
+                            key,
+                            self,
+                            shape=value.shape[:1],
+                            dtype=value.dtype,
+                            component=component,
+                        )
+                    )
+                    for component in range(len(value.labels))
+                ]
+            else:
+                coord_data = value.data
+
+            for label, coord, unit in zip(value.labels, coord_data, value.units):
                 full_name = f"{label}_{base_name}"
                 dim_name = (
                     f"ID_{_process_grid_name(key, _grid_species_name)}"

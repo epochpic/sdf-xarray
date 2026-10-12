@@ -7,6 +7,7 @@ import xarray as xr
 
 import sdf_xarray as sdfxr
 from sdf_xarray import (
+    SDFFile,
     SDFPreprocess,
     _load_deck,
     _process_latex_name,
@@ -765,3 +766,37 @@ def test_epydeck_parsing_failing_deck(tmp_path, capsys):
     _load_deck("", deck)
     out, _ = capsys.readouterr()
     assert "error occurred while trying to load the input deck" in out
+
+
+def test_lazy_particle_coords():
+    with sdfxr.open_dataset(TEST_FILES_DIR / "0010.sdf", keep_particles=True) as df:
+        x_coord = df["X_Particles_proton"]
+        assert not x_coord.variable._in_memory
+        with SDFFile(str(TEST_FILES_DIR / "0010.sdf")) as f:
+            mesh = next(
+                g for g in f.grids.values() if g.name == x_coord.attrs["full_name"]
+            )
+            expected = f.read(mesh)[mesh.labels.index("X")]
+        npt.assert_array_equal(x_coord[2:-3].values, expected[2:-3])
+        npt.assert_array_equal(x_coord.values, expected)
+
+
+@pytest.mark.parametrize(
+    "indexers",
+    [
+        {"dim0": [0, 2, 5], "dim1": [1, 3]},
+        {"dim0": [5, 0], "dim2": slice(10, 2, -2)},
+        {"dim1": -1, "dim2": [0, -1]},
+    ],
+)
+def test_lazy_indexing_matches_eager(indexers):
+    path = TEST_3D_DIST_FN / "0000.sdf"
+    name = "dist_fn_x_px_py_Electron"
+    with xr.open_dataset(path) as eager:
+        expected = eager[name].load()
+    with xr.open_dataset(path) as lazy:
+        dims = lazy[name].dims
+        indexers = {dims[int(k[-1])]: v for k, v in indexers.items()}
+        npt.assert_array_equal(
+            lazy[name].isel(indexers).values, expected.isel(indexers).values
+        )

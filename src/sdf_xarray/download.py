@@ -58,18 +58,25 @@ def fetch_dataset(
     import pooch  # noqa: PLC0415
 
     logger = pooch.get_logger()
-    datasets = pooch.create(
-        path=pooch.os_cache("sdf_datasets"),
-        base_url="doi:10.5281/zenodo.17618509",
-        registry=None,
-        retry_if_failed=10,
-    )
-    datasets.load_registry_from_doi()
 
-    datasets.fetch(
-        f"{dataset_name}.zip", processor=pooch.Unzip(extract_dir="."), progressbar=True
-    )
-    cache_path = Path(datasets.path) / dataset_name
+    cache_dir = Path(pooch.os_cache("sdf_datasets"))
+    cache_path = cache_dir / dataset_name
+
+    # Only download dataset if a local copy is not found
+    if not cache_path.is_dir():
+        datasets = pooch.create(
+            path=cache_dir,
+            base_url="doi:10.5281/zenodo.17618509",
+            registry=None,
+            retry_if_failed=10,
+        )
+        datasets.load_registry_from_doi()
+
+        datasets.fetch(
+            f"{dataset_name}.zip",
+            processor=pooch.Unzip(extract_dir="."),
+            progressbar=True,
+        )
 
     if save_path is not None:
         save_path = Path(save_path)

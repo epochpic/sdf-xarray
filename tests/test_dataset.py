@@ -20,6 +20,7 @@ TEST_MISMATCHED_FILES_DIR = download.fetch_dataset("test_mismatched_files")
 TEST_ARRAYS_DIR = download.fetch_dataset("test_array_no_grids")
 TEST_3D_DIST_FN = download.fetch_dataset("test_dist_fn")
 TEST_2D_PARTICLE_DATA = download.fetch_dataset("test_two_probes_2D")
+TEST_2D_MOVING_WINDOW = download.fetch_dataset("test_files_2D_moving_window")
 
 
 # Type hinting support
@@ -205,6 +206,33 @@ def test_multiple_files_multiple_time_dims():
         assert df["Particles_Px_proton"].shape == (1, 1920)
         assert df["Particles_Weight_proton"].shape == (2, 1920)
         assert df["Absorption_Total_Laser_Energy_Injected"].shape == (11,)
+
+
+def test_open_mfdataset_varying_grid():
+    # A grid that differs between files must not become a concat dimension
+    paths = sorted(TEST_2D_MOVING_WINDOW.glob("*.sdf"))
+    with sdfxr.open_mfdataset(paths) as df:
+        assert df.sizes["time"] == len(paths)
+        assert df["Wall_time"].dims == ("time",)
+        density = df["Derived_Number_Density_electron"]
+        assert density.dims == ("time", "X_Grid_mid", "Y_Grid_mid")
+        assert df.indexes["X_Grid_mid"].is_monotonic_increasing
+
+        for i, path in enumerate(paths):
+            with xr.open_dataset(path) as single:
+                expected = single["Derived_Number_Density_electron"]
+                actual = density.isel(time=i).sel(X_Grid_mid=expected["X_Grid_mid"])
+                npt.assert_array_equal(actual, expected)
+
+
+def test_open_mfdataset_sparse_dist_fn():
+    # The first file's dist_fn and its grid are missing from the last file
+    with sdfxr.open_mfdataset(TEST_3D_DIST_FN.glob("*.sdf")) as df:
+        dist_fn = df["dist_fn_x_px_py_Electron"]
+        assert df.sizes["time"] == 3
+        assert dist_fn.shape == (3, 16, 20, 20)
+        assert dist_fn.isel(time=slice(0, 2)).notnull().all()
+        assert dist_fn.isel(time=2).isnull().all()
 
 
 def test_resolve_paths_from_string_pattern():
@@ -593,6 +621,30 @@ def test_open_mfdataset_data_vars_sparse_time():
         )
 
         npt.assert_allclose(time_values, time.values, rtol=1e-6)
+
+
+def test_open_mfdataset_data_vars_sparse_particles():
+    with sdfxr.open_mfdataset(
+        TEST_FILES_DIR.glob("*.sdf"),
+        keep_particles=True,
+        data_vars=["Particles_Px_proton"],
+    ) as df:
+        px_protons = df["Particles_Px_proton"]
+        assert sorted(px_protons.coords) == sorted(("X_Particles_proton", "time"))
+        assert px_protons.shape == (11, 1920)
+        has_data = px_protons.notnull().any("ID_proton").values
+        assert has_data.tolist() == [False] * 10 + [True]
+
+
+def test_open_mfdataset_data_vars_sparse_dist_fn():
+    with sdfxr.open_mfdataset(
+        TEST_3D_DIST_FN.glob("*.sdf"),
+        data_vars=["dist_fn_x_px_py_Electron"],
+    ) as df:
+        dist_fn = df["dist_fn_x_px_py_Electron"]
+        assert dist_fn.shape == (3, 16, 20, 20)
+        assert dist_fn.isel(time=slice(0, 2)).notnull().all()
+        assert dist_fn.isel(time=2).isnull().all()
 
 
 def test_open_mfdataset_data_vars_separate_times_single():

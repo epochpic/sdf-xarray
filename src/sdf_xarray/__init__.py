@@ -239,30 +239,42 @@ def combine_datasets(
 ) -> xr.Dataset:
     """
     Combine all datasets using a single time dimension, optionally extract
-    data from only the listed data_vars
-    """
+    data from only the listed data_vars.
 
-    if data_vars is not None:
-        ds = xr.open_mfdataset(
-            path_glob,
-            join="outer",
-            coords="different",
-            compat="no_conflicts",
-            combine="nested",
-            concat_dim="time",
-            preprocess=SDFPreprocess(data_vars=data_vars),
-            **kwargs,
-        )
-    else:
-        ds = xr.open_mfdataset(
-            path_glob,
-            data_vars="all",
-            coords="different",
-            compat="no_conflicts",
-            join="outer",
-            preprocess=SDFPreprocess(),
-            **kwargs,
-        )
+    Coordinates with the "point_data" attribute come from SDF point meshes,
+    i.e. particle positions such as ``X_Particles_proton``. They have one
+    value per particle along an ``ID_<species>`` dimension rather than a
+    grid, and SDFPreprocess gives them a time dimension because particles
+    move. They are usually only in some files (with ``keep_particles=True``,
+    on dumps that output particles). When concatenating along time, xarray
+    fills a data variable missing from a file with ``NaN``'s, but raises if a
+    coordinate is missing. So each file's point coordinates are temporarily
+    turned into data variables and turned back into coordinates after
+    combining. Their names are recorded here because particle data variables
+    (e.g. ``Particles_Px_proton``) carry "point_data" too, so they can't be
+    told apart by the attribute later.
+    """
+    point_coords: set[str] = set()
+    preprocess = SDFPreprocess(data_vars=data_vars)
+
+    def _preprocess(ds: xr.Dataset) -> xr.Dataset:
+        ds = preprocess(ds)
+        names = [k for k, v in ds.coords.items() if v.attrs.get("point_data", False)]
+        point_coords.update(names)
+        return ds.reset_coords(names)
+
+    ds = xr.open_mfdataset(
+        path_glob,
+        join="outer",
+        coords="minimal",
+        compat="no_conflicts",
+        combine="nested",
+        concat_dim="time",
+        data_vars="all",
+        preprocess=_preprocess,
+        **kwargs,
+    )
+    ds = ds.set_coords(sorted(point_coords))
 
     ds.attrs["deck"] = _load_deck(ds.attrs["filename"], deck_path)
 

@@ -239,30 +239,42 @@ def combine_datasets(
 ) -> xr.Dataset:
     """
     Combine all datasets using a single time dimension, optionally extract
-    data from only the listed data_vars
-    """
+    data from only the listed data_vars.
 
-    if data_vars is not None:
-        ds = xr.open_mfdataset(
-            path_glob,
-            join="outer",
-            coords="different",
-            compat="no_conflicts",
-            combine="nested",
-            concat_dim="time",
-            preprocess=SDFPreprocess(data_vars=data_vars),
-            **kwargs,
-        )
-    else:
-        ds = xr.open_mfdataset(
-            path_glob,
-            data_vars="all",
-            coords="different",
-            compat="no_conflicts",
-            join="outer",
-            preprocess=SDFPreprocess(),
-            **kwargs,
-        )
+    Coordinates with the "point_data" attribute come from SDF point meshes,
+    i.e. particle positions such as ``X_Particles_proton``. They have one
+    value per particle along an ``ID_<species>`` dimension rather than a
+    grid, and SDFPreprocess gives them a time dimension because particles
+    move. They are usually only in some files (with ``keep_particles=True``,
+    on dumps that output particles). When concatenating along time, xarray
+    fills a data variable missing from a file with ``NaN``'s, but raises if a
+    coordinate is missing. So each file's point coordinates are temporarily
+    turned into data variables and turned back into coordinates after
+    combining. Their names are recorded here because particle data variables
+    (e.g. ``Particles_Px_proton``) carry "point_data" too, so they can't be
+    told apart by the attribute later.
+    """
+    point_coords: set[str] = set()
+    preprocess = SDFPreprocess(data_vars=data_vars)
+
+    def _preprocess(ds: xr.Dataset) -> xr.Dataset:
+        ds = preprocess(ds)
+        names = [k for k, v in ds.coords.items() if v.attrs.get("point_data", False)]
+        point_coords.update(names)
+        return ds.reset_coords(names)
+
+    ds = xr.open_mfdataset(
+        path_glob,
+        join="outer",
+        coords="minimal",
+        compat="no_conflicts",
+        combine="nested",
+        concat_dim="time",
+        data_vars="all",
+        preprocess=_preprocess,
+        **kwargs,
+    )
+    ds = ds.set_coords(sorted(point_coords))
 
     ds.attrs["deck"] = _load_deck(ds.attrs["filename"], deck_path)
 
@@ -625,34 +637,68 @@ def make_time_dims(path_glob):
     return time_dims, var_times_map
 
 
+def _read_span(key, size: int) -> tuple[int, int, int | slice]:
+    """Translate a basic (int or slice) indexer along one axis into the
+    contiguous range ``[start, stop)`` that must be read from disk, plus the
+    indexer to apply to that range once it has been read."""
+    if isinstance(key, slice):
+        indices = range(*key.indices(size))
+        if not indices:
+            return 0, 0, slice(0, 0)
+        first, last = sorted((indices[0], indices[-1]))
+        return first, last + 1, slice(None, None, indices.step)
+    key = int(key)
+    if key < 0:
+        key += size
+    return key, key + 1, 0
+
+
 class SDFBackendArray(BackendArray):
-    """Adapater class required for lazy loading"""
+    """Adapter class required for lazy loading.
 
-    __slots__ = ("datastore", "dtype", "shape", "variable_name")
+    Reads go through :py:meth:`SDFFile.read`, which only reads the span of the
+    last (slowest-varying, as SDF arrays are Fortran ordered) axis that is
+    actually requested. Point mesh coordinates are a single on-disk block
+    holding every component, so ``component`` selects which one this array is.
+    """
 
-    def __init__(self, variable_name, datastore, shape, dtype):
+    __slots__ = ("component", "datastore", "dtype", "shape", "variable_name")
+
+    def __init__(self, variable_name, datastore, shape, dtype, component=None):
         self.datastore = datastore
         self.variable_name = variable_name
         self.shape = shape
         self.dtype = dtype
-
-    def get_array(self, needs_lock=True):
-        with self.datastore.acquire_context(needs_lock) as ds:
-            return ds.variables[self.variable_name]
+        self.component = component
 
     def __getitem__(self, key: indexing.ExplicitIndexer) -> np.typing.ArrayLike:
+        # use BASIC here as we only receive ints and slices. The SDF library can
+        # only read contiguous ranges, so a list like [0, 5] costs the same as
+        # 0:6 anyway; xarray reads that range and then applies the list itself.
         return indexing.explicit_indexing_adapter(
             key,
             self.shape,
-            indexing.IndexingSupport.OUTER,
+            indexing.IndexingSupport.BASIC,
             self._raw_indexing_method,
         )
 
     def _raw_indexing_method(self, key: tuple) -> np.typing.ArrayLike:
-        # thread safe method that access to data on disk
-        with self.datastore.acquire_context():
-            original_array = self.get_array(needs_lock=False)
-            return original_array.data[key]
+        with self.datastore.acquire_context() as sdf_file:
+            if self.component is not None:
+                mesh = sdf_file.grids[self.variable_name]
+                start, stop, last_key = _read_span(key[0], self.shape[0])
+                data = sdf_file.read_mesh_component(mesh, self.component, start, stop)
+                return data[last_key]
+
+            variable = sdf_file.variables[self.variable_name]
+            if not key:
+                return sdf_file.read(variable)
+            start, stop, last_key = _read_span(key[-1], self.shape[-1])
+            if start == stop:
+                empty = np.empty((*self.shape[:-1], 0), dtype=self.dtype)
+                return empty[(*key[:-1], slice(None))]
+            data = sdf_file.read(variable, start, stop)
+            return data[(*key[:-1], last_key)]
 
 
 class SDFDataStore(AbstractDataStore):
@@ -765,7 +811,25 @@ class SDFDataStore(AbstractDataStore):
 
             base_name = _process_grid_name(value.name, _norm_grid_name)
 
-            for label, coord, unit in zip(value.labels, value.data, value.units):
+            if value.is_point_data:
+                # Particle positions are not dimension coordinates, so they
+                # don't need to be in memory to build an index; keep them lazy
+                coord_data = [
+                    indexing.LazilyIndexedArray(
+                        SDFBackendArray(
+                            key,
+                            self,
+                            shape=value.shape[:1],
+                            dtype=value.dtype,
+                            component=component,
+                        )
+                    )
+                    for component in range(len(value.labels))
+                ]
+            else:
+                coord_data = value.data
+
+            for label, coord, unit in zip(value.labels, coord_data, value.units):
                 full_name = f"{label}_{base_name}"
                 dim_name = (
                     f"ID_{_process_grid_name(key, _grid_species_name)}"
@@ -801,7 +865,14 @@ class SDFDataStore(AbstractDataStore):
                 # scalar, or because it's an array over something
                 # else. We have no more information, so just make up
                 # some (hopefully) unique dimension names
-                shape = getattr(value.data, "shape", ())
+                if isinstance(value, Constant):
+                    shape = ()
+                    data = value.data
+                else:
+                    shape = value.shape
+                    data = indexing.LazilyIndexedArray(
+                        SDFBackendArray(key, self, shape=shape, dtype=value.dtype)
+                    )
                 dims = [f"dim_{key}_{n}" for n, _ in enumerate(shape)]
                 base_name = _rename_with_underscore(key)
 
@@ -811,7 +882,7 @@ class SDFDataStore(AbstractDataStore):
                 if value.units is not None:
                     data_attrs["units"] = value.units
 
-                var = Variable(dims, value.data, attrs=data_attrs)
+                var = Variable(dims, data, attrs=data_attrs)
 
                 # Provide preferred_chunks for constants so dask aligns to natural shapes
                 var.encoding["preferred_chunks"] = dict(zip(dims, shape))
@@ -884,14 +955,14 @@ class SDFDataStore(AbstractDataStore):
                 "long_name": long_name,
             }
             lazy_data = indexing.LazilyIndexedArray(
-                SDFBackendArray(key, self, shape=value.shape, dtype=value.data.dtype)
+                SDFBackendArray(key, self, shape=value.shape, dtype=value.dtype)
             )
             var = Variable(var_coords, lazy_data, data_attrs)
             # Set preferred chunks to match on-disk layout
             # For point data (1D): full dimension
             # For grid data (N-D): individual grid chunk sizes
             if value.is_point_data:
-                var.encoding["preferred_chunks"] = {var_coords[0]: len(value.data)}
+                var.encoding["preferred_chunks"] = {var_coords[0]: value.shape[0]}
             else:
                 # Align with on-disk grid structure
                 chunk_dict = {}

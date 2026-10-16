@@ -138,3 +138,47 @@ if __name__ == "__main__":
         pprint(f.variables["Electric Field/Ex"].data)
         print("grid")
         pprint(f.grids["grid"].data)
+
+
+def test_read_section_matches_full_read():
+    with SDFFile(str(TEST_FILES_DIR / "0010.sdf")) as f:
+        variables = [
+            v
+            for v in f.variables.values()
+            if getattr(v, "shape", ()) and "cpu split" not in v.name.lower()
+        ]
+        assert any(v.is_point_data for v in variables)
+        for var in variables:
+            full = f.read(var)
+            size = var.shape[-1]
+            ranges = {(0, 1), (1, size), (size // 3, size // 2 + 1)}
+            for start, stop in [(a, b) for a, b in ranges if a < b <= size]:
+                npt.assert_array_equal(
+                    f.read(var, start, stop), full[..., start:stop], err_msg=var.name
+                )
+            # Reading a section must not affect later full reads
+            npt.assert_array_equal(f.read(var), full, err_msg=var.name)
+
+
+def test_read_section_out_of_range():
+    with SDFFile(str(TEST_FILES_DIR / "0010.sdf")) as f:
+        var = f.variables["Electric Field/Ex"]
+        with pytest.raises(IndexError):
+            f.read(var, 0, var.shape[-1] + 1)
+
+
+def test_read_mesh_component_matches_full_read():
+    with SDFFile(str(TEST_FILES_DIR / "0010.sdf")) as f:
+        meshes = [g for g in f.grids.values() if g.is_point_data]
+        assert meshes
+        for mesh in meshes:
+            full = f.read(mesh)
+            size = mesh.shape[0]
+            for component in range(len(mesh.labels)):
+                npt.assert_array_equal(
+                    f.read_mesh_component(mesh, component), full[component]
+                )
+                npt.assert_array_equal(
+                    f.read_mesh_component(mesh, component, 1, size // 2),
+                    full[component][1 : size // 2],
+                )

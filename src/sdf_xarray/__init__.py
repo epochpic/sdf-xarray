@@ -637,29 +637,21 @@ def make_time_dims(path_glob):
     return time_dims, var_times_map
 
 
-def _read_span(key, size: int) -> tuple[int, int, int | slice]:
-    """Translate a basic (int or slice) indexer along one axis into the
-    contiguous range ``[start, stop)`` that must be read from disk, plus the
-    indexer to apply to that range once it has been read."""
-    if isinstance(key, slice):
-        indices = range(*key.indices(size))
-        if not indices:
-            return 0, 0, slice(0, 0)
-        first, last = sorted((indices[0], indices[-1]))
-        return first, last + 1, slice(None, None, indices.step)
-    key = int(key)
-    if key < 0:
-        key += size
-    return key, key + 1, 0
-
-
 class SDFBackendArray(BackendArray):
     """Adapter class required for lazy loading.
 
     Reads go through :py:meth:`SDFFile.read`, which only reads the span of the
     last (slowest-varying, as SDF arrays are Fortran ordered) axis that is
-    actually requested. Point mesh coordinates are a single on-disk block
-    holding every component, so ``component`` selects which one this array is.
+    actually requested.
+
+    ``component`` is only used for particle positions. SDF stores the positions
+    of a particle species as one point mesh block, holding a 1D array of every
+    particle's position for each spatial direction. Each of these directions is
+    a component, and becomes its own coordinate, e.g. ``X_Particles_Electron``
+    and ``Y_Particles_Electron``. ``component`` is the index of the direction
+    this array holds, in the order of the mesh's labels (e.g. 0 for ``X``, 1
+    for ``Y``), and ``variable_name`` is then the name of the point mesh. For
+    every other variable ``component`` is ``None``.
     """
 
     __slots__ = ("component", "datastore", "dtype", "shape", "variable_name")
@@ -671,34 +663,51 @@ class SDFBackendArray(BackendArray):
         self.dtype = dtype
         self.component = component
 
-    def __getitem__(self, key: indexing.ExplicitIndexer) -> np.typing.ArrayLike:
-        # use BASIC here as we only receive ints and slices. The SDF library can
-        # only read contiguous ranges, so a list like [0, 5] costs the same as
-        # 0:6 anyway; xarray reads that range and then applies the list itself.
+    def __getitem__(self, indexer: indexing.ExplicitIndexer) -> np.typing.ArrayLike:
         return indexing.explicit_indexing_adapter(
-            key,
+            indexer,
             self.shape,
             indexing.IndexingSupport.BASIC,
             self._raw_indexing_method,
         )
 
-    def _raw_indexing_method(self, key: tuple) -> np.typing.ArrayLike:
-        with self.datastore.acquire_context() as sdf_file:
-            if self.component is not None:
-                mesh = sdf_file.grids[self.variable_name]
-                start, stop, last_key = _read_span(key[0], self.shape[0])
-                data = sdf_file.read_mesh_component(mesh, self.component, start, stop)
-                return data[last_key]
+    def _raw_indexing_method(self, indexer: tuple) -> np.typing.ArrayLike:
+        """Read the data selected by ``indexer`` from disk.
 
-            variable = sdf_file.variables[self.variable_name]
-            if not key:
-                return sdf_file.read(variable)
-            start, stop, last_key = _read_span(key[-1], self.shape[-1])
-            if start == stop:
-                empty = np.empty((*self.shape[:-1], 0), dtype=self.dtype)
-                return empty[(*key[:-1], slice(None))]
-            data = sdf_file.read(variable, start, stop)
-            return data[(*key[:-1], last_key)]
+        xarray only calls this once the data is needed (e.g. by ``.values``,
+        ``load()``, ``compute()`` or dask), with one int or slice per
+        dimension, and expects back the same array numpy would return for
+        ``full_array[indexer]``. Any negative ints or steps have already
+        been made positive by xarray.
+
+        SDF arrays are Fortran ordered, so only the last dimension can be read
+        in part (any range of it is contiguous on disk). We read the range that
+        dimension needs, then index the other dimensions in memory.
+        """
+        *other_indices, last_index = indexer
+
+        if isinstance(last_index, slice):
+            start, stop, step = last_index.indices(self.shape[-1])
+            # An empty slice such as 5:1 has stop < start, so read nothing
+            stop = max(start, stop)
+            data = self._read_last_dim(start, stop)
+            # SDF can't skip elements, so a step such as ::2 is applied here
+            return data[*other_indices, ::step]
+
+        data = self._read_last_dim(last_index, last_index + 1)
+        # Index with 0, not 0:1, so the dimension is dropped as numpy would
+        return data[*other_indices, 0]
+
+    def _read_last_dim(self, start: int, stop: int) -> np.ndarray:
+        """Read the range [start, stop) of the last dimension from disk."""
+        with self.datastore.acquire_context() as sdf_file:
+            if self.component is None:
+                variable = sdf_file.variables[self.variable_name]
+                return sdf_file.read(variable, start, stop)
+
+            # Particle positions: one component (e.g. x) of a point mesh
+            mesh = sdf_file.grids[self.variable_name]
+            return sdf_file.read_mesh_component(mesh, self.component, start, stop)
 
 
 class SDFDataStore(AbstractDataStore):

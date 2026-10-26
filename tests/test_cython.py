@@ -145,14 +145,14 @@ def test_read_section_matches_full_read():
         variables = [
             v
             for v in f.variables.values()
-            if getattr(v, "shape", ()) and "cpu split" not in v.name.lower()
+            if getattr(v, "shape", ()) and "cpu" not in v.name.lower()
         ]
         assert any(v.is_point_data for v in variables)
         for var in variables:
             full = f.read(var)
             size = var.shape[-1]
-            ranges = {(0, 1), (1, size), (size // 3, size // 2 + 1)}
-            for start, stop in [(a, b) for a, b in ranges if a < b <= size]:
+            ranges = [(0, 0), (0, 1), (1, size), (size // 3, size // 2 + 1)]
+            for start, stop in ranges:
                 npt.assert_array_equal(
                     f.read(var, start, stop), full[..., start:stop], err_msg=var.name
                 )

@@ -288,11 +288,14 @@ cdef class SDFFile:
         if not is_mesh and shape and (start is not None or stop is not None):
             start = 0 if start is None else start
             stop = shape[-1] if stop is None else stop
-            if not 0 <= start < stop <= shape[-1]:
+            if not 0 <= start <= stop <= shape[-1]:
                 raise IndexError(
                     f"Invalid range [{start}, {stop}) for '{var.name}' "
                     f"with shape {shape}"
                 )
+            if start == stop:
+                # Nothing to read, and the library can't read an empty section
+                return np.empty((*shape[:-1], 0), dtype=var.dtype)
             is_section = (start, stop) != (0, shape[-1])
 
         if is_section and block.blocktype not in (

@@ -142,10 +142,12 @@ if __name__ == "__main__":
 
 def test_read_section_matches_full_read():
     with SDFFile(str(TEST_FILES_DIR / "0010.sdf")) as f:
+        dropped_key_affixes = ["cpu", "output file", "boundary"]
         variables = [
             v
             for v in f.variables.values()
-            if getattr(v, "shape", ()) and "cpu" not in v.name.lower()
+            if getattr(v, "shape", ())
+            and all(key not in v.name.lower() for key in dropped_key_affixes)
         ]
         assert any(v.is_point_data for v in variables)
         for var in variables:

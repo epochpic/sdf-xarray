@@ -258,9 +258,11 @@ cdef class SDFFile:
     cpdef read(self, var: Block, start=None, stop=None):
         """Read a variable from the file, returning numpy array
 
-        For variables, ``start`` and ``stop`` select a range along the last
-        axis, so that only that part of the variable is read from disk. As
-        SDF arrays are Fortran ordered, this is a single contiguous read.
+        For variables, ``start`` and ``stop`` select a range of the last index,
+        i.e. ``var[..., start:stop]``, so that only that part of the variable is
+        read from disk. As SDF arrays are Fortran ordered (the first index
+        changes fastest), this range is one contiguous block on disk, so it is
+        a single read.
         """
 
         if self._c_sdf_file is NULL:

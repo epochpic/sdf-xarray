@@ -640,9 +640,10 @@ def make_time_dims(path_glob):
 class SDFBackendArray(BackendArray):
     """Adapter class required for lazy loading.
 
-    Reads go through :py:meth:`SDFFile.read`, which only reads the span of the
-    last (slowest-varying, as SDF arrays are Fortran ordered) axis that is
-    actually requested.
+    Reads go through :py:meth:`SDFFile.read`, which only reads the range of the
+    last axis that is actually requested. SDF arrays are Fortran ordered, so
+    that range is one contiguous block on disk (see
+    `sdf_xarray.SDFBackendArray.raw_indexing_method`).
 
     ``component`` is only used for particle positions. SDF stores the positions
     of a particle species as one point mesh block, holding a 1D array of every
@@ -668,11 +669,11 @@ class SDFBackendArray(BackendArray):
             indexer,
             self.shape,
             indexing.IndexingSupport.BASIC,
-            self._raw_indexing_method,
+            self.raw_indexing_method,
         )
 
-    def _raw_indexing_method(self, indexer: tuple) -> np.typing.ArrayLike:
-        """Read the data selected by ``indexer`` from disk.
+    def raw_indexing_method(self, indexer: tuple) -> np.typing.ArrayLike:
+        """Read the data selected from disk.
 
         xarray only calls this once the data is needed (e.g. by ``.values``,
         ``load()``, ``compute()`` or dask), with one int or slice per
@@ -680,9 +681,23 @@ class SDFBackendArray(BackendArray):
         ``full_array[indexer]``. Any negative ints or steps have already
         been made positive by xarray.
 
-        SDF arrays are Fortran ordered, so only the last dimension can be read
-        in part (any range of it is contiguous on disk). We read the range that
-        dimension needs, then index the other dimensions in memory.
+        SDF stores arrays in Fortran order, where the first index changes
+        fastest. A 2D array of shape (nx, ny) is stored as all nx values at
+        y=0, then all nx values at y=1, and so on, so for nx=3 and ny=4 each
+        element's position in the file is::
+
+                  y=0  y=1  y=2  y=3
+            x=0    0    3    6    9
+            x=1    1    4    7   10
+            x=2    2    5    8   11
+
+        Each column (one y, every x) is contiguous, and the columns are stored
+        one after another. So a range of the *last* index, with every other
+        dimension in full, is one contiguous block where ``[:, 1:3]`` is positions
+        3 to 8. A range of any other index is scattered through the file where
+        ``[1:3, :]`` is positions 1, 2, 4, 5, 7, 8, 10 and 11. So we only read
+        the range of the last dimension that is needed from disk, then index the
+        other dimensions in memory.
         """
         *other_indices, last_index = indexer
 
@@ -690,15 +705,15 @@ class SDFBackendArray(BackendArray):
             start, stop, step = last_index.indices(self.shape[-1])
             # An empty slice such as 5:1 has stop < start, so read nothing
             stop = max(start, stop)
-            data = self._read_last_dim(start, stop)
+            data = self.read_last_dim(start, stop)
             # SDF can't skip elements, so a step such as ::2 is applied here
             return data[*other_indices, ::step]
 
-        data = self._read_last_dim(last_index, last_index + 1)
+        data = self.read_last_dim(last_index, last_index + 1)
         # Index with 0, not 0:1, so the dimension is dropped as numpy would
         return data[*other_indices, 0]
 
-    def _read_last_dim(self, start: int, stop: int) -> np.ndarray:
+    def read_last_dim(self, start: int, stop: int) -> np.ndarray:
         """Read the range [start, stop) of the last dimension from disk."""
         with self.datastore.acquire_context() as sdf_file:
             if self.component is None:

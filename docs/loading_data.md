@@ -85,7 +85,11 @@ is by using the <project:#sdf_xarray.open_mfdataset>.
 ```{tip}
 If your simulation includes multiple `output` blocks that specify different variables
 for output at various time steps, variables not present at a specific step will default
-to a nan value. To remove these nan values we suggest using the <inv:#xarray.DataArray.dropna>
+to a nan value. This includes distribution functions and particle data that are only
+output at some time steps. Grids that change between outputs (such as a moving window,
+or a distribution function with an automatic range) are combined onto the union of
+every output's grid points, with nan values outside the part of the grid each output
+covers. To remove these nan values we suggest using the <inv:#xarray.DataArray.dropna>
 function or following our implmentation in [](#loading-sparse-data).
 ```
 
@@ -98,13 +102,20 @@ sdfxr.open_mfdataset("tutorial_dataset_1d/*.sdf")
 Alternatively, files can be loaded using <inv:#xarray.open_mfdataset>. However, when loading in
 all the files we have do some processing of the data so that we can correctly align it along
 the time dimension; This is done via the `preprocess` parameter utilising the
-<project:#sdf_xarray.SDFPreprocess> function.
+<project:#sdf_xarray.SDFPreprocess> function. Passing `combine="nested"` and
+`concat_dim="time"` makes sure the files are only joined along time. Otherwise
+<inv:#xarray> treats any coordinate that differs between files (such as a moving
+window's x grid) as another dimension to concatenate along, which can fail or request
+far more memory than needed. Unlike <project:#sdf_xarray.open_mfdataset>, this does
+not handle particle positions that are missing from some files.
 
 ```{code-cell} ipython3
 import xarray as xr
 
 xr.open_mfdataset(
    "tutorial_dataset_1d/*.sdf",
+   combine="nested",
+   concat_dim="time",
    join="outer",
    compat="no_conflicts",
    preprocess=sdfxr.SDFPreprocess()
@@ -123,6 +134,9 @@ sdfxr.open_mfdatatree("tutorial_dataset_1d/*.sdf")
 
 ## Loading sparse data
 
+By default, <project:#sdf_xarray.open_mfdataset> puts every variable on a single
+time dimension, and a variable missing from an output (including distribution
+functions and particle data) is filled with nan values at that time step.
 When dealing with sparse data (where different variables are saved at different,
 non-overlapping time steps) you can optimize memory usage by loading the data with
 <project:#sdf_xarray.open_mfdataset> using the parameter `separate_times=True`. This
@@ -140,12 +154,17 @@ sdfxr.open_mfdataset("tutorial_dataset_1d/*.sdf", separate_times=True)
 ## Loading particle data
 
 ```{warning}
-It is **not recommended** to use <inv:#xarray.open_mfdataset> or
-<project:#sdf_xarray.open_mfdataset> to load particle data from multiple
-SDF outputs. The number of particles often varies between outputs,
-which can lead to inconsistent array shapes that these functions
-cannot handle. Instead, consider loading each file individually and
-then concatenating them manually.
+<project:#sdf_xarray.open_mfdataset> can load particle data from multiple
+SDF outputs, and outputs that don't include particles are filled with nan
+values. However, every output that does include a species must contain the
+same number of particles of that species. The number of particles often
+varies between outputs (for example with particle injection, losses or probes),
+in which case loading fails with a conflicting dimension sizes error, and you
+should load each file individually instead.
+
+The `ID_<species>` dimension is the position in each output's particle array,
+not a particle identity, so the same index at two time steps is not
+necessarily the same particle.
 ```
 
 ```{note}
@@ -157,7 +176,7 @@ Failing to do so will result in dimension name conflicts.
 
 By default, particle data isn't kept as it takes up a lot of space.
 Pass `keep_particles=True` as a keyword argument to
-<inv:#xarray.open_dataset> (for single files) or <inv:#xarray.open_mfdataset> (for
+<project:#sdf_xarray.open_dataset> (for single files) or <project:#sdf_xarray.open_mfdataset> (for
 multiple files).
 
 ```{code-cell} ipython3
@@ -168,14 +187,10 @@ sdfxr.open_dataset("tutorial_dataset_1d/0010.sdf", keep_particles=True)
 
 ## Loading specific variables
 
-When loading datasets containing several (`>10`) coordinates/dimensions
-using <project:#sdf_xarray.open_mfdataset>, <inv:#xarray> may struggle to locate
-the necessary RAM to concatenate all of the data (as seen in
-[Issue #57](https://github.com/epochpic/sdf-xarray/issues/57)).
-In this instance, you can optimize memory usage by loading only the data
-you need using the keyword argument `data_vars` and passing one or more
-variables. This creates a dataset consisting only of the given variable(s)
-and the relevant coordinates/dimensions, significantly reducing memory
+If you only need some of the variables, you can load just those using the
+keyword argument `data_vars` and passing one or more variables to
+<project:#sdf_xarray.open_mfdataset>. This creates a dataset consisting only of
+the given variable(s) and the relevant coordinates/dimensions, reducing memory
 consumption.
 
 ```{code-cell} ipython3

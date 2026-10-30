@@ -167,6 +167,7 @@ cdef class SDFFile:
     cdef public dict[str, Mesh] grids
 
     def __cinit__(self, filename: str):
+        self.filename = filename
         self._c_sdf_file = csdf.sdf_open(
             filename.encode("UTF-8"), 0, csdf.SDF_READ, False
         )
@@ -254,8 +255,14 @@ cdef class SDFFile:
 
             block = block.next
 
-    cpdef read(self, var: Block):
+    cpdef read(self, var: Block, start=None, stop=None):
         """Read a variable from the file, returning numpy array
+
+        For variables, ``start`` and ``stop`` select a range of the last index,
+        i.e. ``var[..., start:stop]``, so that only that part of the variable is
+        read from disk. As SDF arrays are Fortran ordered (the first index
+        changes fastest), this range is one contiguous block on disk, so it is
+        a single read.
         """
 
         if self._c_sdf_file is NULL:
@@ -276,23 +283,112 @@ cdef class SDFFile:
         if block is NULL:
             raise RuntimeError(f"Could not read variable '{var.name}'")
 
-        self._c_sdf_file.current_block = block
-        csdf.sdf_helper_read_data(self._c_sdf_file, block)
-
-        if is_mesh:
-            # Meshes store the data for separate dimensions in block.grids
-            if not (block.grids is not NULL and block.grids[0] is not NULL):
-                raise RuntimeError(f"Could not read variable '{var.name}'")
-
-            data = []
-            for i, dim in enumerate(var.shape):
-                data.append(
-                    self._make_array((dim,), var.dtype, block.grids[i])
+        shape = var.shape
+        cdef bint is_section = False
+        cdef csdf.int64_t starts[csdf.SDF_MAXDIMS]
+        cdef csdf.int64_t ends[csdf.SDF_MAXDIMS]
+        if not is_mesh and shape and (start is not None or stop is not None):
+            start = 0 if start is None else start
+            stop = shape[-1] if stop is None else stop
+            if not 0 <= start <= stop <= shape[-1]:
+                raise IndexError(
+                    f"Invalid range [{start}, {stop}) for '{var.name}' "
+                    f"with shape {shape}"
                 )
-            return tuple(data)
+            if start == stop:
+                # Nothing to read, and the library can't read an empty section
+                return np.empty((*shape[:-1], 0), dtype=var.dtype)
+            is_section = (start, stop) != (0, shape[-1])
 
-        # Normal variables
-        return self._make_array(var.shape, var.dtype, block.data)
+        if is_section and block.blocktype not in (
+            csdf.SDF_BLOCKTYPE_PLAIN_VARIABLE, csdf.SDF_BLOCKTYPE_POINT_VARIABLE
+        ):
+            # Only these readers support array sections (`sdf_read_array`, for
+            # example, ignores them), so read everything and slice it here
+            return self.read(var)[..., start:stop].copy()
+
+        if is_section:
+            for i in range(block.ndims):
+                # The array section is clamped to the local (per-rank) dims,
+                # which for point data are only set during the read itself.
+                # For serial reads these are always the global dims
+                block.local_dims[i] = block.dims[i]
+                starts[i] = 0
+                ends[i] = block.dims[i]
+            starts[block.ndims - 1] = start
+            ends[block.ndims - 1] = stop
+            csdf.sdf_block_set_array_section(block, block.ndims, starts, ends, NULL)
+            shape = (*shape[:-1], stop - start)
+
+        self._c_sdf_file.current_block = block
+        try:
+            csdf.sdf_helper_read_data(self._c_sdf_file, block)
+
+            if is_mesh:
+                # Meshes store the data for separate dimensions in block.grids
+                if not (block.grids is not NULL and block.grids[0] is not NULL):
+                    raise RuntimeError(f"Could not read variable '{var.name}'")
+
+                data = []
+                for i, dim in enumerate(shape):
+                    data.append(
+                        self._make_array((dim,), var.dtype, block.grids[i])
+                    )
+                return tuple(data)
+
+            # Normal variables
+            return self._make_array(shape, var.dtype, block.data)
+        finally:
+            # The library keeps every block it reads cached until the file is
+            # closed, but we've just copied it into numpy, so release it now.
+            # Otherwise we hold two copies of everything that's been read
+            csdf.sdf_stack_free_block(self._c_sdf_file, block)
+            if is_section:
+                csdf.sdf_block_set_array_section(block, block.ndims, NULL, NULL, NULL)
+
+    cpdef read_mesh_component(self, mesh: Mesh, int component, start=None, stop=None):
+        """Read one component (e.g. just ``X``) of a mesh, returning numpy array
+
+        For point meshes, ``start`` and ``stop`` select a range of points so
+        that only those are read from disk.
+        """
+
+        if self._c_sdf_file is NULL:
+            raise RuntimeError(
+                f"Can't read '{mesh.name}', file '{self.filename}' is closed"
+            )
+
+        if not mesh.is_point_data or mesh.parent:
+            return self.read(mesh)[component][start:stop]
+
+        cdef csdf.sdf_block_t* block = csdf.sdf_find_block_by_name(
+            self._c_sdf_file, mesh.name.encode("utf-8")
+        )
+
+        if block is NULL:
+            raise RuntimeError(f"Could not read variable '{mesh.name}'")
+
+        if block.datatype != block.datatype_out:
+            # The library is converting the type on read, so let it
+            return self.read(mesh)[component][start:stop]
+
+        # The library always reads every component of a point mesh, and its
+        # array sections don't work for them. The components are just stored
+        # one after the other though (see `sdf_read_point_mesh`), so read the
+        # part we want directly
+        npoints = block.dims[0]
+        start = 0 if start is None else start
+        stop = npoints if stop is None else stop
+        if not 0 <= component < block.ndims or not 0 <= start <= stop <= npoints:
+            raise IndexError(
+                f"Invalid component {component} or range [{start}, {stop}) "
+                f"for '{mesh.name}' with {block.ndims} components of {npoints} points"
+            )
+
+        offset = block.data_location + (component * npoints + start) * mesh.dtype.itemsize
+        return np.fromfile(
+            self.filename, dtype=mesh.dtype, count=stop - start, offset=offset
+        )
 
     cdef _read_mid_grid(self, mesh: Mesh):
         """Read a midpoint grid"""

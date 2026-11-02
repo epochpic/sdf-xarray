@@ -66,7 +66,7 @@ def fetch_dataset(
     if not cache_path.is_dir():
         datasets = pooch.create(
             path=cache_dir,
-            base_url="doi:10.5281/zenodo.17618509",
+            base_url="doi:10.5281/zenodo.23887747",
             registry=None,
             retry_if_failed=10,
         )

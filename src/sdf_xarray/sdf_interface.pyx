@@ -3,6 +3,7 @@ cimport csdf
 import dataclasses
 import re
 import time
+import warnings
 
 from libc.string cimport memcpy
 
@@ -67,6 +68,20 @@ cdef class Variable(Block):
         )
 
 
+cdef tuple _safely_decode_dim_strings(char** strings, int nstrings, int ndims):
+    """Decode a mesh's per-dimension labels or units
+
+    The SDF C library can make meshes with fewer of these than dimensions: the
+    derived CPU-split grids copy them from the first mesh in the file, which may
+    be a lower-dimension dist_fn grid. Missing entries are returned as ``""``,
+    and `Mesh.from_block` warns about them
+    """
+    return tuple(
+        strings[i].decode("UTF-8") if i < nstrings and strings[i] != NULL else ""
+        for i in range(ndims)
+    )
+
+
 @dataclasses.dataclass
 cdef class Mesh(Block):
     units: tuple[str]
@@ -83,16 +98,20 @@ cdef class Mesh(Block):
 
     @staticmethod
     cdef Mesh from_block(str name, csdf.sdf_block_t* block, SDFFile sdffile):
+        if block.ndim_labels < block.ndims or block.ndim_units < block.ndims:
+            warnings.warn(
+                f"Mesh '{block.id.decode('UTF-8')}' has {block.ndims} dimensions "
+                f"but only {block.ndim_labels} labels and {block.ndim_units} units "
+                "in the SDF file, the missing ones are set to ''"
+            )
         return Mesh(
             _id=block.id.decode("UTF-8"),
             name=name,
             dtype=_sdf_type_mapping[block.datatype_out],
             shape=tuple(block.dims[i] for i in range(block.ndims)),
-            units=tuple(
-                block.dim_units[i].decode("UTF-8") for i in range(block.ndims)
-            ),
-            labels=tuple(
-                block.dim_labels[i].decode("UTF-8") for i in range(block.ndims)
+            units=_safely_decode_dim_strings(block.dim_units, block.ndim_units, block.ndims),
+            labels=_safely_decode_dim_strings(
+                block.dim_labels, block.ndim_labels, block.ndims
             ),
             mults=(
                 tuple(block.dim_mults[i] for i in range(block.ndims))

@@ -5,6 +5,9 @@ import pytest
 from sdf_xarray import SDFFile, download
 
 TEST_FILES_DIR = download.fetch_dataset("test_files_1D")
+TEST_FILES_MISSING_LABELS_AND_UNITS = download.fetch_dataset(
+    "test_missing_labels_and_units"
+)
 
 
 def test_sdffile():
@@ -184,3 +187,12 @@ def test_read_mesh_component_matches_full_read():
                     f.read_mesh_component(mesh, component, 1, size // 2),
                     full[component][1 : size // 2],
                 )
+
+
+def test_read_cpu_mesh_missing_labels_and_coords():
+    with pytest.warns(
+        UserWarning,
+        match="Mesh 'grid_cpu_rank' has 2 dimensions but only 1 labels and "
+        "1 units in the SDF file, the missing ones are set to ''",
+    ):
+        SDFFile(str(TEST_FILES_MISSING_LABELS_AND_UNITS / "0000.sdf"))

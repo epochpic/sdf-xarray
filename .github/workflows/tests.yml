@@ -34,7 +34,7 @@ jobs:
       uses: actions/cache@v6
       with:
         path: ~/.cache/sdf_datasets
-        key: sdf-datasets-17991042
+        key: sdf-datasets-23887747
 
     - name: Test with pytest
       run: uv run pytest

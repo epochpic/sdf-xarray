@@ -64,6 +64,7 @@ cdef extern from "sdf.h":
         int64_t data_location
         int32_t ndims, geometry, datatype, blocktype
         int32_t stagger, datatype_out
+        int ndim_labels, ndim_units
         char const_value[16]
         char* id
         char* units

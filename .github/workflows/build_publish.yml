@@ -24,7 +24,7 @@ jobs:
       with:
         enableCrossOsArchive: true
         path: ~/.cache/sdf_datasets
-        key: sdf-datasets-17991042
+        key: sdf-datasets-23887747
 
     - name: Setup uv
       id: setup-uv

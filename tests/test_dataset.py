@@ -21,6 +21,9 @@ TEST_ARRAYS_DIR = download.fetch_dataset("test_array_no_grids")
 TEST_3D_DIST_FN = download.fetch_dataset("test_dist_fn")
 TEST_2D_PARTICLE_DATA = download.fetch_dataset("test_two_probes_2D")
 TEST_2D_MOVING_WINDOW = download.fetch_dataset("test_files_2D_moving_window")
+TEST_FILES_MISSING_LABELS_AND_UNITS = download.fetch_dataset(
+    "test_missing_labels_and_units"
+)
 
 
 # Type hinting support
@@ -852,3 +855,13 @@ def test_lazy_indexing_matches_eager(indexers):
         npt.assert_array_equal(
             lazy[name].isel(indexers).values, expected.isel(indexers).values
         )
+
+
+@pytest.mark.parametrize("xrlib", [xr, sdfxr])
+def test_load_missing_labels_and_coords_warns_user(xrlib: XRLibrary):
+    with pytest.warns(
+        UserWarning,
+        match="Mesh 'grid_cpu_rank' has 2 dimensions but only 1 labels and "
+        "1 units in the SDF file, the missing ones are set to ''",
+    ):
+        xrlib.open_dataset(TEST_FILES_MISSING_LABELS_AND_UNITS / "0000.sdf")

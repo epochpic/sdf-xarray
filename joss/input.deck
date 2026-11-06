@@ -1,0 +1,61 @@
+begin:control
+    nx = 800
+    ny = 400
+    t_end = 200e-15
+    x_min = 0
+    x_max = 50e-6
+    y_min = -10e-6
+    y_max = 10e-6
+    stdout_frequency = 100
+end:control
+
+begin:boundaries
+    bc_x_min = simple_laser
+    bc_x_max = open
+    bc_y_min = open
+    bc_y_max = open
+end:boundaries
+
+begin:constant
+    I_fwhm = 2.0e-6          # FWHM of laser intensity
+    I_peak_Wcm2 = 1.0e18     # 0.5 * eps0 * c * E_peak^2
+    las_lambda = 1.0e-6      # Laser wavelength
+    foc_dist = 25.0e-6       # Boundary to focal point distance
+    lambda_L = 0.8e-6        # Wavelength of the laser
+    tau_fwhm_L = 20e-15      # Laser full width half maximum
+    y_fwhm_L = 2.4e-6        # Laser focal spot originally 2.4 (3x wavelength)
+end:constant
+
+begin:constant
+  w_t = tau_fwhm_L / sqrt(2*loge(2)) # Beam waist in t
+  w_y = y_fwhm_L / sqrt(2*loge(2)) # Beam waist in y
+  t_hw01m = 0.5 * tau_fwhm_L * sqrt(loge(10)/loge(2)) # Half width 0.1 maximum
+
+  x_foc = foc_dist # Boundary to focal point distance
+  k_L = 2.0 * pi / lambda_L # Laser wave number
+  x_Rr = pi * w_y^2 / lambda_L # Rayleigh range
+  omega_L = 2 * pi * c / lambda_L # Angular frequency of the laser
+
+  w_boundary = w_y * sqrt(1 + (x_foc/x_Rr)^2) # Waist on boundary
+  I_boundary = I_peak_Wcm2 * (w_y / w_boundary)^2 # Intens. on boundary
+  r_curve = x_foc * (1 + (x_Rr/x_foc)^2) # Boundary curv. rad.
+  phase_Gouy = atan(-x_foc/r_curve) # Boundary Gouy shift
+end:constant
+
+begin:laser
+  boundary = x_min
+  intensity_w_cm2 = I_boundary
+  omega = omega_L
+  phase = k_L * y^2 / (2 * r_curve) - phase_Gouy
+  profile = gauss(y, 0, w_boundary) # Spatial profile
+  t_profile = gauss(time, t_hw01m, w_t) # Temporal profile
+  t_start = start
+  t_end = end
+end:laser
+
+begin:output
+    name = o1
+    dt_snapshot = 10 * femto
+    ey = always
+    bz = always
+end:output

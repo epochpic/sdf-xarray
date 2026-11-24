@@ -8,7 +8,7 @@ import sdf_xarray as sdfxr
 input_dir = Path("datasets/2_1_two_stream_instability")
 ds = sdfxr.open_dataset(input_dir / "0000.sdf")
 
-ds = ds.epoch.rescale_coords(1e-3, "km", ["X_x_px_Left"])
+ds = ds.epoch.rescale_coords("km", ["X_x_px_Left"], 1e-3)
 
 # Sum phase-space of species "Left" and "Right" in "x_px" distribution function
 # NOTE: We only use the values from the right distribution function as if we inherit

@@ -8,7 +8,7 @@ import sdf_xarray as sdfxr
 input_dir = Path("datasets/1_1_drifting_bunch")
 
 ds = sdfxr.open_dataset(input_dir / "0000.sdf")
-ds = ds.epoch.rescale_coords(1e6, "µm", ["X_Grid_mid"])
+ds = ds.epoch.rescale_coords("µm", ["X_Grid_mid"], 1e6)
 
 ds["Derived_Number_Density"].epoch.plot()
 plt.tight_layout()

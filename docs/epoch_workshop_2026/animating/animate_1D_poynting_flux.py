@@ -8,9 +8,9 @@ input_dir = Path("datasets/3_3_Gaussian_1d_laser")
 ds = sdfxr.open_mfdataset(input_dir)
 
 # Convert the time to femtoseconds
-ds = ds.epoch.rescale_coords(1e15, "fs", "time")
+ds = ds.epoch.rescale_coords("fs", "time", 1e15)
 # Convert the x and y coords to microns
-ds = ds.epoch.rescale_coords(1e6, "µm", ["X_Grid_mid"])
+ds = ds.epoch.rescale_coords("µm", ["X_Grid_mid"], 1e6)
 
 # Calculate Poynting flux magnitude
 flux_magnitude = np.sqrt(

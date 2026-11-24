@@ -12,7 +12,6 @@ mimic <inv:#xarray.DataArray.plot>.
 
 ```{code-cell} ipython3
 import sdf_xarray as sdfxr
-import xarray as xr
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from IPython.display import HTML
@@ -35,9 +34,10 @@ resolved data has 2 dimensions.
 
 | Dimensions |      Plotting function        |        Notes          |
 | ---------- | ----------------------------- | --------------------- |
-|    `2`     | <inv:#xarray.plot.line>       |                       |
-|    `3`     | <inv:#xarray.plot.pcolormesh> |                       |
-|    `>3`    | <inv:#xarray.plot.hist>       | Not fully implemented |
+|     2      | <inv:#xarray.plot.line>       |                       |
+|     3      | <inv:#xarray.plot.pcolormesh> |                       |
+|     4      | <inv:#mpl_toolkits.mplot3d.axes3d.Axes3D.voxels>| WIP |
+|     >4     | <inv:#xarray.plot.hist>       | Not fully implemented |
 
 
 ### 1D simulation
@@ -103,6 +103,10 @@ anim.show()
 
 ### 3D simulation
 
+```{warning}
+[Voxel](./plotting.md#voxel-plots) animations are not currently implemented. 
+```
+
 Opening a 3D simulation as a multi-file dataset and plotting it will
 return a <inv:#xarray.plot.hist>. However, this may not be
 desirable. We can plot a 3D simulation along a certain plane in the
@@ -134,29 +138,21 @@ EPOCH allows for simulations that have a moving simulation window
 `move_window` and change the x-axis limits accordingly.
 
 ```{warning}
-<project:#sdf_xarray.open_mfdataset> does not currently function with moving window data.
-You must use <inv:#xarray.open_mfdataset> and specify arguments in the following way.
+Importing some datasets with moving windows can cause vertical banding
+in the <inv:#xarray.Dataset>, which will affect the animation. Each output stores
+its own x grid, and the same position can differ by floating point rounding between
+outputs. Both values are then kept on the combined x axis, so each time step has
+nan values in some columns. Setting `join = "override"` in
+<inv:#xarray.open_mfdataset> does not fix this for moving window data, as it
+relabels every time step with the first output's x grid.
 ```
 
 ```{code-cell} ipython3
-ds = xr.open_mfdataset(
-   "tutorial_dataset_2d_moving_window/*.sdf",
-   preprocess = sdfxr.SDFPreprocess(),
-   combine = "nested",
-   join = "outer",
-   compat="no_conflicts",
-   concat_dim="time",
-   )
+ds = sdfxr.open_mfdataset("tutorial_dataset_2d_moving_window/*.sdf")
 
 da = ds["Derived_Number_Density_Beam_Electrons"]
 anim = da.epoch.animate(move_window = True, fps = 5)
 anim.show()
-```
-
-```{warning}
-Importing some datasets with moving windows can cause vertical banding
-in the <inv:#xarray.Dataset>, which will affect the animation. The cause for
-this is unknown but can be circumvented by setting `join = "override"`.
 ```
 
 ## Customisation
@@ -170,8 +166,8 @@ Some functionality such as `aspect` and `size` are not fully implemented yet.
 ds = sdfxr.open_mfdataset("tutorial_dataset_2d/*.sdf")
 
 # Change the units of the coordinates
-ds = ds.epoch.rescale_coords(1e6, "µm", ["X_Grid_mid", "Y_Grid_mid"])
-ds = ds.epoch.rescale_coords(1e15, "fs", ["time"])
+ds = ds.epoch.rescale_coords("µm", ["X_Grid_mid", "Y_Grid_mid"])
+ds = ds.epoch.rescale_coords("fs", ["time"])
 ds["time"].attrs["long_name"] = "t"
 
 # Change units and name of the variable

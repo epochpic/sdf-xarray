@@ -129,7 +129,7 @@ anim = ds["Electric_Field_Ey"].epoch.animate()
 
 The minimum and maximum values of a variable can change between each SDF file, so when generating an animation the limits must be found over the whole dataset. This behaviour exists by default in `sdf-xarray` animations.
 
-EPOCH provides a ``moving window" feature which shifts the axes as a simulation progresses (e.g. to track a laser pulse propagating through a long block of plasma). This saves computational resources by simulating only the most dynamic region of the domain rather than its full extent. `sdf-xarray` animations allow the user to specify a boolean value for this `moving_window` functionality to follow the simulation box instead of maintaining fixed axes.
+EPOCH provides a moving window feature which shifts the axes as a simulation progresses (e.g. to track a laser pulse propagating through a long block of plasma). This saves computational resources by simulating only the most dynamic region of the domain rather than its full extent. `sdf-xarray` animations allow the user to specify a boolean value for this moving_window functionality to follow the simulation box instead of maintaining fixed axes.
 
 On top of building single variable animations, users can utilise the `animate_multiple()` function to overlay multiple variables.
 

@@ -58,8 +58,8 @@ Python and `Matplotlib` [@hunter:2007] are standard tools for plasma physics sim
 
 Developed as a modern successor to `sdf_helper`, `sdf-xarray` converts SDF files to `Xarray` [@hoyer:2017] datasets, enabling users to leverage core ecosystem features, including:
 
-- **Lazy data loading via `Dask` [@matthew:2015]:** Instantiates pointers rather than loading the entire dataset into memory, substantially mitigating RAM constraints when handling large-scale files on the order of 10-100 GB.
-- **Deferred computation:** Leverages `Dask` to postpone execution on data arrays until explicitly required or evaluated.
+- **Lazy data loading:** Reads only metadata when a file is opened and loads data only when it is accessed, substantially mitigating RAM constraints when handling large files.
+- **Deferred computation:** Leverages `Dask` [@matthew:2015] to postpone execution on data arrays until explicitly required or evaluated.
 - **Ecosystem interoperability:** Simplifies conversion of dataset arrays to `NumPy` or `Pandas` [@mckinney:2010] structures for downstream analysis.
 - **Interactive development:** Provides native compatibility with `Jupyter` notebooks [@granger:2021] to support iterative workflows.
 - **Built-in visualisation:** Contains integrated `Matplotlib` routines for rapid, native plotting of multidimensional data.
@@ -75,7 +75,7 @@ This package's design can be separated into three key sections: loading, plottin
 
 ## Loading SDF files
 
-Data ingestion follows a three-stage pipeline: raw binary reading via the underlying `SDF-C` library, decoding into Python dataclasses using `Cython` [@behnel:2010], and parsing into a custom `Xarray` backend. During this process, the backend sanitises variable names to Pythonic `snake_case`, attaches simulation input data using `epydeck` [@hill:2024a], and omits heavy particle data by default to conserve memory.
+Files are read using the `SDF-C` library, which only reads the grid axes and block headers, giving each variable's name, units, shape and position in the file. This metadata is then decoded into Python dataclasses using `Cython` [@behnel:2010] and passed into a custom `Xarray` backend that sanitises variable names to Pythonic `snake_case`. Each block's data is only loaded when it is accessed by the user, which avoids large RAM usage when opening a file. If an `input.deck` is present in the same folder as the SDF file(s), or a path is provided, it is parsed using `epydeck` [@hill:2024a] and added to the dataset's attributes. 
 
 For multi-file datasets, `sdf-xarray` aggregates data along a time dimension derived from each file's `time` attribute. However, this multi-file ingestion highlights a core limitation: `Xarray` strictly requires fixed grids, whereas EPOCH can output variable-grid data that changes with each step. Because these time-varying grids cannot natively coexist in a standard `Xarray` structure, `sdf-xarray` introduces a `separate_times` flag. This creates distinct time dimensions for variables with differing output frequencies, ensuring structural compatibility at the expense of a brief pre-evaluation RAM overhead.
 

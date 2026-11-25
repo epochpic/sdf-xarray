@@ -1,0 +1,164 @@
+---
+title: 'sdf-xarray: Interactive data reading and visualisation for EPOCH particle-in-cell simulations'
+tags:
+  - Python
+  - xarray
+  - EPOCH
+  - PIC
+  - interactivity
+  - data
+authors:
+  - name: Joel Luca Adams
+    orcid: 0009-0005-4889-5231
+    equal-contrib: true
+    corresponding: true
+    affiliation: 1
+  - name: Peter Hill
+    orcid: 0000-0003-3092-1858
+    equal-contrib: true
+    affiliation: 1
+  - name: Liam Pattinson
+    orcid: 0000-0001-8604-6904
+    affiliation: 1
+  - name: Shaun Doherty
+    orcid: 0009-0005-0693-030X
+    affiliation: 1
+  - name: Sviatoslav Shekhanov
+    orcid: 0000-0002-2125-8962
+    affiliation: 1
+  - name: Chris Herdman
+    orcid: 0000-0002-5159-0130
+    affiliation: 1
+  - name: Lawrence Dior
+    orcid: 0000-0003-4138-4576
+    affiliation: 1
+affiliations:
+  - name: York Plasma Institute, University of York, United Kingdom
+    index: 1
+    ror: 04m01e293
+date: 3 June 2026
+bibliography: paper.bib
+---
+
+# Summary
+
+EPOCH is a plasma physics code that outputs files using a custom binary format called SDF. `sdf-xarray` is a Python package which reads these files and parses them into structured N-D labelled datasets provided by `Xarray`. `sdf-xarray` has built-in functions for plotting, animation and unit conversion, allowing for simple interaction and manipulation for easy data analysis.
+
+# Statement of need
+
+EPOCH [@arber:2015], developed at the University of Warwick, is a Fortran-based Particle-In-Cell (PIC) code widely used in laser-plasma physics, primarily within the United Kingdom. The code was first developed at the University of Warwick in early 2008, prior to the standardisation of many modern output file formats and as a result uses the university's custom Self-Describing Format (SDF) binary files. 
+
+Integrating a modern output module like `NetCDF` [@rew:1989] is challenging because the codebase accommodates one-, two-, and three-dimensional simulations across three variants: a regular grid geometry, a cylindrical geometry and a hybrid approximation. Multiple copies of the variants exist and are stored in forks and branches containing diverging commit histories making development of a unified module challenging.
+
+# State of the field
+
+Several SDF wrappers [@bennett:2014a] for use in visualisation software have been created, including but not limited to: `VisIt` [@childs:2012]; `Matlab` [@matlab:2022] which is closed-source and requires a paid license; `OpenPMD` [@huebl:2015] which is not currently widely adopted; and a Python package called `sdf_helper`.
+
+Python and `Matplotlib` [@hunter:2007] are standard tools for plasma physics simulation analysis. The `sdf_helper` Python package supports this workflow by providing simple data extraction to `NumPy` [@harris:2020] and custom `Matplotlib` plotting routines. Unfortunately, it lacks native capabilities for concatenating multiple SDF files into time-resolved datasets.
+
+Developed as a modern successor to `sdf_helper`, `sdf-xarray` converts SDF files to `Xarray` [@hoyer:2017] datasets, enabling users to leverage core ecosystem features, including:
+
+- **Lazy data loading:** Reads only metadata when a file is opened and loads data only when it is accessed, substantially mitigating RAM constraints when handling large files.
+- **Deferred computation:** Leverages `Dask` [@matthew:2015] to postpone execution on data arrays until explicitly required or evaluated.
+- **Ecosystem interoperability:** Simplifies conversion of dataset arrays to `NumPy` or `Pandas` [@mckinney:2010] structures for downstream analysis.
+- **Interactive development:** Provides native compatibility with `Jupyter` notebooks [@granger:2021] to support iterative workflows.
+- **Built-in visualisation:** Contains integrated `Matplotlib` routines for rapid, native plotting of multidimensional data.
+- **Multi-file aggregation:** Facilitates the simultaneous opening and unified handling of split-file datasets.
+
+In addition to leveraging `Xarray`'s core ecosystem, `sdf-xarray` has comprehensive [documentation](https://sdf-xarray.readthedocs.io/en/stable) which is actively maintained and makes use of `Jupyter` notebooks to illustrate the interactive nature of the package.
+
+Both `sdf_helper` and `sdf-xarray` serve as wrappers around the C-based `SDF-C` library [@bennett:2014b]. Although the underlying library historically required manual compilation via a Makefile, `sdf-xarray` utilises the modern `Scikit-build-core` [@schreiner:2024] backend to automate this process for local builds. Furthermore, during the release cycle, `sdf-xarray` leverages `cibuildwheel` [@pypa:2020] to distribute pre-compiled binaries across Windows, MacOS, and various Linux distributions. Originally, `sdf_helper`, released back in 2014, did not have this automated build process, making installation less consistent across operating systems. It also did not respect isolated Python virtual environments, causing some users to face system-wide dependency conflicts. Several months after the release of `sdf-xarray` in 2024, `sdf_helper` was updated to adopt a similar automated pipeline and published on PyPI as `sdfr` to alleviate these deployment challenges.
+
+# Software design
+
+This package's design can be separated into three key sections: loading, plotting and rescaling. 
+
+## Loading SDF files
+
+Files are read using the `SDF-C` library, which only reads the grid axes and block headers, giving each variable's name, units, shape and position in the file. This metadata is then decoded into Python dataclasses using `Cython` [@behnel:2010] and passed into a custom `Xarray` backend that sanitises variable names to Pythonic `snake_case`. Each block's data is only loaded when it is accessed by the user, which avoids large RAM usage when opening a file. If an `input.deck` is present in the same folder as the SDF file(s), or a path is provided, it is parsed using `epydeck` [@hill:2024a] and added to the dataset's attributes. 
+
+For multi-file datasets, `sdf-xarray` aggregates data along a time dimension derived from each file's `time` attribute. However, this multi-file ingestion highlights a core limitation: `Xarray` strictly requires fixed grids, whereas EPOCH can output variable-grid data that changes with each step. Because these time-varying grids cannot natively coexist in a standard `Xarray` structure, `sdf-xarray` introduces a `separate_times` flag. This creates distinct time dimensions for variables with differing output frequencies, ensuring structural compatibility at the expense of a brief pre-evaluation RAM overhead.
+
+## Rescaling datasets
+
+EPOCH outputs all data in base International System (SI) units. It can be convenient to convert these units when handling coordinate data; to that end a custom function was developed and an example can be found below:
+
+```python
+# Convert the time to femtoseconds
+ds = ds.epoch.rescale_coords(1e15, "fs", "time")
+# Convert the x and y coords to microns
+ds = ds.epoch.rescale_coords(1e6, "µm", ["X_Grid_mid", "Y_Grid_mid"])
+```
+
+This is often used in conjunction with generating plots and animations.
+
+Converting variables can also be done by either directly manipulating the underlying `NumPy` array or using the `Pint` [@grecco:2012] package along with the `Xarray` API `pint-xarray` [@magin:2020].
+
+## Plotting
+
+`Xarray` provides a simple interface for plotting variables using `Matplotlib`. An example of which is:
+
+```python
+import sdf_xarray as sdfxr
+
+# Opens a single-file dataset
+ds = sdfxr.open_dataset("0010.sdf")
+ds = ds.epoch.rescale_coords(1e6, "µm", ["X_Grid_mid", "Y_Grid_mid"])
+
+ds["Electric_Field_Ey"].epoch.plot()
+```
+
+![Plot of the electric field of a laser focusing in a vacuum, generated through `sdf-xarray`.](Electric_Field_Ey.png){width="60%"}
+
+### Animations
+
+Building animations provides insight into how systems evolve over time. While `Matplotlib` allows users to build animations, it can require quite a complicated setup in order to work with `Xarray`. As a result, `sdf-xarray` contains a custom function that builds on top of `Matplotlib`'s implementation and provides a simple user interface. An example animation of a dataset variable evolving over time is as follows:
+
+```python
+import sdf_xarray as sdfxr
+
+# Opens a multi-file dataset using globs or a list of paths
+ds = sdfxr.open_mfdataset("*.sdf")
+ds = ds.epoch.rescale_coords(1e15, "fs", "time")
+ds = ds.epoch.rescale_coords(1e6, "µm", ["X_Grid_mid", "Y_Grid_mid"])
+
+anim = ds["Electric_Field_Ey"].epoch.animate()
+```
+
+![Frames from an animation of the electric field of a laser focusing in a vacuum, generated through `sdf-xarray`.](Electric_Field_Ey_frames.png)
+
+The minimum and maximum values of a variable can change between each SDF file, so when generating an animation the limits must be found over the whole dataset. This behaviour exists by default in `sdf-xarray` animations.
+
+EPOCH provides a moving window feature which shifts the axes as a simulation progresses (e.g. to track a laser pulse propagating through a long block of plasma). This saves computational resources by simulating only the most dynamic region of the domain rather than its full extent. `sdf-xarray` animations allow the user to specify a boolean value for this moving_window functionality to follow the simulation box instead of maintaining fixed axes.
+
+On top of building single variable animations, users can utilise the `animate_multiple()` function to overlay multiple variables.
+
+Further examples and explanation of animations can be seen in the [documentation](https://sdf-xarray.readthedocs.io/en/stable/animation.html).
+
+# Research impact statement
+
+This library was originally developed for the machine learning pipeline toolkit [BEAM](https://github.com/epochpic/sdf-xarray#broad-epoch-analysis-modules-beam). The initial software architecture was designed by Peter Hill, with subsequent maintenance, optimization, and feature iteration led by Joel Adams and community contributors. Since its inception, the library has been widely adopted by EPOCH users at the York Plasma Institute, fostering a collaborative development environment where active researchers contribute new features to the codebase.
+
+Beyond its foundational deployment at the University of York, `sdf-xarray` has achieved broader institutional adoption, seeing active use by researchers at the University of Strathclyde, Queen's University Belfast and First Light Fusion. In addition to driving primary research, the library serves a distinct educational role; it has been integrated into a course on PIC codes delivered to undergraduate students at the University of York and served as the primary data-interfacing utility for both the 2025 and 2026 international EPOCH user workshops.
+
+As `sdf-xarray` has the added benefit of lazy loading over `sdf_helper`, we benchmarked the peak memory and time required to open single SDF files. EPOCH was used to generate 2D files containing the six electromagnetic field components with grid sizes from $128^2$ to $8192^2$ cells, giving file sizes from 0.8 MB to 3.2 GB (\autoref{fig:benchmark}). At its peak `sdf_helper` consumed 3.2 GB of memory and took 760 ms, whereas `sdf-xarray` consumed <1 MB of memory and took <1 ms.
+
+![Peak memory allocated (left) and wall-clock time (right) to open a single SDF file with `sdf-xarray` and `sdf_helper`. Each point was measured in a fresh Python process after first opening a small file, to exclude one-off library setup. Memory was measured with [memray](https://github.com/bloomberg/memray) and times are the median of ten runs.\label{fig:benchmark}](benchmark.png)
+
+Combining many SDF files into a single time-resolved dataset is one of the main features `sdf-xarray` adds over `sdf_helper`. To benchmark this, we took a lineout of $E_y$ along $x$, through the centre of the domain, from an increasing number of files (50 MB per file) written every femtosecond. To build this dataset with `sdf-xarray` only a single call to `open_mfdataset` is required, whereas `sdf_helper` requires a loop over the files. For a few files both take a similar time, but `sdf-xarray` only reads $E_y$ rather than all six fields, so for 64 files it needed 25 MB of memory and took 0.29 s, compared with 1.3 GB and 0.94 s for `sdf_helper` (\autoref{fig:benchmark_time_series}). The memory used by `sdf_helper` grows with the number of files because the data from each file is held until Python's garbage collector frees it.
+
+![Peak memory allocated (left) and wall-clock time (right) to take a lineout of $E_y$ through a time series of SDF files with `sdf-xarray` and `sdf_helper`, measured in the same way as \autoref{fig:benchmark}.\label{fig:benchmark_time_series}](benchmark_time_series.png)
+
+By adhering strictly to FAIR (Findable, Accessible, Interoperable, and Reusable) data principles, `sdf-xarray` alongside its sister BEAM packages, `epyscan` and `epydeck` [@hill:2024b] maintains a transparent, community-driven development model that encourages external contributions. In recognition of this commitment to open science and its measurable impact on the plasma physics community, the BEAM project was awarded the 2025 University of York Open Research Award in the Postgraduate Researcher (Sciences) category.
+
+# AI usage disclosure
+
+Some of the code and documentation in this library was partially developed with assistance from the GPT models by Google's Gemini, Anthropic's Claude and OpenAI's ChatGPT. The majority of the codebase was developed by humans and all generated code was verified by several developers prior to release.
+
+# Acknowledgements
+
+This project's initial development was funded by the PlasmaFAIR project, EPSRC Grant EP/V051822/1
+
+We acknowledge the University of Warwick EPOCH development team for their support of the project and indirect contributions to this project by several anonymous contributors.
+
+# References
